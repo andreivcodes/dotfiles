@@ -33,5 +33,6 @@ chmod +x setup/all.sh setup/brew.sh setup/dev.sh setup/dock.sh
 Execute the main setup script to run all individual scripts:
 
 ```bash
-./setup/all.sh
+cd setup
+./all.sh
 ```
