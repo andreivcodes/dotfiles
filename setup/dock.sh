@@ -12,18 +12,22 @@ defaults write com.apple.dock persistent-apps -array
 # Add specified applications to the Dock
 add_app_to_dock "/System/Applications/Launchpad.app"
 add_app_to_dock "/Applications/Safari.app"
+#
 add_app_to_dock "/System/Applications/Messages.app"
 add_app_to_dock "/Applications/WhatsApp.app"
 add_app_to_dock "/System/Applications/Mail.app"
 add_app_to_dock "/Applications/Slack.app"
 add_app_to_dock "/Applications/Discord.app"
+#
 add_app_to_dock "/Applications/Obsidian.app"
 add_app_to_dock "/System/Applications/Calendar.app"
+#
 add_app_to_dock "/System/Applications/Utilities/Terminal.app"
+add_app_to_dock "/Applications/Zed.app"
+add_app_to_dock "/Applications/GitHub Desktop.app"
+#
 add_app_to_dock "/System/Applications/App Store.app"
 add_app_to_dock "/System/Applications/System Settings.app"
-add_app_to_dock "/Applications/GitHub Desktop.app"
-add_app_to_dock "/Applications/Zed.app"
 add_app_to_dock "/Applications/Brave Browser.app"
 
 # Restart the Dock to apply changes
