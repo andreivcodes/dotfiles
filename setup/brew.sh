@@ -20,6 +20,7 @@ brew install --cask rectangle
 brew install --cask topnotch
 brew install --cask zed
 brew install --cask docker
+brew install --cask wifiman
 
 sleep 1
 
