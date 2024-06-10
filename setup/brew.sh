@@ -7,7 +7,7 @@ brew install volta
 
 sleep 1
 
-echo "Success! Basic brew packages are installed."
+echo "Success! Brew packages are installed."
 
 brew install --cask 1password
 brew install --cask discord
