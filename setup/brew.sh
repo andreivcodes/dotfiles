@@ -15,7 +15,7 @@ brew install --cask slack
 brew install --cask whatsapp
 brew install --cask brave-browser
 brew install --cask github
-brew install --cask zed
+brew install --cask zed@preview
 brew install --cask docker
 brew install --cask wifiman
 
