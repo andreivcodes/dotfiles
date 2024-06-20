@@ -18,6 +18,7 @@ brew install --cask github
 brew install --cask zed@preview
 brew install --cask docker
 brew install --cask wifiman
+brew install --cask tableplus
 
 sleep 1
 
