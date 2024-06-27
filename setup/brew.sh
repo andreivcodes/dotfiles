@@ -19,6 +19,7 @@ brew install --cask zed@preview
 brew install --cask docker
 brew install --cask wifiman
 brew install --cask tableplus
+brew install --cask notion
 
 sleep 1
 
