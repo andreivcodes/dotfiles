@@ -20,6 +20,7 @@ brew install --cask docker
 brew install --cask wifiman
 brew install --cask tableplus
 brew install --cask notion
+brew install --cask telegram
 
 sleep 1
 
