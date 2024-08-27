@@ -35,6 +35,8 @@ brew install --cask wifiman
 brew install --cask 1password
 brew install --cask macs-fan-control
 
+brew install --cask tailscale
+brew install --cask zerotier-one
 
 sleep 1
 
