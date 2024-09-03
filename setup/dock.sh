@@ -26,7 +26,7 @@ add_app_to_dock "/Applications/Obsidian.app"
 add_app_to_dock "/System/Applications/Calendar.app"
 #
 add_app_to_dock "/System/Applications/Utilities/Terminal.app"
-add_app_to_dock "/Applications/Zed Preview.app"
+add_app_to_dock "/Applications/Zed.app"
 add_app_to_dock "/Applications/GitHub Desktop.app"
 add_app_to_dock "/Applications/TablePlus.app"
 

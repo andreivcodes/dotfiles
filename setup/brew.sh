@@ -25,7 +25,7 @@ brew install --cask telegram
 brew install --cask obsidian
 brew install --cask notion
 
-brew install --cask zed@preview
+brew install --cask zed
 brew install --cask github
 brew install --cask docker
 brew install --cask tableplus
