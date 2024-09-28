@@ -34,6 +34,7 @@ brew install --cask brave-browser
 brew install --cask wifiman
 brew install --cask 1password
 brew install --cask macs-fan-control
+brew install --cask topnotch
 
 brew install --cask tailscale
 brew install --cask zerotier-one
