@@ -30,6 +30,7 @@ brew install --cask github
 brew install --cask docker
 brew install --cask tableplus
 brew install --cask brave-browser
+brew install --cask ghostty
 
 brew install --cask wifiman
 brew install --cask 1password
