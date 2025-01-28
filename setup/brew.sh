@@ -23,7 +23,6 @@ brew install --cask whatsapp
 brew install --cask telegram
 
 brew install --cask obsidian
-brew install --cask notion
 
 brew install --cask zed
 brew install --cask github
@@ -34,6 +33,7 @@ brew install --cask ghostty
 
 brew install --cask wifiman
 brew install --cask 1password
+brew install --cask 1password-cli
 brew install --cask macs-fan-control
 brew install --cask topnotch
 
