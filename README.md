@@ -1,38 +1,16 @@
 # Dotfiles Setup
 
-This repository contains scripts to set up a macOS development environment with essential applications and configurations.
+Scripts to set up a macOS development environment with essential apps and configurations.
 
-## Repository Structure
+## Structure
 
-- `setup/all.sh`: Main script to execute all setup scripts.
-- `setup/brew.sh`: Script to install Homebrew, update it, and install basic packages and applications.
-- `setup/dev.sh`: Script to set up development environments for Node.js and Rust.
-- `setup/dock.sh`: Script to configure the macOS Dock with specified applications.
+- `setup/all.sh`: Runs all setup scripts.
+- `setup/brew.sh`: Installs/updates Homebrew and installs packages/apps.
+- `setup/dev.sh`: Sets up Node.js and Rust development environments.
+- `setup/dock.sh`: Configures the macOS Dock.
 
-## Setup Instructions
+## Setup
 
-### 1. Clone the Repository
-
-First, clone this repository to your local machine:
-
-```bash
-git clone https://github.com/andreivcodes/dotfiles.git
-cd dotfiles
-```
-
-### 2. Make All Scripts Executable
-
-Run the following command to make sure all setup scripts are executable:
-
-```bash
-chmod +x setup/all.sh setup/brew.sh setup/dev.sh setup/dock.sh
-```
-
-### 3. Run the Main Setup Script
-
-Execute the main setup script to run all individual scripts:
-
-```bash
-cd setup
-./all.sh
-```
+1. **Clone:** `git clone https://github.com/andreivcodes/dotfiles.git && cd dotfiles`
+2. **Executable:** `chmod +x setup/*.sh`
+3. **Run:** `cd setup && ./all.sh`
