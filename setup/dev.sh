@@ -4,7 +4,6 @@ set -euo pipefail
 
 # Ensure shell environment is loaded
 source $HOME/.zprofile
-source $HOME/.zshrc
 
 # Node.js and npm setup using NVM
 echo "Setting up Node.js and npm using NVM..."
@@ -17,7 +16,6 @@ else
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     source ~/.nvm/nvm.sh # Load nvm into the current shell
     source ~/.zprofile # Ensure profile is reloaded
-    source ~/.zshrc  # Ensure zshrc is reloaded
 fi
 
 nvm install node  # Install latest Node.js (includes npm)

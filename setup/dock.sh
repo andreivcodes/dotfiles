@@ -35,7 +35,6 @@ add_app_to_dock "/Applications/Slack.app"
 add_app_to_dock "/Applications/Discord.app"
 add_app_to_dock "/Applications/Telegram.app"
 
-add_app_to_dock "/Applications/Obsidian.app"
 add_app_to_dock "/System/Applications/Calendar.app"
 
 add_app_to_dock "/Applications/Ghostty.app"
