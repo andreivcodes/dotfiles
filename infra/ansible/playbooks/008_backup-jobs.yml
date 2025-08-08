@@ -1,0 +1,193 @@
+---
+- name: Configure PBS Storage and Backup Jobs
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  
+  vars:
+    pbs_datastore_name: backup-store
+    
+  tags:
+    - backup
+    - pbs-jobs
+  
+  tasks:
+    - name: Check if PBS is running
+      systemd:
+        name: proxmox-backup
+        state: started
+      register: pbs_status
+      failed_when: false
+    
+    - name: Get PBS fingerprint
+      shell: |
+        timeout 10s openssl s_client -servername localhost -connect localhost:8007 </dev/null 2>/dev/null | \
+        openssl x509 -fingerprint -sha256 -noout | \
+        cut -d'=' -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]' | \
+        sed 's/\(.\{2\}\)/\1:/g; s/:$//'
+      register: pbs_fingerprint
+      changed_when: false
+      when: pbs_status is succeeded
+    
+    - name: Check existing PBS storages
+      command: pvesm status
+      register: storage_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Check if local-pbs storage already exists
+      set_fact:
+        pbs_storage_exists: "{{ 'local-pbs' in storage_status.stdout }}"
+    
+    - name: Set PBS password environment variable
+      set_fact:
+        pbs_password: "{{ vault_root_password }}"
+      no_log: true
+    
+    - name: Add PBS storage to PVE with correct settings
+      shell: |
+        export PBS_PASSWORD="{{ vault_root_password }}"
+        pvesm add pbs local-pbs \
+          --server localhost \
+          --datastore {{ pbs_datastore_name }} \
+          --username root@pam \
+          --password "{{ vault_root_password }}" \
+          --fingerprint "{{ pbs_fingerprint.stdout }}" \
+          --content backup
+      register: pbs_add_result
+      when: 
+        - pbs_fingerprint.stdout is defined
+        - not pbs_storage_exists
+      failed_when: 
+        - pbs_add_result.rc != 0
+        - "'already exists' not in pbs_add_result.stderr"
+      no_log: true
+    
+    - name: Enable PBS storage
+      command: pvesm set local-pbs --disable 0
+      failed_when: false
+    
+    - name: Set PBS storage as shared
+      command: pvesm set local-pbs --shared 1
+      failed_when: false
+    
+    - name: Check if any VMs exist
+      shell: qm list 2>/dev/null | grep -v VMID | awk '{print $1}' || true
+      register: vm_list
+      changed_when: false
+    
+    - name: Check if any LXCs exist  
+      shell: pct list 2>/dev/null | grep -v VMID | awk '{print $1}' || true
+      register: lxc_list
+      changed_when: false
+    
+    - name: Get all VM and LXC IDs
+      set_fact:
+        all_guest_ids: "{{ (vm_list.stdout_lines + lxc_list.stdout_lines) | select | list | join(',') }}"
+    
+    - name: Check existing backup jobs
+      command: pvesh get /cluster/backup --output-format json
+      register: existing_backup_jobs
+      changed_when: false
+      failed_when: false
+    
+    - name: Parse existing backup jobs
+      set_fact:
+        existing_job_ids: "{{ (existing_backup_jobs.stdout | default('[]') | from_json | map(attribute='id') | list) if existing_backup_jobs.rc == 0 else [] }}"
+    
+    - name: Remove old backup job if exists
+      command: pvesh delete /cluster/backup/backup-all
+      when: "'backup-all' in existing_job_ids"
+      failed_when: false
+    
+    - name: Create backup job for all VMs and containers
+      shell: |
+        pvesh create /cluster/backup \
+          --id backup-all \
+          --schedule "*/2:00" \
+          --storage local-pbs \
+          --mode snapshot \
+          --compress zstd \
+          --all 1 \
+          --enabled 1 \
+          --mailnotification failure \
+          --prune-backups "keep-hourly=24,keep-daily=7,keep-weekly=4,keep-monthly=6"
+      register: backup_job_create
+      failed_when: 
+        - backup_job_create.rc != 0
+        - "'already exists' not in backup_job_create.stderr"
+      when: all_guest_ids | length > 0 or True  # Create job even if no guests yet
+    
+    - name: Create individual backup job per VM (alternative approach)
+      shell: |
+        pvesh create /cluster/backup \
+          --id "backup-vm-{{ item }}" \
+          --schedule "0 */2 * * *" \
+          --storage local-pbs \
+          --vmid {{ item }} \
+          --mode snapshot \
+          --compress zstd \
+          --enabled 1 \
+          --prune-backups "keep-hourly=24,keep-daily=7,keep-weekly=4,keep-monthly=6"
+      loop: "{{ vm_list.stdout_lines }}"
+      when: 
+        - vm_list.stdout_lines | length > 0
+        - false  # Disabled in favor of single job for all
+      failed_when: false
+    
+    - name: Create individual backup job per container (alternative approach)
+      shell: |
+        pvesh create /cluster/backup \
+          --id "backup-ct-{{ item }}" \
+          --schedule "0 */2 * * *" \
+          --storage local-pbs \
+          --vmid {{ item }} \
+          --mode snapshot \
+          --compress zstd \
+          --enabled 1 \
+          --prune-backups "keep-hourly=24,keep-daily=7,keep-weekly=4,keep-monthly=6"
+      loop: "{{ lxc_list.stdout_lines }}"
+      when: 
+        - lxc_list.stdout_lines | length > 0
+        - false  # Disabled in favor of single job for all
+      failed_when: false
+    
+    - name: Verify PBS storage is accessible
+      command: pvesm list local-pbs
+      register: pbs_list
+      failed_when: false
+      changed_when: false
+    
+    - name: Test PBS connectivity
+      command: proxmox-backup-client list --repository root@pam@localhost:{{ pbs_datastore_name }}
+      register: pbs_test
+      failed_when: false
+      changed_when: false
+      environment:
+        PBS_PASSWORD: "{{ vault_root_password }}"
+    
+    - name: Display backup configuration status
+      debug:
+        msg:
+          - "PBS Storage Status: {{ 'Connected' if pbs_list.rc == 0 else 'Not accessible' }}"
+          - "Backup Job: Created for all VMs and LXCs"
+          - "Schedule: Every 2 hours (0 */2 * * *)"
+          - "Storage: local-pbs"
+          - "Retention: 24 hourly, 7 daily, 4 weekly, 6 monthly"
+          - "Current VMs: {{ vm_list.stdout_lines | length }}"
+          - "Current LXCs: {{ lxc_list.stdout_lines | length }}"
+          - "PBS Test: {{ 'Success' if pbs_test.rc == 0 else 'Failed - check credentials' }}"
+    
+    - name: Run initial backup test (optional)
+      command: |
+        pvesh create /nodes/{{ ansible_hostname }}/vzdump \
+          --storage local-pbs \
+          --mode snapshot \
+          --compress zstd \
+          --all 1
+      when: false  # Set to true if you want to run a test backup immediately
+      register: test_backup
+      failed_when: false

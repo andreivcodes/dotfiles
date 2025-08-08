@@ -1,0 +1,22 @@
+{
+  "zones": {
+    {% for zone in sdn_zones %}
+    "{{ zone.name }}": {
+      "subnets": {
+        {% set zone_vnets = sdn_vnets | selectattr('zone', 'equalto', zone.name) | list %}
+        {% for subnet in sdn_subnets %}
+        {% if subnet.vnet in zone_vnets | map(attribute='name') %}
+        "{{ subnet.cidr }}": {
+          "ips": {
+            "{{ subnet.gateway }}": {
+              "gateway": 1
+            }
+          }
+        }{% if not loop.last %},{% endif %}
+        {% endif %}
+        {% endfor %}
+      }
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  }
+}

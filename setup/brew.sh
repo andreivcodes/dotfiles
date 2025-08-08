@@ -23,6 +23,7 @@ echo "Installing essential brew packages..."
 brew install wget
 brew install volta
 brew install nixpacks
+brew install act
 
 # Ensure shell environment is loaded again after volta install (it might modify it)
 source $HOME/.zprofile

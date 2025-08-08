@@ -1,0 +1,14 @@
+{% for subnet in sdn_subnets %}
+# Configuration for {{ subnet.vnet }}
+interface={{ subnet.vnet }}
+dhcp-range={{ subnet.vnet }},{{ subnet.dhcp_start }},{{ subnet.dhcp_end }},12h
+dhcp-option={{ subnet.vnet }},3,{{ subnet.gateway }}
+dhcp-option={{ subnet.vnet }},6,{{ subnet.gateway }}
+{% endfor %}
+
+# General settings
+bind-interfaces
+except-interface=lo
+no-hosts
+expand-hosts
+domain=local

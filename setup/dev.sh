@@ -40,5 +40,8 @@ echo "Installing Rust tools..."
 cargo install cargo-autoinherit
 cargo install cargo-upgrades
 cargo install cargo-edit
+cargo install cargo-sort
+cargo install sea-orm-cli
+cargo install cargo-nextest
 
 echo "Success! Development tools are installed and configured."

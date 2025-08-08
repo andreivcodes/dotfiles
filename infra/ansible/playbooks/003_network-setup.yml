@@ -1,0 +1,104 @@
+---
+- name: Network Configuration
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  
+  tasks:
+    - name: Install network utilities
+      apt:
+        name:
+          - ifupdown2
+          - bridge-utils
+          - ethtool
+        state: present
+    
+    - name: Configure network interfaces
+      template:
+        src: ../templates/interfaces.j2
+        dest: /etc/network/interfaces
+        backup: yes
+      notify: restart networking
+    
+    - name: Configure DNS
+      template:
+        src: ../templates/resolv.conf.j2
+        dest: /etc/resolv.conf
+        mode: '0644'
+    
+    - name: Set hostname
+      hostname:
+        name: "{{ proxmox_node_name }}"
+    
+    - name: Update /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ proxmox_ip }} {{ proxmox_node_name }}.local {{ proxmox_node_name }}"
+        state: present
+    
+    - name: Enable IP forwarding
+      sysctl:
+        name: "{{ item }}"
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+      loop:
+        - net.ipv4.ip_forward
+        - net.ipv6.conf.all.forwarding
+    
+    - name: Check if Proxmox firewall directory exists
+      stat:
+        path: /etc/pve/firewall
+      register: pve_firewall_dir
+      check_mode: no
+    
+    - name: Prepare desired firewall content
+      copy:
+        dest: /tmp/cluster.fw.ansible
+        mode: '0644'
+        content: |
+          [OPTIONS]
+          enable: 1
+          policy_in: DROP
+          policy_out: ACCEPT
+          
+          [RULES]
+          IN ACCEPT -i vmbr0 -p tcp -dport 8006 # Proxmox web interface
+          IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface
+          IN ACCEPT -i vmbr0 -p tcp -dport 3128 # SPICE proxy
+          IN ACCEPT -i vmbr0 -p tcp -dport 5900:5999 # VNC range
+          IN ACCEPT -i vmbr0 -p tcp -dport 22 # SSH
+      when: pve_firewall_dir.stat.exists
+
+    - name: Update Proxmox firewall if content differs
+      shell: |
+        set -euo pipefail
+        dest="/etc/pve/firewall/cluster.fw"
+        src="/tmp/cluster.fw.ansible"
+        if [ ! -f "$dest" ] || ! cmp -s "$src" "$dest"; then
+          cat "$src" > "$dest"
+          echo changed
+        else
+          echo ok
+        fi
+      args:
+        executable: /bin/bash
+      register: fw_update
+      changed_when: "'changed' in (fw_update.stdout | default(''))"
+      when: pve_firewall_dir.stat.exists
+
+    - name: Cleanup temp firewall file
+      file:
+        path: /tmp/cluster.fw.ansible
+        state: absent
+      when: pve_firewall_dir.stat.exists
+    
+  handlers:
+    - name: restart networking
+      systemd:
+        name: networking
+        state: restarted

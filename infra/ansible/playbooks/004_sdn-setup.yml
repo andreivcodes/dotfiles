@@ -1,0 +1,129 @@
+---
+- name: Proxmox SDN Configuration
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  
+  tags:
+    - sdn
+    - network
+  
+  tasks:
+    - name: Install SDN dependencies
+      apt:
+        name:
+          - frr-pythontools
+          - dnsmasq
+          - iptables-persistent
+        state: present
+    
+    - name: Create SDN configuration directory
+      file:
+        path: /etc/pve/sdn
+        state: directory
+        mode: '0755'
+    
+    - name: Check existing SDN zones
+      command: pvesh get /cluster/sdn/zones --output-format json
+      register: existing_zones
+      changed_when: false
+      failed_when: false
+    
+    - name: Create SDN zones
+      command: |
+        pvesh create /cluster/sdn/zones \
+          --zone {{ item.name }} \
+          --type {{ item.type }} \
+          --ipam {{ item.ipam | default('pve') }}
+      loop: "{{ sdn_zones }}"
+      when: item.name not in (existing_zones.stdout | default('[]') | from_json | map(attribute='zone') | list | default([]))
+      failed_when: false
+    
+    - name: Check existing SDN vnets
+      command: pvesh get /cluster/sdn/vnets --output-format json
+      register: existing_vnets
+      changed_when: false
+      failed_when: false
+    
+    - name: Create SDN vnets
+      command: |
+        pvesh create /cluster/sdn/vnets \
+          --vnet {{ item.name }} \
+          --zone {{ item.zone }}
+      loop: "{{ sdn_vnets }}"
+      when: item.name not in (existing_vnets.stdout | default('[]') | from_json | map(attribute='vnet') | list | default([]))
+      failed_when: false
+    
+    - name: Check existing SDN subnets
+      command: pvesh get /cluster/sdn/vnets/{{ item.vnet }}/subnets --output-format json
+      loop: "{{ sdn_subnets }}"
+      register: existing_subnets_check
+      changed_when: false
+      failed_when: false
+    
+    - name: Create SDN subnets using API
+      command: |
+        pvesh create /cluster/sdn/vnets/{{ item.0.vnet }}/subnets \
+          --subnet {{ item.0.cidr }} \
+          --type subnet \
+          --gateway {{ item.0.gateway }} \
+          --snat {{ 1 if item.0.snat else 0 }} \
+          --dhcp-dns-server {{ item.0.gateway }}
+      loop: "{{ sdn_subnets | zip(existing_subnets_check.results) | list }}"
+      when: >
+        item.1.stdout == '[]' or 
+        (item.0.cidr not in (item.1.stdout | default('[]') | from_json | map(attribute='cidr') | list | default([])))
+      register: subnet_create
+      failed_when: 
+        - subnet_create.rc != 0
+        - "'already exists' not in subnet_create.stderr"
+        - "'already defined' not in subnet_create.stderr"
+      changed_when: subnet_create.rc == 0
+    
+    - name: Apply SDN configuration
+      command: pvesh set /cluster/sdn
+      changed_when: true
+      register: sdn_apply
+    
+    - name: Wait for SDN to be ready
+      pause:
+        seconds: 2
+      when: sdn_apply.changed
+    
+    - name: Configure dnsmasq for SDN DHCP
+      template:
+        src: ../templates/dnsmasq-sdn.conf.j2
+        dest: /etc/dnsmasq.d/sdn.conf
+        mode: '0644'
+      notify: restart dnsmasq
+    
+    - name: Configure NAT rules for SDN
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        source: "{{ item.cidr }}"
+        out_interface: "{{ proxmox_bridge }}"
+        jump: MASQUERADE
+      loop: "{{ sdn_subnets }}"
+      when: item.snat | default(true)
+    
+    - name: Check if iptables rules need saving
+      command: iptables-save
+      register: current_iptables
+      changed_when: false
+      check_mode: no
+    
+    - name: Save iptables rules
+      command: netfilter-persistent save
+      when: current_iptables.stdout is search('MASQUERADE')
+      changed_when: true
+    
+  handlers:
+    - name: restart dnsmasq
+      systemd:
+        name: dnsmasq
+        state: restarted
+      failed_when: false  # dnsmasq might not be installed yet

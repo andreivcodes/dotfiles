@@ -1,0 +1,69 @@
+---
+# Main Proxmox Configuration Playbook
+# This orchestrates all component playbooks in the correct order
+
+- name: Verify connectivity
+  hosts: proxmox
+  gather_facts: false
+  tags: always
+  tasks:
+    - name: Test connection
+      ping:
+    - name: Gather facts for all plays
+      setup:
+
+- import_playbook: 001_base-setup.yml
+  tags: base
+
+- import_playbook: 002_zfs-setup.yml
+  tags: zfs
+
+- import_playbook: 003_network-setup.yml
+  tags: network
+
+- import_playbook: 004_sdn-setup.yml
+  tags: sdn
+
+- import_playbook: 005_gpu-setup.yml
+  tags: gpu
+
+- import_playbook: 006_pbs-setup.yml
+  tags: pbs
+
+- import_playbook: 007_storage-setup.yml
+  tags: storage
+
+- import_playbook: 008_backup-jobs.yml
+  tags: backup-jobs
+
+- import_playbook: 009_tailscale-setup.yml
+  tags: tailscale
+
+- name: Final validation
+  hosts: proxmox
+  gather_facts: false
+  tags: always
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  tasks:
+    - name: Verify all services are running
+      systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - pve-cluster
+        - pvedaemon
+        - pveproxy
+        - pvestatd
+      check_mode: yes
+      register: service_status
+
+    - name: Display configuration summary
+      debug:
+        msg:
+          - "Proxmox configuration complete!"
+          - "Node: {{ proxmox_node_name | default(ansible_hostname | default(inventory_hostname)) }}"
+          - "IP: {{ proxmox_ip | default(ansible_default_ipv4.address | default('n/a')) }}"
+          - "ZFS Pools: {{ (zfs_pools | default([])) | map(attribute='name') | join(', ') }}"
+          - "Storage: {{ (pve_storages | default([])) | map(attribute='name') | join(', ') }}"

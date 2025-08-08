@@ -1,0 +1,61 @@
+# Ansible runtime and cache
+*.retry
+*.pyc
+__pycache__/
+/tmp/
+
+# Ansible vault password files - NEVER COMMIT
+.vault_pass
+vault_pass
+*.vault_pass
+vault-password*
+.vault-password*
+
+# Ansible facts cache
+/ansible_facts/
+
+# Local inventory overrides
+inventory/local/
+inventory/dev/
+inventory/prod/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Environment specific files
+.env
+.env.local
+*.env
+
+# Terraform state (if using Terraform with Ansible)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.iml

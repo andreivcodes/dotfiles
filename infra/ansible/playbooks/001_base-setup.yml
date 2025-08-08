@@ -1,0 +1,98 @@
+---
+- name: Base Proxmox Configuration
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  
+  tags:
+    - base
+    - configuration
+  
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags:
+        - packages
+    
+    - name: Install essential packages
+      apt:
+        name:
+          - vim
+          - htop
+          - iotop
+          - net-tools
+          - curl
+          - wget
+          - git
+          - build-essential
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - python3-pip
+          - python3-proxmoxer
+          - sshpass
+        state: present
+    
+    - name: Configure locale
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+    
+    - name: Check current locale
+      shell: locale | grep LANG
+      register: current_locale
+      changed_when: false
+      check_mode: no
+    
+    - name: Set default locale
+      command: update-locale LANG=en_US.UTF-8
+      when: "'LANG=en_US.UTF-8' not in current_locale.stdout"
+      changed_when: true
+    
+    - name: Configure timezone
+      timezone:
+        name: Europe/Bucharest
+    
+    - name: Configure Proxmox repository
+      apt_repository:
+        repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+        state: present
+        filename: pve-no-subscription
+    
+    - name: Remove enterprise repository
+      apt_repository:
+        repo: "deb https://enterprise.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-enterprise"
+        state: absent
+    
+    - name: Configure sysctl for better performance
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: yes
+        reload: yes
+      loop:
+        - { key: 'vm.swappiness', value: '10' }
+        - { key: 'net.ipv4.ip_forward', value: '1' }
+        - { key: 'net.ipv6.conf.all.forwarding', value: '1' }
+        - { key: 'net.core.rmem_max', value: '134217728' }
+        - { key: 'net.core.wmem_max', value: '134217728' }
+        - { key: 'net.ipv4.tcp_rmem', value: '4096 87380 134217728' }
+        - { key: 'net.ipv4.tcp_wmem', value: '4096 65536 134217728' }
+    
+    - name: Enable and start essential services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - pve-cluster
+        - pvedaemon
+        - pveproxy
+        - pvestatd

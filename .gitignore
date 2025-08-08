@@ -1,0 +1,5 @@
+.DS_Store
+infra/ansible/.vault_pass
+*.retry
+.ansible/
+__pycache__/

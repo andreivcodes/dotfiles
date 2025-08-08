@@ -1,0 +1,32 @@
+---
+- name: Ensure all pool member devices exist
+  stat:
+    path: "/dev/disk/by-id/{{ dev }}"
+  register: zfs_dev_stat
+  loop: "{{ pool.devices }}"
+  loop_control:
+    loop_var: dev
+  failed_when: false
+  changed_when: false
+
+- name: Fail if any pool device missing
+  fail:
+    msg: "One or more ZFS devices for pool {{ pool.name }} are missing: {{ pool.devices }}"
+  when: "(zfs_dev_stat.results | selectattr('stat.exists','equalto', False) | list) | length > 0"
+
+- name: Create pool {{ pool.name }}
+  command: >
+    zpool create -f
+    -o ashift=12
+    -o autoexpand=on
+    -O compression={{ pool.compression | default('lz4') }}
+    -O atime={{ pool.atime | default('off') }}
+    -O xattr={{ pool.xattr | default('sa') }}
+    -O aclinherit={{ pool.aclinherit | default('passthrough') }}
+    -O mountpoint={{ pool.mountpoint }}
+    {{ pool.name }}
+    {{ pool.type }}
+    {{ pool.devices | join(' ') }}
+  register: pool_creation
+  changed_when: pool_creation.rc == 0
+

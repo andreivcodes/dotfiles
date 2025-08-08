@@ -1,0 +1,108 @@
+---
+- name: ZFS Pool Configuration
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../group_vars/all/main.yml
+    - ../group_vars/all/vault.yml
+  
+  tags:
+    - zfs
+    - storage
+  
+  tasks:
+    - name: Install ZFS utilities
+      apt:
+        name:
+          - zfsutils-linux
+          - zfs-auto-snapshot
+        state: present
+      tags:
+        - packages
+    
+    - name: Load ZFS kernel module
+      modprobe:
+        name: zfs
+        state: present
+    
+    - name: Gather ZFS pool facts
+      command: zpool list -H -o name
+      register: existing_pools
+      changed_when: false
+      check_mode: no
+      failed_when: false
+    
+    - name: Create ZFS pools when absent
+      include_tasks: ../tasks/zfs_pool_create.yml
+      loop: "{{ zfs_pools }}"
+      loop_control:
+        loop_var: pool
+      when: pool.name not in (existing_pools.stdout_lines | default([]))
+    
+    - name: Get current ZFS properties
+      command: zfs get -H -o property,value all {{ item.0.name }}
+      register: current_properties
+      loop: "{{ zfs_pools | subelements('properties', skip_missing=True) }}"
+      changed_when: false
+      check_mode: no
+      failed_when: false
+    
+    - name: Set ZFS pool properties
+      command: zfs set {{ item.1.key }}={{ item.1.value }} {{ item.0.name }}
+      loop: "{{ zfs_pools | subelements('properties', skip_missing=True) }}"
+      when: >
+        current_properties.results[ansible_loop.index0].stdout is defined and
+        (item.1.key + '\t' + item.1.value) not in current_properties.results[ansible_loop.index0].stdout
+      loop_control:
+        extended: yes
+      register: property_change
+      changed_when: property_change.rc == 0
+    
+    - name: Check current ZFS ARC size
+      slurp:
+        src: /etc/modprobe.d/zfs.conf
+      register: zfs_conf_content
+      failed_when: false
+    
+    - name: Configure ZFS ARC size (50% of RAM for Proxmox)
+      lineinfile:
+        path: /etc/modprobe.d/zfs.conf
+        line: "options zfs zfs_arc_max={{ (ansible_memtotal_mb * 1024 * 1024 * 0.5) | int }}"
+        regexp: '^options zfs zfs_arc_max='
+        create: yes
+      notify: update initramfs
+    
+    - name: Enable ZFS services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - zfs-import-cache
+        - zfs-import-scan
+        - zfs-mount
+        - zfs-share
+        - zfs-zed
+      tags:
+        - services
+    
+    - name: Configure ZFS scrub cron job
+      cron:
+        name: "ZFS scrub {{ item.name }}"
+        minute: "0"
+        hour: "2"
+        day: "1"
+        job: "zpool scrub {{ item.name }}"
+        user: root
+      loop: "{{ zfs_pools }}"
+    
+    - name: Configure ZFS auto-snapshot
+      template:
+        src: ../templates/zfs-auto-snapshot.j2
+        dest: /etc/cron.d/zfs-auto-snapshot
+        mode: '0644'
+  
+  handlers:
+    - name: update initramfs
+      command: update-initramfs -u -k all
