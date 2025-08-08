@@ -5,7 +5,6 @@
   become: true
   vars_files:
     - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   
   tags:
     - sdn
@@ -38,8 +37,8 @@
           --zone {{ item.name }} \
           --type {{ item.type }} \
           --ipam {{ item.ipam | default('pve') }}
-      loop: "{{ sdn_zones }}"
-      when: item.name not in (existing_zones.stdout | default('[]') | from_json | map(attribute='zone') | list | default([]))
+      loop: "{{ sdn_zones | default([]) }}"
+      when: sdn_zones is defined and item.name not in (existing_zones.stdout | default('[]', true) | from_json | map(attribute='zone') | list | default([]))
       failed_when: false
     
     - name: Check existing SDN vnets
@@ -53,13 +52,13 @@
         pvesh create /cluster/sdn/vnets \
           --vnet {{ item.name }} \
           --zone {{ item.zone }}
-      loop: "{{ sdn_vnets }}"
-      when: item.name not in (existing_vnets.stdout | default('[]') | from_json | map(attribute='vnet') | list | default([]))
+      loop: "{{ sdn_vnets | default([]) }}"
+      when: sdn_vnets is defined and item.name not in (existing_vnets.stdout | default('[]', true) | from_json | map(attribute='vnet') | list | default([]))
       failed_when: false
     
     - name: Check existing SDN subnets
       command: pvesh get /cluster/sdn/vnets/{{ item.vnet }}/subnets --output-format json
-      loop: "{{ sdn_subnets }}"
+      loop: "{{ sdn_subnets | default([]) }}"
       register: existing_subnets_check
       changed_when: false
       failed_when: false
@@ -72,10 +71,9 @@
           --gateway {{ item.0.gateway }} \
           --snat {{ 1 if item.0.snat else 0 }} \
           --dhcp-dns-server {{ item.0.gateway }}
-      loop: "{{ sdn_subnets | zip(existing_subnets_check.results) | list }}"
+      loop: "{{ (sdn_subnets | default([])) | zip(existing_subnets_check.results) | list }}"
       when: >
-        item.1.stdout == '[]' or 
-        (item.0.cidr not in (item.1.stdout | default('[]') | from_json | map(attribute='cidr') | list | default([])))
+        sdn_subnets is defined and (item.1.stdout == '[]' or (item.0.cidr not in (item.1.stdout | default('[]', true) | from_json | map(attribute='cidr') | list | default([]))))
       register: subnet_create
       failed_when: 
         - subnet_create.rc != 0
@@ -99,6 +97,7 @@
         dest: /etc/dnsmasq.d/sdn.conf
         mode: '0644'
       notify: restart dnsmasq
+      when: sdn_subnets is defined and (sdn_subnets | length > 0)
     
     - name: Configure NAT rules for SDN
       iptables:
@@ -107,7 +106,7 @@
         source: "{{ item.cidr }}"
         out_interface: "{{ proxmox_bridge }}"
         jump: MASQUERADE
-      loop: "{{ sdn_subnets }}"
+      loop: "{{ sdn_subnets | default([]) }}"
       when: item.snat | default(true)
     
     - name: Check if iptables rules need saving

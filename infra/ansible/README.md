@@ -73,11 +73,9 @@ Edit `inventory/hosts.yml` and update:
 - GPU PCI IDs if different
 
 ### 4. Configure secrets
-The vault password is currently set to `VaultPass123!` in `.vault_pass`. 
-
-Update the encrypted values in `group_vars/all/vault.yml`:
+Set a strong vault password stored outside of version control (recommended via `ANSIBLE_VAULT_PASSWORD_FILE` or a local `.vault_pass` ignored by VCS). Update the encrypted values in `group_vars/all/vault.yml`:
 ```bash
-# Change vault password
+# Set vault password (example uses a local file)
 echo "YourNewVaultPassword" > .vault_pass
 chmod 600 .vault_pass
 
@@ -141,11 +139,11 @@ ansible-playbook playbooks/006_pbs-setup.yml
 # Storage configuration
 ansible-playbook playbooks/007_storage-setup.yml
 
-# Tailscale
-ansible-playbook playbooks/008_tailscale-setup.yml
-
 # Backup jobs
-ansible-playbook playbooks/009_backup-jobs.yml
+ansible-playbook playbooks/008_backup-jobs.yml
+
+# Tailscale
+ansible-playbook playbooks/009_tailscale-setup.yml
 
 ```
 

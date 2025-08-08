@@ -3,9 +3,6 @@
   hosts: proxmox
   gather_facts: true
   become: true
-  vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   
   tasks:
     - name: Install network utilities
@@ -15,6 +12,8 @@
           - bridge-utils
           - ethtool
         state: present
+      tags:
+        - packages
     
     - name: Configure network interfaces
       template:
@@ -23,11 +22,12 @@
         backup: yes
       notify: restart networking
     
-    - name: Configure DNS
+    - name: Configure DNS (skip if managed by systemd-resolved on Debian 12+)
       template:
         src: ../templates/resolv.conf.j2
         dest: /etc/resolv.conf
         mode: '0644'
+      when: not (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] | int >= 12 and ansible_facts.services is defined and 'systemd-resolved.service' in ansible_facts.services)
     
     - name: Set hostname
       hostname:
@@ -36,6 +36,7 @@
     - name: Update /etc/hosts
       lineinfile:
         path: /etc/hosts
+        regexp: "^{{ proxmox_ip }}\\s+{{ proxmox_node_name }}\\.local\\s+{{ proxmox_node_name }}$"
         line: "{{ proxmox_ip }} {{ proxmox_node_name }}.local {{ proxmox_node_name }}"
         state: present
     
@@ -56,46 +57,31 @@
       register: pve_firewall_dir
       check_mode: no
     
-    - name: Prepare desired firewall content
-      copy:
-        dest: /tmp/cluster.fw.ansible
-        mode: '0644'
-        content: |
-          [OPTIONS]
-          enable: 1
-          policy_in: DROP
-          policy_out: ACCEPT
-          
-          [RULES]
-          IN ACCEPT -i vmbr0 -p tcp -dport 8006 # Proxmox web interface
-          IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface
-          IN ACCEPT -i vmbr0 -p tcp -dport 3128 # SPICE proxy
-          IN ACCEPT -i vmbr0 -p tcp -dport 5900:5999 # VNC range
-          IN ACCEPT -i vmbr0 -p tcp -dport 22 # SSH
-      when: pve_firewall_dir.stat.exists
-
-    - name: Update Proxmox firewall if content differs
-      shell: |
-        set -euo pipefail
-        dest="/etc/pve/firewall/cluster.fw"
-        src="/tmp/cluster.fw.ansible"
-        if [ ! -f "$dest" ] || ! cmp -s "$src" "$dest"; then
-          cat "$src" > "$dest"
-          echo changed
-        else
-          echo ok
-        fi
-      args:
-        executable: /bin/bash
-      register: fw_update
-      changed_when: "'changed' in (fw_update.stdout | default(''))"
-      when: pve_firewall_dir.stat.exists
-
-    - name: Cleanup temp firewall file
+    - name: Create Proxmox firewall directory if not exists
       file:
-        path: /tmp/cluster.fw.ansible
-        state: absent
+        path: /etc/pve/firewall
+        state: directory
       when: pve_firewall_dir.stat.exists
+      ignore_errors: yes
+    
+    - name: Write Proxmox firewall configuration using shell
+      shell: |
+        cat > /etc/pve/firewall/cluster.fw << 'EOF'
+        [OPTIONS]
+        enable: 1
+        policy_in: DROP
+        policy_out: ACCEPT
+        
+        [RULES]
+        IN ACCEPT -i vmbr0 -p tcp -dport 8006 # Proxmox web interface
+        IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface
+        IN ACCEPT -i vmbr0 -p tcp -dport 3128 # SPICE proxy
+        IN ACCEPT -i vmbr0 -p tcp -dport 5900:5999 # VNC range
+        IN ACCEPT -i vmbr0 -p tcp -dport 22 # SSH
+        EOF
+      when: pve_firewall_dir.stat.exists
+      register: firewall_config
+      changed_when: firewall_config.rc == 0
     
   handlers:
     - name: restart networking

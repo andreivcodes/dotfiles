@@ -1,4 +1,4 @@
-.PHONY: help test deploy deploy-base deploy-zfs deploy-network deploy-sdn deploy-gpu deploy-tailscale deploy-storage deploy-pbs deploy-backup check encrypt decrypt
+.PHONY: help init test deploy deploy-base deploy-zfs deploy-network deploy-sdn deploy-gpu deploy-tailscale deploy-storage deploy-pbs deploy-backup check encrypt decrypt
 
 help:
 	@echo "Proxmox Ansible Automation"
@@ -18,6 +18,9 @@ help:
 	@echo "  test             - Run playbook in check mode"
 	@echo "  encrypt          - Encrypt a string for vault"
 	@echo "  decrypt          - View vault contents"
+	@echo "  init             - Install collections and validate"
+
+INIT_ENV := ANSIBLE_CONFIG=./ansible.cfg
 
 test:
 	ansible-playbook playbooks/000_site.yml --check
@@ -47,7 +50,7 @@ deploy-storage:
 	ansible-playbook playbooks/007_storage-setup.yml
 
 deploy-backup:
-	ansible-playbook playbooks/008_backup-jobs.yml
+	ansible-playbook playbooks/008_backup-jobs.yml --tags backup
 
 deploy-tailscale:
 	ansible-playbook playbooks/009_tailscale-setup.yml
@@ -71,3 +74,6 @@ encrypt:
 
 decrypt:
 	ansible-vault view group_vars/all/vault.yml
+
+init:
+	$(INIT_ENV) ./validate.sh

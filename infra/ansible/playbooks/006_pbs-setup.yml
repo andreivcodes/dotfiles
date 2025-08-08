@@ -8,7 +8,7 @@
     - ../group_vars/all/vault.yml
   
   vars:
-    pbs_datastore_name: backup-store
+    pbs_datastore_name: "{{ pbs_datastore_name | default('backup-store') }}"
     pbs_disk_size: 18.2T
     
   tags:
@@ -16,6 +16,13 @@
     - backup
   
   tasks:
+    - name: Ensure enterprise repos are removed
+      import_tasks: ../tasks/remove_enterprise_repos.yml
+
+    - name: Ensure PBS datastore path variable is set
+      set_fact:
+        pbs_datastore_path: "{{ pbs_datastore_path | default('/mnt/backup-datastore') }}"
+
     - name: Check if Proxmox archive keyring exists
       stat:
         path: /usr/share/keyrings/proxmox-archive-keyring.gpg
@@ -28,41 +35,24 @@
         mode: '0644'
       when: not pve_keyring_check.stat.exists
     
-    - name: Check if PBS no-subscription repository already exists
-      stat:
-        path: /etc/apt/sources.list.d/pbs-no-subscription.sources
-      register: pbs_repo_check
-    
-    - name: Add PBS no-subscription repository
-      copy:
-        content: |
-          Types: deb
-          URIs: http://download.proxmox.com/debian/pbs
-          Suites: trixie
-          Components: pbs-no-subscription
-          Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
-        dest: /etc/apt/sources.list.d/pbs-no-subscription.sources
-        mode: '0644'
-      when: not pbs_repo_check.stat.exists
-    
-    - name: Find and remove all PBS enterprise repository files
+    - name: Check if PBS repository already exists in any format
       shell: |
-        find /etc/apt/sources.list.d/ -type f \( -name "*pbs-enterprise*" \) -delete
+        ls /etc/apt/sources.list.d/pbs-no-subscription.* 2>/dev/null || echo "not_found"
+      register: pbs_repo_check
       changed_when: false
     
-    - name: Remove PBS enterprise repository from sources if present
-      lineinfile:
-        path: "{{ item }}"
-        regexp: '.*enterprise\.proxmox\.com/debian/pbs.*'
+    # Already handled by enterprise repo removal task
+    
+    - name: Remove duplicate PBS no-subscription sources file (keep .list)
+      file:
+        path: /etc/apt/sources.list.d/pbs-no-subscription.sources
         state: absent
-      loop:
-        - /etc/apt/sources.list.d/pbs-enterprise.list
-        - /etc/apt/sources.list.d/pbs-enterprise.sources
-      failed_when: false
+      when: "'pbs-no-subscription.list' in pbs_repo_check.stdout"
     
     - name: Update apt cache
       apt:
         update_cache: yes
+      when: not (ansible_check_mode | default(false))
     
     - name: Install Proxmox Backup Server
       apt:
@@ -70,6 +60,9 @@
           - proxmox-backup-server
           - proxmox-backup-client
         state: present
+
+    - name: Ensure enterprise repos are removed after PBS install
+      import_tasks: ../tasks/remove_enterprise_repos.yml
     
     - name: Create backup user if needed
       user:
@@ -117,20 +110,22 @@
       changed_when: false
       when: pbs_disk_check.stat.exists
     
-    - name: Wipe disk completely if it has partitions
+    - name: Wipe disk completely if it has partitions (guarded)
       command: |
         wipefs -a {{ pbs_base_disk }}
       when:
         - pbs_disk_check.stat.exists
         - partition_count.stdout | int > 0
+        - pbs_wipe_disk | default(false)
       changed_when: true
     
-    - name: Zero out partition table area
+    - name: Zero out partition table area (guarded)
       command: |
         dd if=/dev/zero of={{ pbs_base_disk }} bs=1M count=100
       when:
         - pbs_disk_check.stat.exists
         - partition_count.stdout | int > 0
+        - pbs_wipe_disk | default(false)
       changed_when: true
     
     - name: Check if filesystem already exists
@@ -156,6 +151,13 @@
       changed_when: false
       when: pbs_disk_check.stat.exists
     
+    - name: Check if backup disk is already mounted
+      command: mount | grep {{ pbs_datastore_path }}
+      register: mount_status
+      failed_when: false
+      changed_when: false
+      when: pbs_disk_check.stat.exists
+
     - name: Mount backup disk
       mount:
         path: "{{ pbs_datastore_path }}"
@@ -167,18 +169,20 @@
         - pbs_disk_check.stat.exists
         - disk_uuid.stdout is defined
         - disk_uuid.stdout | length > 0
+        - mount_status.rc != 0
     
     - name: Display warning if disk not available
       debug:
         msg: "WARNING: PBS disk device {{ pbs_base_disk }} not found or has no filesystem. PBS will use local storage instead."
       when: not pbs_disk_check.stat.exists or (disk_uuid.stdout is not defined) or (disk_uuid.stdout | length == 0)
     
-    - name: Set ownership for backup directory
+    - name: Set ownership for backup directory (non-recursive for performance)
       file:
         path: "{{ pbs_datastore_path }}"
         owner: backup
         group: backup
-        recurse: yes
+        # Don't recurse on large disks - PBS will handle its own files
+        recurse: no
     
     - name: Enable and start PBS services
       systemd:
@@ -188,13 +192,16 @@
       loop:
         - proxmox-backup
         - proxmox-backup-proxy
+      register: pbs_service_start
+      # Don't fail if services are already running
+      failed_when: false
     
     - name: Wait for PBS API to be available
       wait_for:
         port: 8007
         host: localhost
-        delay: 5
-        timeout: 60
+        delay: 2
+        timeout: 30
     
     - name: Check if PBS datastore exists
       command: proxmox-backup-manager datastore list --output-format json
@@ -207,13 +214,16 @@
         path: "{{ pbs_datastore_path }}/.chunks"
       register: chunks_dir_check
     
-    - name: Create PBS datastore (without gc-schedule initially)
+    - name: Create or reuse PBS datastore
       command: |
         proxmox-backup-manager datastore create {{ pbs_datastore_name }} {{ pbs_datastore_path }} \
-          {% if chunks_dir_check.stat.exists %}--reuse-datastore true{% endif %}
+          --reuse-datastore true
       when: pbs_datastore_name not in (existing_datastores.stdout | from_json | map(attribute='name') | list)
       register: datastore_create
       changed_when: datastore_create.rc == 0
+      failed_when: 
+        - datastore_create.rc != 0
+        - "'already exists' not in datastore_create.stderr"
     
     - name: Configure PBS garbage collection and retention
       command: |
@@ -237,19 +247,32 @@
       changed_when: false
       failed_when: pbs_fingerprint.stdout is not defined or pbs_fingerprint.stdout | length == 0
     
-    - name: Add PBS storage to PVE
+    - name: Ensure PBS root user has proper password
+      shell: |
+        echo "root:{{ vault_root_password }}" | chpasswd
+      no_log: true
+      changed_when: false
+    
+    - name: Add PBS storage to PVE using root credentials
       command: |
         pvesm add pbs local-pbs \
-          --server localhost \
+          --server 127.0.0.1 \
           --datastore {{ pbs_datastore_name }} \
           --username root@pam \
+          --password '{{ vault_root_password }}' \
           --fingerprint "{{ pbs_fingerprint.stdout }}"
       register: pbs_storage_add
       failed_when: false
-      changed_when: "'already exists' not in pbs_storage_add.stderr"
+      changed_when: pbs_storage_add.rc == 0
+      no_log: true
     
     - name: Enable PBS storage in PVE
       command: pvesm set local-pbs --disable 0
+      failed_when: false
+      changed_when: false
+    
+    - name: Set PBS storage content types
+      command: pvesm set local-pbs --content backup
       failed_when: false
       changed_when: false
     
@@ -262,24 +285,9 @@
         - "bind 0.0.0.0:8007"
         - "ssl true"
     
-    - name: Check existing PBS users
-      command: proxmox-backup-manager user list --output-format json
-      register: existing_users
-      changed_when: false
-      check_mode: no
-    
-    - name: Create PBS admin user (if not root)
+    - name: Ensure root user has admin permissions in PBS
       command: |
-        proxmox-backup-manager user create admin@pbs \
-          --password "{{ vault_pbs_admin_password | default(vault_root_password) }}"
-      when: "'admin@pbs' not in (existing_users.stdout | from_json | map(attribute='userid') | list)"
-      register: user_create
-      changed_when: user_create.rc == 0
-      no_log: true
-    
-    - name: Set PBS admin permissions
-      command: |
-        proxmox-backup-manager acl update / Admin --auth-id admin@pbs
+        proxmox-backup-manager acl update / Admin --auth-id root@pam
       failed_when: false
       changed_when: false
     

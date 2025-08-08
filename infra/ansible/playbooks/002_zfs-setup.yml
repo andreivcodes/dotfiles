@@ -5,7 +5,6 @@
   become: true
   vars_files:
     - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   
   tags:
     - zfs
@@ -26,32 +25,37 @@
         name: zfs
         state: present
     
-    - name: Gather ZFS pool facts
-      command: zpool list -H -o name
-      register: existing_pools
-      changed_when: false
-      check_mode: no
-      failed_when: false
+    - name: Debug ZFS pools variable
+      debug:
+        msg:
+          - "ZFS pools defined: {{ zfs_pools is defined }}"
+          - "ZFS pools value: {{ zfs_pools | default('NOT DEFINED') }}"
+          - "ZFS pools length: {{ zfs_pools | default([]) | length }}"
     
-    - name: Create ZFS pools when absent
+    - name: Create ZFS pools
       include_tasks: ../tasks/zfs_pool_create.yml
       loop: "{{ zfs_pools }}"
       loop_control:
         loop_var: pool
-      when: pool.name not in (existing_pools.stdout_lines | default([]))
+      when: zfs_pools is defined and zfs_pools | length > 0
     
     - name: Get current ZFS properties
       command: zfs get -H -o property,value all {{ item.0.name }}
       register: current_properties
-      loop: "{{ zfs_pools | subelements('properties', skip_missing=True) }}"
+      loop: "{{ (zfs_pools | selectattr('properties','defined') | list) | subelements('properties') }}"
       changed_when: false
       check_mode: no
       failed_when: false
+      when:
+        - zfs_pools is defined
+        - (zfs_pools | selectattr('properties','defined') | list | length) > 0
     
     - name: Set ZFS pool properties
       command: zfs set {{ item.1.key }}={{ item.1.value }} {{ item.0.name }}
-      loop: "{{ zfs_pools | subelements('properties', skip_missing=True) }}"
+      loop: "{{ (zfs_pools | selectattr('properties','defined') | list) | subelements('properties') }}"
       when: >
+        zfs_pools is defined and
+        ((zfs_pools | selectattr('properties','defined') | list | length) > 0) and
         current_properties.results[ansible_loop.index0].stdout is defined and
         (item.1.key + '\t' + item.1.value) not in current_properties.results[ansible_loop.index0].stdout
       loop_control:
@@ -65,10 +69,10 @@
       register: zfs_conf_content
       failed_when: false
     
-    - name: Configure ZFS ARC size (50% of RAM for Proxmox)
+    - name: Configure ZFS ARC size (ratio of RAM)
       lineinfile:
         path: /etc/modprobe.d/zfs.conf
-        line: "options zfs zfs_arc_max={{ (ansible_memtotal_mb * 1024 * 1024 * 0.5) | int }}"
+        line: "options zfs zfs_arc_max={{ (ansible_memtotal_mb * 1024 * 1024 * (zfs_arc_max_ratio | default(0.5))) | int }}"
         regexp: '^options zfs zfs_arc_max='
         create: yes
       notify: update initramfs
@@ -80,12 +84,57 @@
         state: started
       loop:
         - zfs-import-cache
-        - zfs-import-scan
         - zfs-mount
         - zfs-share
         - zfs-zed
       tags:
         - services
+    
+    - name: Enable ZFS import-scan service (may fail if pools already imported)
+      systemd:
+        name: zfs-import-scan
+        enabled: yes
+        state: started
+      ignore_errors: yes
+      tags:
+        - services
+    
+    - name: Check if ZFS pools exist in system
+      command: zpool list -H -o name
+      register: existing_zpools
+      changed_when: false
+      failed_when: false
+
+    - name: Check existing PVE storages
+      command: pvesm status
+      register: existing_pve_storages
+      changed_when: false
+      failed_when: false
+
+    - name: Parse existing PVE storage names
+      set_fact:
+        existing_pve_storage_names: >-
+          {{ (existing_pve_storages.stdout | default(''))
+             | regex_findall('^(?!Name)\\s*([a-zA-Z0-9_.-]+)', multiline=True)
+             | map('trim')
+             | list }}
+
+    - name: Add ZFS pools to PVE storage
+      command: >
+        pvesm add zfspool {{ item.name }}
+        --pool {{ item.name }}
+        --content {{ item.pve_content | default('rootdir,images') }}
+        --nodes {{ ansible_hostname }}
+      loop: "{{ zfs_pools }}"
+      when:
+        - zfs_pools is defined
+        - item.name in existing_zpools.stdout_lines
+        - item.name not in (existing_pve_storage_names | default([]))
+      register: pve_storage_add
+      changed_when: pve_storage_add.rc == 0
+      failed_when: 
+        - pve_storage_add.rc != 0
+        - "('already exists' not in (pve_storage_add.stderr | default(''))) and ('already defined' not in (pve_storage_add.stderr | default('')))"
     
     - name: Configure ZFS scrub cron job
       cron:
@@ -96,6 +145,9 @@
         job: "zpool scrub {{ item.name }}"
         user: root
       loop: "{{ zfs_pools }}"
+      when:
+        - zfs_pools is defined
+        - zfs_pools | length > 0
     
     - name: Configure ZFS auto-snapshot
       template:

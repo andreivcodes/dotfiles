@@ -5,13 +5,15 @@
   become: true
   vars_files:
     - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   
   tags:
     - storage
     - pve
   
   tasks:
+    - name: Ensure storage list variable is set
+      set_fact:
+        pve_storages: "{{ pve_storages | default([]) }}"
     - name: Get existing storage configurations
       command: pvesm status
       register: existing_storage
@@ -30,7 +32,8 @@
       when: 
         - item.type == 'dir'
         - item.name not in existing_storage_names
-      loop: "{{ pve_storages }}"
+        - pve_storages | length > 0
+      loop: "{{ pve_storages | default([]) }}"
       register: dir_storage_result
       changed_when: dir_storage_result.rc == 0
       failed_when: 
@@ -45,7 +48,8 @@
       when: 
         - item.type == 'zfspool'
         - item.name not in existing_storage_names
-      loop: "{{ pve_storages }}"
+        - pve_storages | length > 0
+      loop: "{{ pve_storages | default([]) }}"
       register: zfs_storage_result
       changed_when: zfs_storage_result.rc == 0
       failed_when: 
@@ -61,7 +65,8 @@
       when: 
         - item.type == 'lvmthin'
         - item.name not in existing_storage_names
-      loop: "{{ pve_storages }}"
+        - pve_storages | length > 0
+      loop: "{{ pve_storages | default([]) }}"
       register: lvm_storage_result
       changed_when: lvm_storage_result.rc == 0
       failed_when: 
@@ -78,6 +83,7 @@
       when: 
         - item.type == 'pbs'
         - item.name not in existing_storage_names
+        - false  # Keep PBS storage managed in PBS setup only
       loop: "{{ pve_storages }}"
       register: pbs_storage_result
       changed_when: pbs_storage_result.rc == 0
@@ -88,14 +94,14 @@
     
     - name: Check storage status
       command: pvesm status {{ item.name }}
-      loop: "{{ pve_storages }}"
+      loop: "{{ pve_storages | default([]) }}"
       register: storage_status
       changed_when: false
       failed_when: false
     
     - name: Enable storage if disabled
       command: pvesm set {{ item.0.name }} --disable 0
-      when: "'disabled' in item.1.stderr | default('')"
-      loop: "{{ pve_storages | zip(storage_status.results) | list }}"
+      when: "pve_storages is defined and 'disabled' in item.1.stderr | default('')"
+      loop: "{{ (pve_storages | default([])) | zip(storage_status.results) | list }}"
       register: enable_result
       changed_when: enable_result.rc == 0

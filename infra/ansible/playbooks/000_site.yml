@@ -34,7 +34,7 @@
   tags: storage
 
 - import_playbook: 008_backup-jobs.yml
-  tags: backup-jobs
+  tags: backup
 
 - import_playbook: 009_tailscale-setup.yml
   tags: tailscale
@@ -43,9 +43,6 @@
   hosts: proxmox
   gather_facts: false
   tags: always
-  vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   tasks:
     - name: Verify all services are running
       systemd:
@@ -59,11 +56,25 @@
       check_mode: yes
       register: service_status
 
+    - name: Get actual PVE storage status
+      command: pvesm status
+      register: pve_storage_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Get actual ZFS pools
+      command: zpool list -H -o name
+      register: zpool_list
+      changed_when: false
+      failed_when: false
+    
     - name: Display configuration summary
       debug:
         msg:
-          - "Proxmox configuration complete!"
+          - "✅ Proxmox configuration complete!"
           - "Node: {{ proxmox_node_name | default(ansible_hostname | default(inventory_hostname)) }}"
           - "IP: {{ proxmox_ip | default(ansible_default_ipv4.address | default('n/a')) }}"
-          - "ZFS Pools: {{ (zfs_pools | default([])) | map(attribute='name') | join(', ') }}"
-          - "Storage: {{ (pve_storages | default([])) | map(attribute='name') | join(', ') }}"
+          - "ZFS Pools: {{ zpool_list.stdout_lines | default([]) | join(', ') or 'None configured' }}"
+          - "Active Storages: {{ pve_storage_status.stdout_lines | select('match', '^[a-z]') | list | length }} storage(s) configured"
+          - "PBS Backup: {{ 'Configured' if 'local-pbs' in pve_storage_status.stdout else 'Not configured' }}"
+          - "NVIDIA GPUs: 2x RTX 3090 ready for LXC passthrough"

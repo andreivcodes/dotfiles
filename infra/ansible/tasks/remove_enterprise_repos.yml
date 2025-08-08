@@ -1,0 +1,95 @@
+---
+# Remove any Proxmox enterprise repositories from apt sources
+
+- name: Initialize repository change tracker
+  set_fact:
+    repos_changed: false
+
+- name: Remove known enterprise repository files (defensive)
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/pve-enterprise.list
+    - /etc/apt/sources.list.d/pve-enterprise.sources
+    - /etc/apt/sources.list.d/pbs-enterprise.list
+    - /etc/apt/sources.list.d/pbs-enterprise.sources
+    - /etc/apt/sources.list.d/ceph-enterprise.list
+    - /etc/apt/sources.list.d/ceph-enterprise.sources
+  register: removed_known_enterprise_files
+  failed_when: false
+
+- name: Track changes from known enterprise file removal
+  set_fact:
+    repos_changed: "{{ repos_changed or removed_known_enterprise_files.changed }}"
+
+- name: Remove enterprise entries from /etc/apt/sources.list
+  lineinfile:
+    path: /etc/apt/sources.list
+    regexp: ".*enterprise\\.proxmox\\.com.*"
+    state: absent
+    backrefs: no
+  register: removed_from_sources_list
+  failed_when: false
+
+- name: Track changes from /etc/apt/sources.list cleanup
+  set_fact:
+    repos_changed: "{{ repos_changed or removed_from_sources_list.changed }}"
+
+- name: Find all .list files in sources.list.d
+  find:
+    paths: /etc/apt/sources.list.d
+    patterns: "*.list"
+    file_type: file
+  register: list_files
+
+- name: Remove enterprise entries from any .list files
+  lineinfile:
+    path: "{{ item.path }}"
+    regexp: ".*enterprise\\.proxmox\\.com.*"
+    state: absent
+    backrefs: no
+  loop: "{{ list_files.files }}"
+  register: removed_from_list_files
+  when: list_files.matched | default(0) | int > 0
+  failed_when: false
+
+- name: Track changes from .list files cleanup
+  set_fact:
+    repos_changed: "{{ repos_changed or (removed_from_list_files is defined and removed_from_list_files.changed | default(false)) }}"
+
+- name: Find all .sources files in sources.list.d
+  find:
+    paths: /etc/apt/sources.list.d
+    patterns: "*.sources"
+    file_type: file
+  register: sources_files
+
+- name: Read .sources files to detect enterprise references
+  slurp:
+    src: "{{ item.path }}"
+  loop: "{{ sources_files.files }}"
+  register: slurped_sources
+  when: sources_files.matched | default(0) | int > 0
+  changed_when: false
+  failed_when: false
+
+- name: Delete .sources files that reference enterprise.proxmox.com
+  file:
+    path: "{{ item.source }}"
+    state: absent
+  loop: "{{ slurped_sources.results | default([]) }}"
+  when: item is defined and (item.content | b64decode) is search('enterprise\\.proxmox\\.com')
+  register: deleted_enterprise_sources_files
+  failed_when: false
+
+- name: Track changes from .sources file deletions
+  set_fact:
+    repos_changed: "{{ repos_changed or (deleted_enterprise_sources_files is defined and deleted_enterprise_sources_files.changed | default(false)) }}"
+
+- name: Clean apt cache when repositories changed
+  shell: |
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+  when: repos_changed | default(false)
+

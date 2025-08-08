@@ -8,11 +8,10 @@
     - ../group_vars/all/vault.yml
   
   vars:
-    pbs_datastore_name: backup-store
+    pbs_datastore_name: "{{ pbs_datastore_name | default('backup-store') }}"
     
   tags:
     - backup
-    - pbs-jobs
   
   tasks:
     - name: Check if PBS is running
@@ -22,15 +21,7 @@
       register: pbs_status
       failed_when: false
     
-    - name: Get PBS fingerprint
-      shell: |
-        timeout 10s openssl s_client -servername localhost -connect localhost:8007 </dev/null 2>/dev/null | \
-        openssl x509 -fingerprint -sha256 -noout | \
-        cut -d'=' -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]' | \
-        sed 's/\(.\{2\}\)/\1:/g; s/:$//'
-      register: pbs_fingerprint
-      changed_when: false
-      when: pbs_status is succeeded
+    # Fingerprint not needed here; storage is created in PBS setup
     
     - name: Check existing PBS storages
       command: pvesm status
@@ -46,27 +37,9 @@
       set_fact:
         pbs_password: "{{ vault_root_password }}"
       no_log: true
+      when: vault_root_password is defined
     
-    - name: Add PBS storage to PVE with correct settings
-      shell: |
-        export PBS_PASSWORD="{{ vault_root_password }}"
-        pvesm add pbs local-pbs \
-          --server localhost \
-          --datastore {{ pbs_datastore_name }} \
-          --username root@pam \
-          --password "{{ vault_root_password }}" \
-          --fingerprint "{{ pbs_fingerprint.stdout }}" \
-          --content backup
-      register: pbs_add_result
-      when: 
-        - pbs_fingerprint.stdout is defined
-        - not pbs_storage_exists
-      failed_when: 
-        - pbs_add_result.rc != 0
-        - "'already exists' not in pbs_add_result.stderr"
-      no_log: true
-    
-    - name: Enable PBS storage
+    - name: Ensure PBS storage is enabled (added in PBS setup)
       command: pvesm set local-pbs --disable 0
       failed_when: false
     
@@ -94,14 +67,15 @@
       changed_when: false
       failed_when: false
     
-    - name: Parse existing backup jobs
+    - name: Initialize existing_job_ids when list not available
       set_fact:
-        existing_job_ids: "{{ (existing_backup_jobs.stdout | default('[]') | from_json | map(attribute='id') | list) if existing_backup_jobs.rc == 0 else [] }}"
-    
-    - name: Remove old backup job if exists
-      command: pvesh delete /cluster/backup/backup-all
-      when: "'backup-all' in existing_job_ids"
-      failed_when: false
+        existing_job_ids: []
+      when: existing_backup_jobs is failed or (existing_backup_jobs.stdout | default('') | length) == 0
+
+    - name: Parse existing backup jobs when available
+      set_fact:
+        existing_job_ids: "{{ existing_backup_jobs.stdout | from_json | map(attribute='id') | list }}"
+      when: existing_backup_jobs is succeeded and (existing_backup_jobs.stdout | default('') | length) > 0
     
     - name: Create backup job for all VMs and containers
       shell: |
@@ -125,7 +99,7 @@
       shell: |
         pvesh create /cluster/backup \
           --id "backup-vm-{{ item }}" \
-          --schedule "0 */2 * * *" \
+          --schedule "*/2:00" \
           --storage local-pbs \
           --vmid {{ item }} \
           --mode snapshot \
@@ -142,7 +116,7 @@
       shell: |
         pvesh create /cluster/backup \
           --id "backup-ct-{{ item }}" \
-          --schedule "0 */2 * * *" \
+          --schedule "*/2:00" \
           --storage local-pbs \
           --vmid {{ item }} \
           --mode snapshot \
@@ -156,30 +130,38 @@
       failed_when: false
     
     - name: Verify PBS storage is accessible
-      command: pvesm list local-pbs
-      register: pbs_list
-      failed_when: false
+      shell: |
+        pvesm status | grep "^local-pbs" | grep -q "active" && echo "accessible" || echo "not accessible"
+      register: pbs_storage_test
       changed_when: false
+      failed_when: false
     
-    - name: Test PBS connectivity
-      command: proxmox-backup-client list --repository root@pam@localhost:{{ pbs_datastore_name }}
-      register: pbs_test
+    - name: Test PBS connectivity directly
+      shell: |
+        export PBS_PASSWORD='{{ vault_root_password }}'
+        timeout 5 proxmox-backup-client list --repository root@pam@127.0.0.1:{{ pbs_datastore_name }} 2>&1 || echo "failed"
+      register: pbs_direct_test
       failed_when: false
       changed_when: false
-      environment:
-        PBS_PASSWORD: "{{ vault_root_password }}"
+      no_log: true
+      ignore_errors: yes
+
+    - name: Derive backup status facts for summary
+      set_fact:
+        pbs_storage_status_msg: "{{ 'Connected' if (pbs_storage_test.stdout is defined and 'accessible' in pbs_storage_test.stdout) else 'Not accessible' }}"
+        pbs_test_msg: "{{ 'Success' if (pbs_direct_test.stdout is defined and pbs_direct_test.stdout != 'failed') else 'Check credentials' }}"
     
     - name: Display backup configuration status
       debug:
         msg:
-          - "PBS Storage Status: {{ 'Connected' if pbs_list.rc == 0 else 'Not accessible' }}"
+          - "PBS Storage Status: {{ pbs_storage_status_msg }}"
           - "Backup Job: Created for all VMs and LXCs"
           - "Schedule: Every 2 hours (0 */2 * * *)"
           - "Storage: local-pbs"
           - "Retention: 24 hourly, 7 daily, 4 weekly, 6 monthly"
           - "Current VMs: {{ vm_list.stdout_lines | length }}"
           - "Current LXCs: {{ lxc_list.stdout_lines | length }}"
-          - "PBS Test: {{ 'Success' if pbs_test.rc == 0 else 'Failed - check credentials' }}"
+          - "PBS Test: {{ pbs_test_msg }}"
     
     - name: Run initial backup test (optional)
       command: |

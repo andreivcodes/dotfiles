@@ -3,3 +3,4 @@ infra/ansible/.vault_pass
 *.retry
 .ansible/
 __pycache__/
+/infra/ansible/.fact_cache

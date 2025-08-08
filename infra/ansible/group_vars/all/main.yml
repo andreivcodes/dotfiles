@@ -71,3 +71,8 @@ blacklist_drivers:
 # PBS Configuration
 pbs_datastore_path: /mnt/backup-datastore
 pbs_disk_device: /dev/disk/by-id/ata-WDC_WD201KFGX-68BKJN0_2LG8D8XF-part1  # 18.2TB HDD for PBS (partition 1)
+pbs_datastore_name: backup-store
+pbs_wipe_disk: false
+
+# ZFS tuning
+zfs_arc_max_ratio: 0.5

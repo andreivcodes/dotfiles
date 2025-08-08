@@ -1,4 +1,28 @@
 ---
+- name: Check if pool {{ pool.name }} already exists
+  command: zpool list -H -o name {{ pool.name }}
+  register: pool_exists
+  failed_when: false
+  changed_when: false
+
+- name: Try to import pool {{ pool.name }} if it exists but not imported
+  command: zpool import -f {{ pool.name }}
+  register: pool_import_check
+  failed_when: false
+  changed_when: pool_import_check.rc == 0
+  when: pool_exists.rc != 0
+
+- name: Re-check if pool {{ pool.name }} exists after import attempt
+  command: zpool list -H -o name {{ pool.name }}
+  register: pool_exists_after_import
+  failed_when: false
+  changed_when: false
+  when: pool_import_check is defined
+
+- name: Update pool exists status
+  set_fact:
+    pool_already_exists: "{{ (pool_exists.rc == 0) or (pool_exists_after_import is defined and pool_exists_after_import.rc == 0) }}"
+
 - name: Ensure all pool member devices exist
   stat:
     path: "/dev/disk/by-id/{{ dev }}"
@@ -8,11 +32,23 @@
     loop_var: dev
   failed_when: false
   changed_when: false
+  when: not pool_already_exists
 
 - name: Fail if any pool device missing
   fail:
     msg: "One or more ZFS devices for pool {{ pool.name }} are missing: {{ pool.devices }}"
-  when: "(zfs_dev_stat.results | selectattr('stat.exists','equalto', False) | list) | length > 0"
+  when: 
+    - not pool_already_exists
+    - zfs_dev_stat.results is defined
+    - "(zfs_dev_stat.results | selectattr('stat.exists','equalto', False) | list) | length > 0"
+
+- name: Wipe existing partitions from pool devices
+  shell: |
+    wipefs -a /dev/disk/by-id/{{ item }} 2>/dev/null || true
+    sgdisk --zap-all /dev/disk/by-id/{{ item }} 2>/dev/null || true
+  loop: "{{ pool.devices }}"
+  when: not pool_already_exists
+  ignore_errors: yes
 
 - name: Create pool {{ pool.name }}
   command: >
@@ -26,7 +62,11 @@
     -O mountpoint={{ pool.mountpoint }}
     {{ pool.name }}
     {{ pool.type }}
-    {{ pool.devices | join(' ') }}
+    {% for device in pool.devices %}/dev/disk/by-id/{{ device }}{% if not loop.last %} {% endif %}{% endfor %}
   register: pool_creation
   changed_when: pool_creation.rc == 0
+  when: not pool_already_exists
+  failed_when: 
+    - pool_creation.rc != 0
+    - "'already exists' not in pool_creation.stderr"
 

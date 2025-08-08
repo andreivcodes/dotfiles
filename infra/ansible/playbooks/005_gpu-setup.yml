@@ -3,9 +3,6 @@
   hosts: proxmox
   gather_facts: true
   become: true
-  vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
   
   vars:
     nvidia_driver_install: true  # Set to false to skip driver installation
@@ -107,16 +104,27 @@
           debug:
             msg: "Current NVIDIA driver version: {{ current_driver_version.stdout | default('Not installed') }}"
 
-        - name: Check if Debian sources already have non-free components
+        - name: Check if Debian sources have non-free component (not just non-free-firmware)
           shell: |
-            grep -q "non-free" /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
-            grep -q "non-free" /etc/apt/sources.list.d/*.list 2>/dev/null || \
+            grep -E "Components:.*non-free( |$)" /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
+            grep -E "^deb.*non-free( |$)" /etc/apt/sources.list.d/*.list 2>/dev/null || \
             echo "not_found"
           register: non_free_check
           changed_when: false
           failed_when: false
         
-        - name: Configure APT sources for non-free packages (only if needed)
+        - name: Add non-free component to existing debian.sources
+          shell: |
+            if [ -f /etc/apt/sources.list.d/debian.sources ]; then
+              sed -i 's/Components: main contrib non-free-firmware/Components: main contrib non-free non-free-firmware/g' /etc/apt/sources.list.d/debian.sources
+            fi
+          register: sources_modified
+          changed_when: sources_modified.rc == 0
+          when: 
+            - not nvidia_smi_check.stat.exists
+            - non_free_check.stdout == "not_found"
+        
+        - name: Configure APT sources for non-free packages (fallback if no debian.sources)
           copy:
             content: |
               deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
@@ -128,11 +136,13 @@
           when: 
             - not nvidia_smi_check.stat.exists
             - non_free_check.stdout == "not_found"
+            - sources_modified is skipped or sources_modified.rc != 0
 
         - name: Update APT cache if sources changed
           apt:
             update_cache: yes
-          when: apt_sources_updated is defined and apt_sources_updated.changed
+            cache_valid_time: 0
+          when: sources_modified.changed or (apt_sources_updated is defined and apt_sources_updated.changed)
 
         - name: Install build dependencies for NVIDIA drivers
           apt:
@@ -173,6 +183,12 @@
           command: update-initramfs -u -k all
           when: nouveau_blacklisted.changed
 
+        - name: Ensure APT cache is updated before driver installation
+          apt:
+            update_cache: yes
+            cache_valid_time: 0
+          when: not nvidia_smi_check.stat.exists
+
         - name: Install NVIDIA driver from Debian repositories
           apt:
             name:
@@ -185,7 +201,6 @@
               - nvidia-cuda-toolkit
               - nvidia-cuda-dev
             state: present
-            update_cache: yes
           when: not nvidia_smi_check.stat.exists
           register: nvidia_driver_installed
 
