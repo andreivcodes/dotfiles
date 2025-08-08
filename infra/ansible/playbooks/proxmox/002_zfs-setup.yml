@@ -4,7 +4,7 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
+    - ../../group_vars/all/main.yml
   
   tags:
     - zfs
@@ -33,7 +33,7 @@
           - "ZFS pools length: {{ zfs_pools | default([]) | length }}"
     
     - name: Create ZFS pools
-      include_tasks: ../tasks/zfs_pool_create.yml
+      include_tasks: ../../tasks/zfs_pool_create.yml
       loop: "{{ zfs_pools }}"
       loop_control:
         loop_var: pool
@@ -104,13 +104,13 @@
       register: existing_zpools
       changed_when: false
       failed_when: false
-
+    
     - name: Check existing PVE storages
       command: pvesm status
       register: existing_pve_storages
       changed_when: false
       failed_when: false
-
+    
     - name: Parse existing PVE storage names
       set_fact:
         existing_pve_storage_names: >-
@@ -118,13 +118,13 @@
              | regex_findall('^(?!Name)\\s*([a-zA-Z0-9_.-]+)', multiline=True)
              | map('trim')
              | list }}
-
+    
     - name: Add ZFS pools to PVE storage
       command: >
-        pvesm add zfspool {{ item.name }}
-        --pool {{ item.name }}
-        --content {{ item.pve_content | default('rootdir,images') }}
-        --nodes {{ ansible_hostname }}
+        pvesm add zfspool {{ item.name }} \
+          --pool {{ item.name }} \
+          --content {{ item.pve_content | default('rootdir,images') }} \
+          --nodes {{ ansible_hostname }}
       loop: "{{ zfs_pools }}"
       when:
         - zfs_pools is defined
@@ -151,10 +151,12 @@
     
     - name: Configure ZFS auto-snapshot
       template:
-        src: ../templates/zfs-auto-snapshot.j2
+        src: ../../templates/zfs-auto-snapshot.j2
         dest: /etc/cron.d/zfs-auto-snapshot
         mode: '0644'
   
   handlers:
     - name: update initramfs
       command: update-initramfs -u -k all
+
+

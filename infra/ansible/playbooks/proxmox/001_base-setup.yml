@@ -10,7 +10,7 @@
   
   tasks:
     - name: Ensure enterprise repos are removed
-      import_tasks: ../tasks/remove_enterprise_repos.yml
+      import_tasks: ../../tasks/remove_enterprise_repos.yml
     
     - name: Configure locale
       locale_gen:
@@ -61,7 +61,7 @@
       until: apt_update is succeeded
       retries: 3
       delay: 5
-
+  
     - name: Install essential packages
       apt:
         name:
@@ -97,7 +97,7 @@
         - { key: 'net.core.wmem_max', value: '134217728' }
         - { key: 'net.ipv4.tcp_rmem', value: '4096 87380 134217728' }
         - { key: 'net.ipv4.tcp_wmem', value: '4096 65536 134217728' }
-    
+      
     - name: Enable and start essential services
       systemd:
         name: "{{ item }}"
@@ -108,3 +108,5 @@
         - pvedaemon
         - pveproxy
         - pvestatd
+
+

@@ -4,8 +4,8 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
+    - ../../group_vars/all/main.yml
+    - ../../group_vars/all/vault.yml
   
   vars:
     pbs_datastore_name: "{{ pbs_datastore_name | default('backup-store') }}"
@@ -17,7 +17,7 @@
   
   tasks:
     - name: Ensure enterprise repos are removed
-      import_tasks: ../tasks/remove_enterprise_repos.yml
+      import_tasks: ../../tasks/remove_enterprise_repos.yml
 
     - name: Ensure PBS datastore path variable is set
       set_fact:
@@ -62,7 +62,7 @@
         state: present
 
     - name: Ensure enterprise repos are removed after PBS install
-      import_tasks: ../tasks/remove_enterprise_repos.yml
+      import_tasks: ../../tasks/remove_enterprise_repos.yml
     
     - name: Create backup user if needed
       user:
@@ -157,7 +157,7 @@
       failed_when: false
       changed_when: false
       when: pbs_disk_check.stat.exists
-
+  
     - name: Mount backup disk
       mount:
         path: "{{ pbs_datastore_path }}"
@@ -247,7 +247,7 @@
       changed_when: false
       failed_when: pbs_fingerprint.stdout is not defined or pbs_fingerprint.stdout | length == 0
     
-    - name: Ensure PBS root user has proper password
+    - name: Ensure root user has proper password
       shell: |
         echo "root:{{ vault_root_password }}" | chpasswd
       no_log: true
@@ -344,3 +344,5 @@
           - "Path: {{ pbs_datastore_path }}"
           - "Fingerprint: {{ pbs_fingerprint.stdout }}"
           - "Web UI: https://{{ ansible_default_ipv4.address }}:8007"
+
+

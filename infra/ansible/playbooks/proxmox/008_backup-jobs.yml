@@ -4,8 +4,8 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
+    - ../../group_vars/all/main.yml
+    - ../../group_vars/all/vault.yml
   
   vars:
     pbs_datastore_name: "{{ pbs_datastore_name | default('backup-store') }}"
@@ -71,7 +71,7 @@
       set_fact:
         existing_job_ids: []
       when: existing_backup_jobs is failed or (existing_backup_jobs.stdout | default('') | length) == 0
-
+  
     - name: Parse existing backup jobs when available
       set_fact:
         existing_job_ids: "{{ existing_backup_jobs.stdout | from_json | map(attribute='id') | list }}"
@@ -145,7 +145,7 @@
       changed_when: false
       no_log: true
       ignore_errors: yes
-
+  
     - name: Derive backup status facts for summary
       set_fact:
         pbs_storage_status_msg: "{{ 'Connected' if (pbs_storage_test.stdout is defined and 'accessible' in pbs_storage_test.stdout) else 'Not accessible' }}"
@@ -173,3 +173,5 @@
       when: false  # Set to true if you want to run a test backup immediately
       register: test_backup
       failed_when: false
+
+

@@ -1,0 +1,600 @@
+---
+- name: Create Debian LXC with GPU+TUN and install Tailscale, Docker, and Ollama
+  hosts: proxmox
+  become: true
+  vars_files:
+    - ../../group_vars/all/main.yml
+    - ../../group_vars/all/vault.yml
+
+  vars:
+    # Override at runtime via ANSIBLE_ARGS if desired
+    lxc_vmid: 110
+    lxc_hostname: ollama-lxc
+    # Debian 12.7-1 template
+    lxc_ostemplate: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    # Use SSD pool for CT rootfs
+    lxc_storage: ssd-raid
+    lxc_memory_mb: 8192
+    lxc_cores: 8
+    # Use SDN vnet bridge (created by SDN playbooks)
+    lxc_bridge: "{{ proxmox_bridge | default('sibnet') }}"
+    lxc_ip: dhcp
+    lxc_gw: "{{ proxmox_gateway | default(omit) }}"
+    # Deploy mode for Ollama: 'docker' (GPU via CDI) or 'native'
+    ollama_deploy_mode: docker
+
+  tasks:
+    - name: Compute template filename
+      tags: [create]
+      set_fact:
+        lxc_template_filename: "{{ lxc_ostemplate.split(':')[-1] | regex_replace('^vztmpl/', '') }}"
+
+    - name: Check if Debian template is already downloaded
+      tags: [create]
+      stat:
+        path: "/var/lib/vz/template/cache/{{ lxc_template_filename }}"
+      register: lxc_template_stat
+
+    - name: Update template catalog
+      tags: [create]
+      command: pveam update
+      when: not lxc_template_stat.stat.exists
+      changed_when: true
+
+    - name: Download Debian template to local storage (exact name)
+      tags: [create]
+      command: pveam download local {{ lxc_template_filename }}
+      when: not lxc_template_stat.stat.exists
+      register: template_download_attempt
+      failed_when: false
+      changed_when: template_download_attempt.rc == 0
+
+    - name: Find latest available Debian 12 standard template (fallback)
+      tags: [create]
+      shell: |
+        pveam available | awk '{print $2}' | \
+        grep '^debian-12-standard_.*_amd64.tar.\(zst\|gz\)$' | \
+        sort -Vr | head -n1
+      register: deb12_latest
+      when: not lxc_template_stat.stat.exists and (template_download_attempt is defined and template_download_attempt.rc != 0)
+      changed_when: false
+
+    - name: Download Debian template to local storage (fallback to latest)
+      tags: [create]
+      command: pveam download local {{ deb12_latest.stdout }}
+      when: not lxc_template_stat.stat.exists and (template_download_attempt is defined and template_download_attempt.rc != 0) and (deb12_latest.stdout | length) > 0
+      register: template_download_fallback
+      changed_when: template_download_fallback.rc == 0
+
+    - name: Create LXC container (idempotent)
+      tags: [create]
+      shell: >-
+        pct create {{ lxc_vmid }} {{ lxc_ostemplate }}
+        --hostname {{ lxc_hostname }}
+        --unprivileged 1
+        --memory {{ lxc_memory_mb }}
+        --cores {{ lxc_cores }}
+        --features nesting=1,keyctl=1
+        --net0 name=eth0,bridge={{ lxc_bridge }},ip={{ lxc_ip }}{% if lxc_gw is defined %},gw={{ lxc_gw }}{% endif %}
+        --rootfs {{ lxc_storage }}:128
+      args:
+        creates: "/etc/pve/lxc/{{ lxc_vmid }}.conf"
+
+    - name: Ensure GPU and TUN access in LXC config
+      tags: [create]
+      import_tasks: ../../tasks/proxmox_lxc_gpu_tun.yml
+      vars:
+        target_lxc_vmid: "{{ lxc_vmid }}"
+
+    - name: Start container
+      tags: [create]
+      command: pct start {{ lxc_vmid }}
+      register: start_ct
+      failed_when: false
+      changed_when: start_ct.rc == 0
+
+    - name: Wait for LXC init to settle
+      tags: [create]
+      command: pct status {{ lxc_vmid }}
+      register: lxc_status
+      retries: 10
+      delay: 2
+      until: "lxc_status.rc == 0 and (lxc_status.stdout is search('status: running'))"
+
+    - name: Update apt cache inside LXC
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'apt-get update'
+
+    - name: Install base tools inside LXC
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "apt-get install -y curl ca-certificates gnupg lsb-release"
+
+    - name: Install Tailscale inside LXC
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "curl -fsSL https://tailscale.com/install.sh | sh"
+
+    - name: Enable and start tailscaled inside LXC
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl enable --now tailscaled'
+
+    - name: Determine if we can authenticate Tailscale
+      tags: [configure]
+      set_fact:
+        ts_can_auth: "{{ (tailscale_auth_key is defined and (tailscale_auth_key | string | length) > 0) or (tailscale_api_token is defined and (tailscale_api_token | string | length) > 0) }}"
+
+    - name: Fail early if no way to authenticate to Tailscale
+      tags: [configure]
+      fail:
+        msg: >-
+          No Tailscale auth available. Provide 'tailscale_auth_key' or 'tailscale_api_token'
+          via vault/group_vars to allow automatic login and approval.
+      when: not ts_can_auth
+
+    - name: Ensure Tailscale ACL policy allows tag:proxmox (align with proxmox setup)
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/tailnet/-/acl"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          acls:
+            - action: accept
+              src: ["*"]
+              dst: ["*:22", "*:8006", "*:8007", "*:3128", "*:8080", "*:11434"]
+            - action: accept
+              src: ["tag:proxmox"]
+              dst: ["*:*"]
+          tagOwners:
+            tag:proxmox: ["autogroup:admin"]
+        return_content: yes
+        status_code: [200, 201]
+      register: ts_acl_update_ct
+      delegate_to: localhost
+      become: false
+      changed_when: ts_acl_update_ct.status in [200, 201]
+      when:
+        - tailscale_api_token is defined and (tailscale_api_token | string | length) > 0
+
+    - name: Query Tailscale devices (pre-clean existing entries for CT hostname)
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/tailnet/-/devices"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+          Accept: application/json
+        return_content: yes
+        status_code: 200
+      register: ts_devices_ct_pre
+      no_log: true
+      delegate_to: localhost
+      become: false
+      when: tailscale_api_token is defined and (tailscale_api_token | string | length) > 0
+
+    - name: Build duplicate CT devices by hostname
+      tags: [configure]
+      set_fact:
+        ts_duplicates_ct: >-
+          {{ ((ts_devices_ct_pre.json.devices | default(ts_devices_ct_pre.json)) | default([]))
+             | selectattr('hostname','equalto', lxc_hostname) | list
+             +
+             ((ts_devices_ct_pre.json.devices | default(ts_devices_ct_pre.json)) | default([]))
+             | selectattr('name','equalto', lxc_hostname) | list }}
+      when: ts_devices_ct_pre is defined and ts_devices_ct_pre.json is defined
+      delegate_to: localhost
+      become: false
+
+    - name: Remove duplicate CT devices
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/device/{{ item.id }}"
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+        status_code: [200, 204, 404]
+      loop: "{{ ts_duplicates_ct | default([]) }}"
+      loop_control:
+        label: "{{ item.id }} {{ item.hostname | default(item.name) }}"
+      register: ts_ct_delete_results
+      no_log: true
+      delegate_to: localhost
+      become: false
+      when:
+        - ts_duplicates_ct is defined
+        - (ts_duplicates_ct | length) > 0
+        - tailscale_api_token is defined and (tailscale_api_token | string | length) > 0
+
+    - name: Always create fresh preauthorized Tailscale auth key for CT
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/tailnet/-/keys"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          capabilities:
+            devices:
+              create:
+                reusable: true
+                ephemeral: false
+                preauthorized: true
+                tags:
+                  - "tag:proxmox"
+          description: "ct-ollama-{{ lxc_hostname }}-{{ lxc_vmid }}"
+          expirySeconds: 86400
+        return_content: true
+        status_code: [200, 201]
+      register: ts_key_create_ct
+      no_log: true
+      delegate_to: localhost
+      become: false
+      when: (tailscale_api_token is defined and (tailscale_api_token | string | length) > 0)
+
+    - name: Choose Tailscale auth key for CT
+      tags: [configure]
+      set_fact:
+        ts_auth_key_to_use: "{{ (ts_key_create_ct.json.key | default('')) if (ts_key_create_ct is defined and ts_key_create_ct.json is defined) else (tailscale_auth_key | default('')) }}"
+      no_log: true
+
+    - name: Tailscale up with auth key (idempotent)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "(test -n '{{ ts_auth_key_to_use | default(tailscale_auth_key) }}' && tailscale up --authkey={{ ts_auth_key_to_use | default(tailscale_auth_key) }} --accept-routes --hostname={{ lxc_hostname }} --reset) || true"
+      no_log: true
+      failed_when: false
+
+    - name: Check Tailscale connection status in CT (initial)
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'tailscale status 2>&1 || true'
+      register: ts_status_once
+      failed_when: false
+      changed_when: false
+
+    - name: Fetch devices from Tailscale API (for approval)
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/tailnet/-/devices"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+          Accept: application/json
+        return_content: yes
+        status_code: 200
+      register: ts_devices_for_approval_ct
+      no_log: true
+      delegate_to: localhost
+      become: false
+      when:
+        - tailscale_api_token is defined and (tailscale_api_token | string | length) > 0
+        - ts_status_once.stdout is defined
+        - ts_status_once.stdout is search('Machine is not yet approved')
+
+    - name: Extract CT device ID from Tailscale devices
+      tags: [configure]
+      set_fact:
+        ct_device_id_extracted: "{{ (ts_devices_for_approval_ct.json.devices | selectattr('hostname', 'equalto', lxc_hostname) | list | first).id | default('') }}"
+      when:
+        - ts_devices_for_approval_ct is defined
+        - ts_devices_for_approval_ct.json is defined
+        - ts_devices_for_approval_ct.json.devices is defined
+
+    - name: Approve CT device via Tailscale API
+      tags: [configure]
+      uri:
+        url: "https://api.tailscale.com/api/v2/device/{{ ct_device_id_extracted }}/authorized"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ tailscale_api_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          authorized: true
+        status_code: [200, 201]
+      no_log: true
+      delegate_to: localhost
+      become: false
+      when:
+        - ct_device_id_extracted is defined
+        - ct_device_id_extracted | length > 0
+
+    - name: Wait for Tailscale to connect after approval/login
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'tailscale status 2>&1 || true'
+      register: ts_status_wait
+      retries: 20
+      delay: 3
+      until: "(ts_status_wait.stdout is defined) and (not (ts_status_wait.stdout is search('Machine is not yet approved'))) and (not (ts_status_wait.stdout is search('NeedsLogin')))"
+      changed_when: false
+
+    - name: Wait for CT to get Tailscale IP (IPv4)
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'tailscale ip -4 | head -n1'
+      register: ct_ts_ip
+      retries: 20
+      delay: 3
+      until: "ct_ts_ip.rc == 0 and (ct_ts_ip.stdout | trim | length) > 0"
+      changed_when: false
+
+    - name: Configure Tailscale tags for CT (match proxmox tag usage)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "tailscale up --advertise-tags=tag:proxmox --hostname={{ lxc_hostname }} || true"
+      register: ts_tag_config
+      failed_when: false
+      changed_when: ts_tag_config.rc == 0
+
+    - name: Install Docker inside LXC (official script)
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsSL https://get.docker.com | sh'
+
+    - name: Enable and start Docker inside LXC
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl enable --now docker'
+
+    - name: Check for NVIDIA devices in container
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'ls -la /dev/nvidia* 2>/dev/null || echo "No NVIDIA devices found"'
+      register: nvidia_devices_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install NVIDIA Container Toolkit inside LXC
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |
+        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |
+        tee /etc/apt/sources.list.d/nvidia-container-toolkit.list &&
+        apt-get update &&
+        apt-get install -y nvidia-container-toolkit"
+
+    - name: Configure NVIDIA Container Runtime to disable cgroups for LXC
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "mkdir -p /etc/nvidia-container-runtime &&
+        echo '[nvidia-container-cli]' > /etc/nvidia-container-runtime/config.toml &&
+        echo 'no-cgroups = true' >> /etc/nvidia-container-runtime/config.toml"
+
+    - name: Configure Docker to use NVIDIA runtime
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "nvidia-ctk runtime configure --runtime=docker &&
+        systemctl restart docker"
+
+    - name: Create NVIDIA library symlinks for compatibility
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "if [ -d /usr/lib/x86_64-linux-gnu/nvidia ]; then
+           find /usr/lib/x86_64-linux-gnu/nvidia -name 'libnvidia-ml.so.*' -type f | head -1 | xargs -I {} ln -sf {} /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1;
+           ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 /usr/lib/x86_64-linux-gnu/libnvidia-ml.so;
+           ldconfig;
+         fi"
+      failed_when: false
+
+    # Ollama requires NVIDIA userspace libraries to be installed inside the container
+    # to properly detect GPUs. We install the same driver version as the host but
+    # without kernel modules (--no-kernel-module) since those are provided by the host
+    - name: Get NVIDIA driver version from host
+      tags: [configure]
+      shell: nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1
+      register: nvidia_driver_version
+      failed_when: false
+      changed_when: false
+
+    - name: Download NVIDIA driver installer (for userspace libraries)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "if ! [ -f /usr/local/bin/nvidia-smi ] || ! nvidia-smi &>/dev/null; then
+           wget -q https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_version.stdout | default('550.163.01') }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_version.stdout | default('550.163.01') }}.run -O /tmp/nvidia-installer.run &&
+           chmod +x /tmp/nvidia-installer.run;
+         else
+           echo 'NVIDIA driver already installed';
+         fi"
+      register: nvidia_download
+      failed_when: false
+
+    - name: Install NVIDIA driver in container (userspace only, no kernel modules)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "if [ -f /tmp/nvidia-installer.run ]; then
+           /tmp/nvidia-installer.run --no-kernel-module --silent &&
+           rm -f /tmp/nvidia-installer.run;
+         else
+           echo 'NVIDIA driver already installed or installer not found';
+         fi"
+      register: nvidia_install
+      failed_when: false
+      changed_when: "'already installed' not in nvidia_install.stdout"
+
+    - name: Ensure CDI directory exists on Proxmox host
+      tags: [configure]
+      file:
+        path: /etc/cdi
+        state: directory
+        mode: '0755'
+
+    - name: Check if NVIDIA CDI spec exists on host
+      tags: [configure]
+      stat:
+        path: /etc/cdi/nvidia.yaml
+      register: host_cdi_spec
+
+    - name: Generate NVIDIA CDI spec on host if missing
+      tags: [configure]
+      command: nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+      when: not host_cdi_spec.stat.exists
+
+    - name: Test Docker GPU access via NVIDIA runtime (nvidia-smi)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "docker run --rm --pull=always --runtime=nvidia --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi"
+      register: docker_gpu_test
+      failed_when: false
+      changed_when: false
+
+    - name: Deploy Ollama (Docker, try with GPU first)
+      when: ollama_deploy_mode == 'docker'
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "docker ps -a --format '{{'{{'}}.Names{{'}}'}}' | grep -qx ollama || \
+         (docker run -d --name ollama --restart unless-stopped \
+         --runtime=nvidia --gpus all \
+         -e OLLAMA_HOST=0.0.0.0 \
+         -e CUDA_VISIBLE_DEVICES=0,1 \
+         -e NVIDIA_VISIBLE_DEVICES=all \
+         -e NVIDIA_DRIVER_CAPABILITIES=all \
+         -p 11434:11434 \
+         -v ollama:/root/.ollama \
+         ollama/ollama:latest 2>/dev/null || \
+         docker run -d --name ollama --restart unless-stopped \
+         -e OLLAMA_HOST=0.0.0.0 \
+         -p 11434:11434 \
+         -v ollama:/root/.ollama \
+         ollama/ollama:latest)"
+
+    - name: Ensure Ollama container is running
+      when: ollama_deploy_mode == 'docker'
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker start ollama >/dev/null 2>&1 || true'
+
+    - name: Pull OpenWebUI image
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker pull ghcr.io/open-webui/open-webui:main'
+
+    - name: Create OpenWebUI container if missing
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "docker ps -a --format '{{'{{'}}.Names{{'}}'}}' | grep -qx openwebui || \
+         docker run -d --name openwebui --restart unless-stopped \
+         --network=host \
+         -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
+         -v openwebui-data:/app/backend/data \
+         ghcr.io/open-webui/open-webui:main"
+
+    - name: Ensure OpenWebUI container is running
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker start openwebui >/dev/null 2>&1 || true'
+
+    - name: Allow OpenWebUI over tailscale0 (port 8080)
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'iptables -C INPUT -i tailscale0 -p tcp --dport 8080 -j ACCEPT 2>/dev/null || iptables -A INPUT -i tailscale0 -p tcp --dport 8080 -j ACCEPT'
+
+    - name: Wait for OpenWebUI to respond locally in CT
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsS http://127.0.0.1:8080/'
+      register: owui_ready_local
+      retries: 40
+      delay: 3
+      until: "owui_ready_local.rc == 0"
+
+    - name: Test OpenWebUI over Tailscale from host
+      tags: [configure]
+      uri:
+        url: "http://{{ (ct_ts_ip.stdout_lines | default([])) | first }}:8080/"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: owui_ready_ts
+      failed_when: false
+      changed_when: false
+
+    - name: Install Ollama inside LXC (native)
+      when: ollama_deploy_mode == 'native'
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsSL https://ollama.com/install.sh | sh'
+
+    - name: Ensure systemd override directory for ollama service
+      when: ollama_deploy_mode == 'native'
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'mkdir -p /etc/systemd/system/ollama.service.d'
+
+    - name: Configure Ollama to listen on all interfaces with permissive CORS (native)
+      when: ollama_deploy_mode == 'native'
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "cat > /etc/systemd/system/ollama.service.d/override.conf << 'EOF'\n[Service]\nEnvironment=OLLAMA_HOST=0.0.0.0:11434\nEnvironment=OLLAMA_ORIGINS=*\nEOF"
+
+    - name: Reload systemd and enable/restart Ollama (native)
+      when: ollama_deploy_mode == 'native'
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl daemon-reload && systemctl enable --now ollama && systemctl restart ollama'
+
+    - name: Allow Ollama API over tailscale0 (iptables ACCEPT)
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'iptables -C INPUT -i tailscale0 -p tcp --dport 11434 -j ACCEPT 2>/dev/null || iptables -A INPUT -i tailscale0 -p tcp --dport 11434 -j ACCEPT'
+
+    - name: Wait for Ollama API to be ready locally in CT
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsS http://127.0.0.1:11434/api/version'
+      register: ollama_ready
+      retries: 20
+      delay: 3
+      until: "ollama_ready.rc == 0"
+
+    - name: Pull a default model for OpenWebUI (Docker mode)
+      when: ollama_deploy_mode == 'docker'
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker exec ollama ollama pull llama3.1:8b'
+      register: ollama_pull_model
+      failed_when: false
+      changed_when: ollama_pull_model.rc == 0
+
+    - name: Show Tailscale and Ollama status
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "echo 'Tailscale IP:'; tailscale ip -4 || true;
+         echo '----';
+         echo 'GPU Status:'; docker exec ollama nvidia-smi --query-gpu=name,memory.total --format=csv 2>/dev/null || echo 'No GPU detected';
+         echo '----';
+         echo 'Ollama listening on:'; ss -ltnp | grep 11434 || true;
+         echo '----';
+         echo 'Access URLs:';
+         echo '  Ollama API: http://$(tailscale ip -4):11434';
+         echo '  OpenWebUI: http://$(tailscale ip -4):8080'"
+
+    - name: Test Ollama API from inside LXC (local)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "curl -fsS http://127.0.0.1:11434/api/version"
+      register: ollama_api_internal
+      retries: 10
+      delay: 3
+      until: "ollama_api_internal.rc == 0"
+
+    - name: Test Ollama API from Proxmox host over Tailscale (best-effort)
+      tags: [configure]
+      uri:
+        url: "http://{{ (ct_ts_ip.stdout_lines | default([])) | first }}:11434/api/version"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: ollama_api_external
+      failed_when: false
+      changed_when: false
+
+

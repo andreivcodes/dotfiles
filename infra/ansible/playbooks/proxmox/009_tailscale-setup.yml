@@ -4,8 +4,8 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
-    - ../group_vars/all/vault.yml
+    - ../../group_vars/all/main.yml
+    - ../../group_vars/all/vault.yml
 
   tags:
     - tailscale
@@ -13,7 +13,7 @@
 
   tasks:
     - name: Ensure enterprise repos are removed
-      import_tasks: ../tasks/remove_enterprise_repos.yml
+      import_tasks: ../../tasks/remove_enterprise_repos.yml
 
     - name: Check if Tailscale is enabled
       debug:
@@ -33,8 +33,6 @@
             state: present
             filename: tailscale
             update_cache: no
-
-        # Already handled by enterprise repo removal task
 
         - name: Update apt cache for Tailscale
           apt:
@@ -93,7 +91,7 @@
               acls:
                 - action: accept
                   src: ["*"]
-                  dst: ["*:22", "*:8006", "*:8007", "*:3128"]
+                  dst: ["*:22", "*:8006", "*:8007", "*:3128", "*:3000", "*:11434"]
                 - action: accept
                   src: ["tag:proxmox"]
                   dst: ["*:*"]
@@ -317,7 +315,6 @@
           failed_when: false
           when: not (ansible_check_mode | default(false)) and tailscale_bin.rc == 0 and tailscale_do_auth | default(false)
 
-
         - name: Display Tailscale information
           debug:
             msg:
@@ -328,3 +325,5 @@
               - "  Tags: {{ (tailscale_verify.stdout | from_json).Self.Tags | default([]) | join(', ') }}"
           when: tailscale_verify is defined and tailscale_verify.stdout is defined and tailscale_verify.stdout | length > 0
       when: tailscale_enabled | default(false)
+
+

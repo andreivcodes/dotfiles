@@ -4,7 +4,7 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
+    - ../../group_vars/all/main.yml
   
   tags:
     - sdn
@@ -78,7 +78,6 @@
       failed_when: 
         - subnet_create.rc != 0
         - "'already exists' not in subnet_create.stderr"
-        - "'already defined' not in subnet_create.stderr"
       changed_when: subnet_create.rc == 0
     
     - name: Apply SDN configuration
@@ -93,7 +92,7 @@
     
     - name: Configure dnsmasq for SDN DHCP
       template:
-        src: ../templates/dnsmasq-sdn.conf.j2
+        src: ../../templates/dnsmasq-sdn.conf.j2
         dest: /etc/dnsmasq.d/sdn.conf
         mode: '0644'
       notify: restart dnsmasq
@@ -125,4 +124,6 @@
       systemd:
         name: dnsmasq
         state: restarted
-      failed_when: false  # dnsmasq might not be installed yet
+      failed_when: false
+
+

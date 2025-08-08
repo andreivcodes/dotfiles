@@ -12,31 +12,31 @@
     - name: Gather facts for all plays
       setup:
 
-- import_playbook: 001_base-setup.yml
+- import_playbook: proxmox/001_base-setup.yml
   tags: base
 
-- import_playbook: 002_zfs-setup.yml
+- import_playbook: proxmox/002_zfs-setup.yml
   tags: zfs
 
-- import_playbook: 003_network-setup.yml
+- import_playbook: proxmox/003_network-setup.yml
   tags: network
 
-- import_playbook: 004_sdn-setup.yml
+- import_playbook: proxmox/004_sdn-setup.yml
   tags: sdn
 
-- import_playbook: 005_gpu-setup.yml
+- import_playbook: proxmox/005_gpu-setup.yml
   tags: gpu
 
-- import_playbook: 006_pbs-setup.yml
+- import_playbook: proxmox/006_pbs-setup.yml
   tags: pbs
 
-- import_playbook: 007_storage-setup.yml
+- import_playbook: proxmox/007_storage-setup.yml
   tags: storage
 
-- import_playbook: 008_backup-jobs.yml
+- import_playbook: proxmox/008_backup-jobs.yml
   tags: backup
 
-- import_playbook: 009_tailscale-setup.yml
+- import_playbook: proxmox/009_tailscale-setup.yml
   tags: tailscale
 
 - name: Final validation

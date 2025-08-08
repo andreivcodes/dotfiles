@@ -4,7 +4,7 @@
   gather_facts: true
   become: true
   vars_files:
-    - ../group_vars/all/main.yml
+    - ../../group_vars/all/main.yml
   
   tags:
     - storage
@@ -105,3 +105,5 @@
       loop: "{{ (pve_storages | default([])) | zip(storage_status.results) | list }}"
       register: enable_result
       changed_when: enable_result.rc == 0
+
+

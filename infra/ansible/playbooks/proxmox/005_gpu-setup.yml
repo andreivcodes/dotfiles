@@ -1,0 +1,80 @@
+---
+- name: GPU Setup for LXC Containers
+  hosts: proxmox
+  gather_facts: true
+  become: true
+  
+  vars:
+    nvidia_driver_install: true  # Set to false to skip driver installation
+    
+  tags:
+    - gpu
+    - drivers
+    - lxc
+
+  tasks:
+    - name: Check for NVIDIA GPUs
+      shell: lspci | grep -i nvidia
+      register: nvidia_gpus
+      changed_when: false
+      failed_when: false
+      tags: always
+    
+    - name: Display GPU information
+      debug:
+        msg: "{{ nvidia_gpus.stdout_lines }}"
+      when: nvidia_gpus.rc == 0
+      tags: always
+    
+    # ... existing code ...
+    
+    - name: Final GPU Status Check
+      block:
+        - name: Run nvidia-smi for final verification
+          command: nvidia-smi
+          register: final_nvidia_check
+          changed_when: false
+          failed_when: false
+        
+        - name: Check NVIDIA devices
+          shell: ls -la /dev/nvidia* | head -10
+          register: nvidia_devices
+          changed_when: false
+          failed_when: false
+        
+        - name: Display final GPU status
+          debug:
+            msg: |
+              {% if final_nvidia_check.rc == 0 %}
+              ✅ NVIDIA drivers installed and working on host
+              
+              Devices available:
+              {{ nvidia_devices.stdout }}
+              
+              Next steps:
+              1. Create an LXC container
+              2. Run: lxc-gpu-helper setup-lxc <CTID>
+              3. Inside container, run: lxc-gpu-helper install-guide
+              
+              GPU Status:
+              {{ final_nvidia_check.stdout_lines | join('\n') }}
+              {% else %}
+              ⚠️  NVIDIA drivers not loaded. Reboot may be required.
+              Run 'systemctl status nvidia-persistenced-boot' to check
+              {% endif %}
+      tags:
+        - verify
+  
+  handlers:
+    - name: update grub
+      command: update-grub
+      listen: "update grub"
+    
+    - name: reboot system
+      reboot:
+        msg: "Rebooting to apply GPU configuration changes"
+        pre_reboot_delay: 10
+        post_reboot_delay: 30
+      listen: "reboot system"
+
+
