@@ -19,6 +19,12 @@
           - iptables-persistent
         state: present
     
+    - name: Disable default dnsmasq service (conflicts with SDN zone services)
+      systemd:
+        name: dnsmasq
+        enabled: no
+        state: stopped
+    
     - name: Create SDN configuration directory
       file:
         path: /etc/pve/sdn
@@ -63,27 +69,62 @@
       changed_when: false
       failed_when: false
     
-    - name: Create SDN subnets using API
+    - name: Delete existing SDN subnets to recreate with DHCP
       command: |
-        pvesh create /cluster/sdn/vnets/{{ item.0.vnet }}/subnets \
-          --subnet {{ item.0.cidr }} \
+        pvesh delete /cluster/sdn/vnets/{{ item.vnet }}/subnets/{{ item.zone | default('sibzone') }}-{{ item.cidr | replace('/', '-') }}
+      loop: "{{ sdn_subnets | default([]) }}"
+      failed_when: false
+      changed_when: true
+
+    - name: Create SDN subnets with DHCP enabled
+      shell: |
+        pvesh create /cluster/sdn/vnets/{{ item.vnet }}/subnets \
+          --subnet {{ item.cidr }} \
           --type subnet \
-          --gateway {{ item.0.gateway }} \
-          --snat {{ 1 if item.0.snat else 0 }} \
-          --dhcp-dns-server {{ item.0.gateway }}
-      loop: "{{ (sdn_subnets | default([])) | zip(existing_subnets_check.results) | list }}"
-      when: >
-        sdn_subnets is defined and (item.1.stdout == '[]' or (item.0.cidr not in (item.1.stdout | default('[]', true) | from_json | map(attribute='cidr') | list | default([]))))
+          --gateway {{ item.gateway }} \
+          --snat {{ 1 if item.snat else 0 }} \
+          {% if item.dhcp_start is defined and item.dhcp_end is defined %}
+          --dhcp-range start-address={{ item.dhcp_start }},end-address={{ item.dhcp_end }} \
+          {% endif %}
+          2>&1
+      loop: "{{ sdn_subnets | default([]) }}"
       register: subnet_create
       failed_when: 
         - subnet_create.rc != 0
         - "'already exists' not in subnet_create.stderr"
       changed_when: subnet_create.rc == 0
     
+    - name: Ensure dnsmasq configuration directory for sibzone exists
+      file:
+        path: /etc/dnsmasq.d/sibzone
+        state: directory
+        mode: '0755'
+    
+    - name: Configure DNS servers for SDN subnets
+      shell: |
+        echo "dhcp-option=option:dns-server,8.8.8.8,1.1.1.1" > /etc/dnsmasq.d/sibzone/10-dns.conf
+        echo "server=8.8.8.8" >> /etc/dnsmasq.d/sibzone/10-dns.conf
+        echo "server=1.1.1.1" >> /etc/dnsmasq.d/sibzone/10-dns.conf
+      args:
+        creates: /etc/dnsmasq.d/sibzone/10-dns.conf
+      register: dns_config
+    
     - name: Apply SDN configuration
       command: pvesh set /cluster/sdn
       changed_when: true
       register: sdn_apply
+    
+    - name: Restart dnsmasq@sibzone service if configuration changed
+      systemd:
+        name: dnsmasq@sibzone
+        state: restarted
+      when: dns_config.changed or subnet_create.changed
+    
+    - name: Ensure dnsmasq@sibzone service is enabled and started
+      systemd:
+        name: dnsmasq@sibzone
+        enabled: yes
+        state: started
     
     - name: Wait for SDN to be ready
       pause:

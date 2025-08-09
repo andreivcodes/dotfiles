@@ -27,8 +27,6 @@
       lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
       lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
       lxc.mount.entry: /dev/nvidia-caps dev/nvidia-caps none bind,optional,create=dir
-      lxc.mount.entry: /usr/lib/x86_64-linux-gnu/nvidia usr/lib/x86_64-linux-gnu/nvidia none bind,optional,create=dir
-      lxc.mount.entry: /usr/bin/nvidia-smi usr/bin/nvidia-smi none bind,optional,create=file
 
 - name: Start LXC after config change
   command: pct start {{ target_lxc_vmid }}

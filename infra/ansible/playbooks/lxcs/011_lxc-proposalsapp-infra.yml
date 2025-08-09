@@ -1,5 +1,5 @@
 ---
-- name: Create Debian LXC with GPU+TUN and install Tailscale, Docker, and Ollama
+- name: Create Debian LXC with GPU+TUN and install Tailscale, Docker, and Dokploy
   hosts: proxmox
   become: true
   vars_files:
@@ -8,20 +8,25 @@
 
   vars:
     # Override at runtime via ANSIBLE_ARGS if desired
-    lxc_vmid: 110
-    lxc_hostname: ollama
-    # Debian 12.7-1 template
+    lxc_vmid: 111
+    lxc_hostname: proposalsapp-infra
+    # Debian 12.7-1 template (same as ollama)
     lxc_ostemplate: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
     # Use SSD pool for CT rootfs
     lxc_storage: ssd-raid
     lxc_memory_mb: 8192
     lxc_cores: 8
+    lxc_disk_gb: 100
     # Use SDN vnet bridge (created by SDN playbooks)
     lxc_bridge: sibnet
-    lxc_ip: 192.168.100.110/24
+    lxc_ip: 192.168.100.111/24
     lxc_gw: 192.168.100.1
-    # Deploy mode for Ollama: 'docker' (GPU via CDI) or 'native'
-    ollama_deploy_mode: docker
+    # Dokploy specific settings
+    dokploy_port: 3000
+    # Use privileged container for better Docker compatibility (can be changed to unprivileged with more config)
+    lxc_unprivileged: 0
+    # Enable GPU support for AI/ML workloads deployed through Dokploy
+    enable_gpu_passthrough: true
 
   tasks:
     - name: Compute template filename
@@ -66,25 +71,57 @@
       register: template_download_fallback
       changed_when: template_download_fallback.rc == 0
 
-    - name: Create LXC container (idempotent)
+    - name: Create LXC container (idempotent) - privileged for Docker Swarm compatibility
       tags: [create]
       shell: >-
         pct create {{ lxc_vmid }} {{ lxc_ostemplate }}
         --hostname {{ lxc_hostname }}
-        --unprivileged 1
+        --unprivileged {{ lxc_unprivileged }}
         --memory {{ lxc_memory_mb }}
         --cores {{ lxc_cores }}
         --features nesting=1,keyctl=1
         --net0 name=eth0,bridge={{ lxc_bridge }},ip={{ lxc_ip }},gw={{ lxc_gw }}
-        --rootfs {{ lxc_storage }}:128
+        --rootfs {{ lxc_storage }}:{{ lxc_disk_gb }}
       args:
         creates: "/etc/pve/lxc/{{ lxc_vmid }}.conf"
 
-    - name: Ensure GPU and TUN access in LXC config
+    - name: Configure LXC for Docker compatibility
       tags: [create]
-      import_tasks: ../../tasks/proxmox_lxc_gpu_tun.yml
-      vars:
-        target_lxc_vmid: "{{ lxc_vmid }}"
+      shell: |
+        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
+        # Docker compatibility settings
+        lxc.apparmor.profile: unconfined
+        lxc.cgroup2.devices.allow: a
+        lxc.cap.drop:
+        lxc.mount.auto: proc:rw sys:rw
+        EOF
+
+    - name: Configure TUN device for Tailscale
+      tags: [create]
+      shell: |
+        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
+        # TUN device for Tailscale
+        lxc.cgroup2.devices.allow: c 10:200 rwm
+        lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+        EOF
+
+    - name: Configure GPU passthrough if enabled
+      tags: [create]
+      shell: |
+        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
+        # NVIDIA GPU passthrough
+        lxc.cgroup2.devices.allow: c 195:* rwm
+        lxc.cgroup2.devices.allow: c 234:* rwm
+        lxc.cgroup2.devices.allow: c 509:* rwm
+        lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidia1 dev/nvidia1 none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidia-modeset dev/nvidia-modeset none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
+        lxc.mount.entry: /dev/nvidia-caps dev/nvidia-caps none bind,optional,create=dir
+        EOF
+      when: enable_gpu_passthrough
 
     - name: Start container
       tags: [create]
@@ -104,12 +141,26 @@
     - name: Update apt cache inside LXC
       tags: [configure]
       command: pct exec {{ lxc_vmid }} -- bash -lc 'apt-get update'
+      retries: 3
+      delay: 5
 
-    - name: Install base tools inside LXC
+    - name: Install curl first (required for most installers)
       tags: [configure]
       command: >-
         pct exec {{ lxc_vmid }} -- bash -lc
-        "apt-get install -y curl ca-certificates gnupg lsb-release"
+        "apt-get install -y curl ca-certificates gnupg"
+      retries: 3
+      delay: 5
+
+    - name: Configure kernel parameters for Docker
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf &&
+         echo 'net.bridge.bridge-nf-call-iptables=1' >> /etc/sysctl.conf &&
+         echo 'net.bridge.bridge-nf-call-ip6tables=1' >> /etc/sysctl.conf &&
+         sysctl -p"
+      failed_when: false
 
     - name: Install Tailscale inside LXC
       tags: [configure]
@@ -148,7 +199,7 @@
           acls:
             - action: accept
               src: ["*"]
-              dst: ["*:22", "*:8006", "*:8007", "*:3128", "*:8080", "*:11434"]
+              dst: ["*:22", "*:8006", "*:8007", "*:3128", "*:3000", "*:80", "*:443"]
             - action: accept
               src: ["tag:proxmox"]
               dst: ["*:*"]
@@ -231,7 +282,7 @@
                 preauthorized: true
                 tags:
                   - "tag:proxmox"
-          description: "ct-ollama-{{ lxc_hostname }}-{{ lxc_vmid }}"
+          description: "ct-dokploy-{{ lxc_hostname }}-{{ lxc_vmid }}"
           expirySeconds: 86400
         return_content: true
         status_code: [200, 201]
@@ -246,6 +297,12 @@
       set_fact:
         ts_auth_key_to_use: "{{ (ts_key_create_ct.json.key | default('')) if (ts_key_create_ct is defined and ts_key_create_ct.json is defined) else (tailscale_auth_key | default('')) }}"
       no_log: true
+
+    - name: Configure Tailscale to use userspace networking (avoid conflicts with Docker)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "mkdir -p /etc/default && echo 'TS_USERSPACE=true' >> /etc/default/tailscaled"
 
     - name: Tailscale up with auth key (idempotent)
       tags: [configure]
@@ -344,55 +401,24 @@
       tags: [configure]
       command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl enable --now docker'
 
-    - name: Check for NVIDIA devices in container
+    # Docker daemon config removed - using defaults for LXC compatibility
+
+    - name: Wait for Docker to be ready
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker ps'
+      register: docker_ready
+      retries: 10
+      delay: 3
+      until: "docker_ready.rc == 0"
+
+    - name: Check for NVIDIA devices in container (if GPU enabled)
       tags: [configure]
       command: pct exec {{ lxc_vmid }} -- bash -lc 'ls -la /dev/nvidia* 2>/dev/null || echo "No NVIDIA devices found"'
       register: nvidia_devices_check
       failed_when: false
       changed_when: false
+      when: enable_gpu_passthrough
 
-    - name: Install NVIDIA Container Toolkit inside LXC
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey > /tmp/nvidia.gpg &&
-        cat /tmp/nvidia.gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
-        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |
-        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |
-        tee /etc/apt/sources.list.d/nvidia-container-toolkit.list &&
-        apt-get update &&
-        apt-get install -y nvidia-container-toolkit"
-
-    - name: Configure NVIDIA Container Runtime to disable cgroups for LXC
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "mkdir -p /etc/nvidia-container-runtime &&
-        echo '[nvidia-container-cli]' > /etc/nvidia-container-runtime/config.toml &&
-        echo 'no-cgroups = true' >> /etc/nvidia-container-runtime/config.toml &&
-        echo '[nvidia-container-runtime]' >> /etc/nvidia-container-runtime/config.toml"
-
-    - name: Configure Docker to use NVIDIA runtime
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "nvidia-ctk runtime configure --runtime=docker &&
-        systemctl restart docker"
-
-    - name: Create NVIDIA library symlinks for compatibility
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "if [ -d /usr/lib/x86_64-linux-gnu/nvidia ]; then
-           find /usr/lib/x86_64-linux-gnu/nvidia -name 'libnvidia-ml.so.*' -type f | head -1 | xargs -I {} ln -sf {} /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1;
-           ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 /usr/lib/x86_64-linux-gnu/libnvidia-ml.so;
-           ldconfig;
-         fi"
-      failed_when: false
-
-    # Ollama requires NVIDIA userspace libraries to be installed inside the container
-    # to properly detect GPUs. We install the same driver version as the host but
-    # without kernel modules (--no-kernel-module) since those are provided by the host
     # No longer need to get specific driver version - will install latest from repository
 
     - name: Add NVIDIA CUDA repository in container
@@ -405,6 +431,7 @@
       register: cuda_repo_added
       failed_when: false
       changed_when: cuda_repo_added.rc == 0
+      when: enable_gpu_passthrough
 
     - name: Install NVIDIA driver libraries in container
       tags: [configure]
@@ -414,176 +441,225 @@
       register: nvidia_install
       failed_when: false
       changed_when: nvidia_install.rc == 0
+      when: enable_gpu_passthrough
 
-
-    # Note: CDI is not needed for LXC GPU passthrough
-    # The GPU devices are passed through directly via the container config
-
-    - name: Test Docker GPU access via NVIDIA runtime (nvidia-smi)
+    - name: Install NVIDIA Container Toolkit inside LXC (if GPU enabled)
       tags: [configure]
       command: >-
         pct exec {{ lxc_vmid }} -- bash -lc
-        "docker run --rm --runtime=nvidia --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi"
-      register: docker_gpu_test
+        "curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey > /tmp/nvidia.gpg &&
+        cat /tmp/nvidia.gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |
+        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |
+        tee /etc/apt/sources.list.d/nvidia-container-toolkit.list &&
+        apt-get update &&
+        apt-get install -y nvidia-container-toolkit"
+      when: enable_gpu_passthrough
+
+    - name: Configure NVIDIA Container Runtime to disable cgroups for LXC
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "mkdir -p /etc/nvidia-container-runtime &&
+        echo '[nvidia-container-cli]' > /etc/nvidia-container-runtime/config.toml &&
+        echo 'no-cgroups = true' >> /etc/nvidia-container-runtime/config.toml &&
+        echo '[nvidia-container-runtime]' >> /etc/nvidia-container-runtime/config.toml"
+      when: enable_gpu_passthrough
+
+    - name: Configure Docker to use NVIDIA runtime
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "nvidia-ctk runtime configure --runtime=docker &&
+        systemctl restart docker"
+      when: enable_gpu_passthrough
+
+    - name: Create working directory for Dokploy
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'mkdir -p /root/dokploy && cd /root/dokploy'
+
+    - name: Install Dokploy using official script (with workarounds for LXC)
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "export DOKPLOY_DOCKER_NETWORK=dokploy-network &&
+         export DISABLE_SWARM=true &&
+         curl -sSL https://dokploy.com/install.sh | sh"
+      register: dokploy_install
+      failed_when: false
+
+    - name: Check if Dokploy is running
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker ps | grep dokploy'
+      register: dokploy_status
       failed_when: false
       changed_when: false
-      
-    - name: Debug GPU test result
+
+    - name: Manual Dokploy installation if script failed (common in LXC)
+      tags: [configure]
+      when: dokploy_install.rc != 0 or dokploy_status.rc != 0
+      block:
+        - name: Pull Dokploy Docker image
+          command: pct exec {{ lxc_vmid }} -- bash -lc 'docker pull dokploy/dokploy:latest'
+
+        - name: Create Dokploy network
+          command: pct exec {{ lxc_vmid }} -- bash -lc 'docker network create dokploy-network 2>/dev/null || true'
+
+        - name: Create Dokploy volumes
+          command: >-
+            pct exec {{ lxc_vmid }} -- bash -lc
+            "docker volume create dokploy-data &&
+             docker volume create dokploy-docker-config"
+
+        - name: Run Dokploy container with proper configuration
+          command: >-
+            pct exec {{ lxc_vmid }} -- bash -lc
+            "docker run -d \
+              --name dokploy \
+              --hostname dokploy \
+              --restart unless-stopped \
+              --network dokploy-network \
+              -p {{ dokploy_port }}:3000 \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v dokploy-data:/data \
+              -v dokploy-docker-config:/root/.docker \
+              -e DOCKER_HOST=unix:///var/run/docker.sock \
+              dokploy/dokploy:latest"
+
+    - name: Wait for Dokploy to be ready
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsS http://127.0.0.1:{{ dokploy_port }}/'
+      register: dokploy_ready
+      retries: 30
+      delay: 5
+      until: "dokploy_ready.rc == 0"
+
+    - name: Configure firewall rules for Dokploy access via Tailscale
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "iptables -C INPUT -i tailscale0 -p tcp --dport {{ dokploy_port }} -j ACCEPT 2>/dev/null || 
+         iptables -A INPUT -i tailscale0 -p tcp --dport {{ dokploy_port }} -j ACCEPT &&
+         iptables -C INPUT -i tailscale0 -p tcp --dport 80 -j ACCEPT 2>/dev/null || 
+         iptables -A INPUT -i tailscale0 -p tcp --dport 80 -j ACCEPT &&
+         iptables -C INPUT -i tailscale0 -p tcp --dport 443 -j ACCEPT 2>/dev/null || 
+         iptables -A INPUT -i tailscale0 -p tcp --dport 443 -j ACCEPT"
+
+    - name: Install iptables-persistent to save firewall rules
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent &&
+         netfilter-persistent save"
+
+    - name: Create systemd service to fix Docker networking after reboot
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "cat > /etc/systemd/system/docker-network-fix.service << 'EOF'
+         [Unit]
+         Description=Fix Docker networking in LXC
+         After=docker.service
+         Requires=docker.service
+         
+         [Service]
+         Type=oneshot
+         ExecStartPre=/bin/sleep 5
+         ExecStart=/bin/bash -c 'sysctl -w net.ipv4.ip_forward=1'
+         RemainAfterExit=yes
+         
+         [Install]
+         WantedBy=multi-user.target
+         EOF"
+
+    - name: Enable Docker network fix service
+      tags: [configure]
+      command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl daemon-reload && systemctl enable docker-network-fix.service'
+
+    - name: Test Dokploy access from Proxmox host over Tailscale
+      tags: [configure]
+      uri:
+        url: "http://{{ (ct_ts_ip.stdout_lines | default([])) | first }}:{{ dokploy_port }}/"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: dokploy_access_test
+      failed_when: false
+      changed_when: false
+
+    - name: Show Dokploy access information
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "echo '================================';
+         echo 'Dokploy Installation Complete!';
+         echo '================================';
+         echo '';
+         echo 'Tailscale IP:'; tailscale ip -4 || true;
+         echo '';
+         echo 'Docker Status:'; docker ps | grep dokploy || true;
+         echo '';
+         {% if enable_gpu_passthrough %}
+         echo 'GPU Status:'; docker run --rm --runtime=nvidia --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi;
+         echo '';
+         {% endif %}
+         echo 'Access URLs:';
+         echo '  Dokploy Dashboard: http://$(tailscale ip -4):{{ dokploy_port }}';
+         echo '';
+         echo 'Initial Setup:';
+         echo '  1. Navigate to the dashboard URL above';
+         echo '  2. Create your admin account';
+         echo '  3. Start deploying your applications!';
+         echo '';
+         echo 'Notes:';
+         echo '  - Docker Swarm is disabled to avoid LXC compatibility issues';
+         echo '  - Single-node deployment mode is configured';
+         echo '  - Traefik will handle routing for deployed apps';
+         echo '  - GPU support is {% if enable_gpu_passthrough %}enabled{% else %}disabled{% endif %}';
+         echo '================================'"
+
+    - name: Create helper script for Dokploy management
+      tags: [configure]
+      command: >-
+        pct exec {{ lxc_vmid }} -- bash -lc
+        "cat > /usr/local/bin/dokploy-status << 'EOF'
+         #!/bin/bash
+         echo '=== Dokploy Status ==='
+         echo ''
+         echo 'Container Status:'
+         docker ps | grep dokploy
+         echo ''
+         echo 'Logs (last 20 lines):'
+         docker logs dokploy --tail 20
+         echo ''
+         echo 'Network:'
+         docker network ls | grep dokploy
+         echo ''
+         echo 'Volumes:'
+         docker volume ls | grep dokploy
+         echo ''
+         echo 'Access URL:'
+         echo \"http://$(tailscale ip -4):{{ dokploy_port }}\"
+         EOF
+         && chmod +x /usr/local/bin/dokploy-status"
+
+    - name: Display important notes
       tags: [configure]
       debug:
-        msg: |
-          GPU Test Result: {{ docker_gpu_test.rc }}
-          {% if docker_gpu_test.rc != 0 %}
-          Error: {{ docker_gpu_test.stderr | default('No error message') }}
-          {% else %}
-          Success! GPU is accessible in Docker
-          {% endif %}
-
-    - name: Stop and remove any existing Ollama container
-      when: ollama_deploy_mode == 'docker'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc "docker rm -f ollama 2>/dev/null || true"
-      failed_when: false
-      
-    - name: Deploy Ollama with GPU support (required)
-      when: ollama_deploy_mode == 'docker'
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "docker run -d --name ollama --restart unless-stopped \
-         --runtime=nvidia --gpus all \
-         -e OLLAMA_HOST=0.0.0.0 \
-         -e CUDA_VISIBLE_DEVICES=0,1 \
-         -e NVIDIA_VISIBLE_DEVICES=all \
-         -e NVIDIA_DRIVER_CAPABILITIES=all \
-         -p 11434:11434 \
-         -v ollama:/root/.ollama \
-         ollama/ollama:latest"
-
-    - name: Ensure Ollama container is running
-      when: ollama_deploy_mode == 'docker'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker start ollama >/dev/null 2>&1 || true'
-
-    - name: Pull OpenWebUI image
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker pull ghcr.io/open-webui/open-webui:main'
-
-    - name: Stop and remove any existing OpenWebUI container
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc "docker rm -f openwebui 2>/dev/null || true"
-      failed_when: false
-
-    - name: Create OpenWebUI container
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "docker run -d --name openwebui --restart unless-stopped \
-         --network=host \
-         -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
-         -v openwebui-data:/app/backend/data \
-         ghcr.io/open-webui/open-webui:main"
-
-    - name: Ensure OpenWebUI container is running
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker start openwebui >/dev/null 2>&1 || true'
-
-    - name: Allow OpenWebUI over tailscale0 (port 8080)
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'iptables -C INPUT -i tailscale0 -p tcp --dport 8080 -j ACCEPT 2>/dev/null || iptables -A INPUT -i tailscale0 -p tcp --dport 8080 -j ACCEPT'
-
-    - name: Wait for OpenWebUI to respond locally in CT
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsS http://127.0.0.1:8080/'
-      register: owui_ready_local
-      retries: 40
-      delay: 3
-      until: "owui_ready_local.rc == 0"
-
-    - name: Test OpenWebUI over Tailscale from host
-      tags: [configure]
-      uri:
-        url: "http://{{ (ct_ts_ip.stdout_lines | default([])) | first }}:8080/"
-        method: GET
-        return_content: true
-        status_code: 200
-      register: owui_ready_ts
-      failed_when: false
-      changed_when: false
-
-    - name: Install Ollama inside LXC (native)
-      when: ollama_deploy_mode == 'native'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsSL https://ollama.com/install.sh | sh'
-
-    - name: Ensure systemd override directory for ollama service
-      when: ollama_deploy_mode == 'native'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'mkdir -p /etc/systemd/system/ollama.service.d'
-
-    - name: Configure Ollama to listen on all interfaces with permissive CORS (native)
-      when: ollama_deploy_mode == 'native'
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "cat > /etc/systemd/system/ollama.service.d/override.conf << 'EOF'\n[Service]\nEnvironment=OLLAMA_HOST=0.0.0.0:11434\nEnvironment=OLLAMA_ORIGINS=*\nEOF"
-
-    - name: Reload systemd and enable/restart Ollama (native)
-      when: ollama_deploy_mode == 'native'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'systemctl daemon-reload && systemctl enable --now ollama && systemctl restart ollama'
-
-    - name: Allow Ollama API over tailscale0 (iptables ACCEPT)
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'iptables -C INPUT -i tailscale0 -p tcp --dport 11434 -j ACCEPT 2>/dev/null || iptables -A INPUT -i tailscale0 -p tcp --dport 11434 -j ACCEPT'
-
-    - name: Wait for Ollama API to be ready locally in CT
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'curl -fsS http://127.0.0.1:11434/api/version'
-      register: ollama_ready
-      retries: 20
-      delay: 3
-      until: "ollama_ready.rc == 0"
-
-    - name: Pull a default model for OpenWebUI (Docker mode)
-      when: ollama_deploy_mode == 'docker'
-      tags: [configure]
-      command: pct exec {{ lxc_vmid }} -- bash -lc 'docker exec ollama ollama pull llama3.1:8b'
-      register: ollama_pull_model
-      failed_when: false
-      changed_when: ollama_pull_model.rc == 0
-
-    - name: Show Tailscale and Ollama status
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "echo 'Tailscale IP:'; tailscale ip -4 || true;
-         echo '----';
-         echo 'GPU Status:'; docker exec ollama nvidia-smi --query-gpu=name,memory.total --format=csv;
-         echo '----';
-         echo 'Ollama listening on:'; ss -ltnp | grep 11434 || true;
-         echo '----';
-         echo 'Access URLs:';
-         echo '  Ollama API: http://$(tailscale ip -4):11434';
-         echo '  OpenWebUI: http://$(tailscale ip -4):8080'"
-
-    - name: Test Ollama API from inside LXC (local)
-      tags: [configure]
-      command: >-
-        pct exec {{ lxc_vmid }} -- bash -lc
-        "curl -fsS http://127.0.0.1:11434/api/version"
-      register: ollama_api_internal
-      retries: 10
-      delay: 3
-      until: "ollama_api_internal.rc == 0"
-
-    - name: Test Ollama API from Proxmox host over Tailscale (best-effort)
-      tags: [configure]
-      uri:
-        url: "http://{{ (ct_ts_ip.stdout_lines | default([])) | first }}:11434/api/version"
-        method: GET
-        return_content: true
-        status_code: 200
-      register: ollama_api_external
-      failed_when: false
-      changed_when: false
+        msg:
+          - "Dokploy LXC created successfully!"
+          - "VMID: {{ lxc_vmid }}"
+          - "Hostname: {{ lxc_hostname }}"
+          - "Resources: {{ lxc_cores }} cores, {{ lxc_memory_mb }}MB RAM, {{ lxc_disk_gb }}GB disk"
+          - ""
+          - "IMPORTANT NOTES:"
+          - "1. This is a privileged container for Docker compatibility"
+          - "2. Docker Swarm is disabled - single-node deployment only"
+          - "3. Access via Tailscale network only for security"
+          - "4. Run 'dokploy-status' inside container to check status"
+          - ""
+          - "Known Issues Addressed:"
+          - "- Used privileged container to avoid Docker permission issues"
+          - "- Disabled Swarm mode to avoid port 2377 problems"
+          - "- Configured custom Docker network to avoid conflicts"
+          - "- Added network fix service for reboot persistence"

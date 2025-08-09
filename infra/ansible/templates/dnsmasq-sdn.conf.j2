@@ -3,7 +3,8 @@
 interface={{ subnet.vnet }}
 dhcp-range={{ subnet.vnet }},{{ subnet.dhcp_start }},{{ subnet.dhcp_end }},12h
 dhcp-option={{ subnet.vnet }},3,{{ subnet.gateway }}
-dhcp-option={{ subnet.vnet }},6,{{ subnet.gateway }}
+# Use public DNS servers instead of gateway
+dhcp-option={{ subnet.vnet }},6,8.8.8.8,1.1.1.1
 {% endfor %}
 
 # General settings
@@ -12,3 +13,7 @@ except-interface=lo
 no-hosts
 expand-hosts
 domain=local
+
+# DNS servers to use
+server=8.8.8.8
+server=1.1.1.1
