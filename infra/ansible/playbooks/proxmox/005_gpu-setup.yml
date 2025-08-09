@@ -62,6 +62,8 @@
               - pve-headers
               - gcc
               - make
+              - nvtop
+              - htop
             state: present
             update_cache: yes
 
@@ -83,11 +85,7 @@
         - name: Update initramfs if nouveau was blacklisted
           when: nouveau_blacklisted is changed
           command: update-initramfs -u
-          
-        - name: Check if reboot is needed for nouveau blacklist
-          when: nouveau_blacklisted is changed
-          set_fact:
-            reboot_required: true
+          register: initramfs_updated
             
         - name: Add NVIDIA CUDA repository GPG key
           when: nvidia_smi_check.rc != 0 and use_repository
@@ -119,7 +117,7 @@
           register: nvidia_installed
 
         - name: Load NVIDIA kernel modules
-          when: nvidia_installed is changed
+          when: nvidia_installed is changed or nvidia_smi_check.rc != 0
           modprobe:
             name: "{{ item }}"
             state: present
@@ -129,6 +127,7 @@
             - nvidia_modeset
             - nvidia_drm
           failed_when: false
+          register: modules_loaded
           
         - name: Ensure NVIDIA modules load on boot
           when: nvidia_installed is changed
@@ -248,6 +247,7 @@
           # GPU Passthrough
           lxc.cgroup2.devices.allow: c 195:* rwm
           lxc.cgroup2.devices.allow: c 234:* rwm
+          lxc.cgroup2.devices.allow: c 508:* rwm
           lxc.cgroup2.devices.allow: c 509:* rwm
           lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
           lxc.mount.entry: /dev/nvidia1 dev/nvidia1 none bind,optional,create=file
@@ -263,6 +263,33 @@
         dest: /usr/local/bin/lxc-gpu-passthrough
         mode: '0755'
 
+    - name: Determine if reboot is needed
+      set_fact:
+        needs_reboot: "{{ (nvidia_installed is changed) or (nouveau_blacklisted is changed) or (initramfs_updated is changed) }}"
+      tags:
+        - verify
+    
+    - name: Reboot system if drivers were installed or changed
+      reboot:
+        msg: "Rebooting to apply GPU driver changes"
+        pre_reboot_delay: 10
+        post_reboot_delay: 30
+        reboot_timeout: 600
+        test_command: "nvidia-smi > /dev/null 2>&1"
+      when: needs_reboot | default(false)
+      register: reboot_result
+      tags:
+        - verify
+    
+    - name: Wait for NVIDIA drivers to fully load after reboot
+      wait_for:
+        path: /dev/nvidia0
+        state: present
+        timeout: 60
+      when: reboot_result is changed
+      tags:
+        - verify
+        
     - name: Final GPU Status Check
       block:
         - name: Run nvidia-smi for final verification
@@ -280,10 +307,7 @@
         - name: Display final GPU status
           debug:
             msg: |
-              {% if reboot_required is defined and reboot_required %}
-              ⚠️  REBOOT REQUIRED: Nouveau driver was blacklisted.
-              Please reboot the system and run this playbook again.
-              {% elif final_nvidia_check.rc == 0 %}
+              {% if final_nvidia_check.rc == 0 %}
               ✅ NVIDIA drivers installed and working on host
               
               Devices available:
@@ -291,16 +315,22 @@
               
               Next steps for LXC containers:
               1. Use the helper script: lxc-gpu-passthrough <container_id>
-              2. Inside container, install same NVIDIA driver version with --no-kernel-module flag
+              2. Inside container, install NVIDIA drivers from CUDA repository
+              3. Configure nvidia-container-toolkit with no-cgroups=true for Docker
+              
+              GPU Status:
+              {{ final_nvidia_check.stdout_lines[:10] | join('\n') }}
+              {% elif reboot_result is changed %}
+              🔄 System was rebooted to apply GPU driver changes
               
               GPU Status:
               {{ final_nvidia_check.stdout_lines[:10] | join('\n') }}
               {% else %}
               ⚠️  NVIDIA drivers not fully loaded. 
               Try: 
-              1. Run 'nvidia-smi' to check status
-              2. Check 'dmesg | grep -i nvidia' for errors
-              3. Reboot may be required
+              1. Check 'dmesg | grep -i nvidia' for errors
+              2. Run this playbook again to trigger automatic reboot
+              3. Check if nouveau driver is still loaded: lsmod | grep nouveau
               {% endif %}
       tags:
         - verify
@@ -309,10 +339,3 @@
     - name: update grub
       command: update-grub
       listen: "update grub"
-    
-    - name: reboot system
-      reboot:
-        msg: "Rebooting to apply GPU configuration changes"
-        pre_reboot_delay: 10
-        post_reboot_delay: 30
-      listen: "reboot system"

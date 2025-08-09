@@ -87,40 +87,44 @@
 
     - name: Configure LXC for Docker compatibility
       tags: [create]
-      shell: |
-        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
-        # Docker compatibility settings
-        lxc.apparmor.profile: unconfined
-        lxc.cgroup2.devices.allow: a
-        lxc.cap.drop:
-        lxc.mount.auto: proc:rw sys:rw
-        EOF
+      ansible.builtin.blockinfile:
+        path: "/etc/pve/lxc/{{ lxc_vmid }}.conf"
+        marker: "# {mark} ANSIBLE DOCKER CONFIG"
+        block: |
+          # Docker compatibility settings
+          lxc.apparmor.profile: unconfined
+          lxc.cgroup2.devices.allow: a
+          lxc.cap.drop:
+          lxc.mount.auto: proc:rw sys:rw
 
     - name: Configure TUN device for Tailscale
       tags: [create]
-      shell: |
-        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
-        # TUN device for Tailscale
-        lxc.cgroup2.devices.allow: c 10:200 rwm
-        lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
-        EOF
+      ansible.builtin.blockinfile:
+        path: "/etc/pve/lxc/{{ lxc_vmid }}.conf"
+        marker: "# {mark} ANSIBLE TUN CONFIG"
+        block: |
+          # TUN device for Tailscale
+          lxc.cgroup2.devices.allow: c 10:200 rwm
+          lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 
     - name: Configure GPU passthrough if enabled
       tags: [create]
-      shell: |
-        cat >> /etc/pve/lxc/{{ lxc_vmid }}.conf << 'EOF'
-        # NVIDIA GPU passthrough
-        lxc.cgroup2.devices.allow: c 195:* rwm
-        lxc.cgroup2.devices.allow: c 234:* rwm
-        lxc.cgroup2.devices.allow: c 509:* rwm
-        lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidia1 dev/nvidia1 none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidia-modeset dev/nvidia-modeset none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
-        lxc.mount.entry: /dev/nvidia-caps dev/nvidia-caps none bind,optional,create=dir
-        EOF
+      ansible.builtin.blockinfile:
+        path: "/etc/pve/lxc/{{ lxc_vmid }}.conf"
+        marker: "# {mark} ANSIBLE NVIDIA CONFIG"
+        block: |
+          # NVIDIA GPU passthrough
+          lxc.cgroup2.devices.allow: c 195:* rwm
+          lxc.cgroup2.devices.allow: c 234:* rwm
+          lxc.cgroup2.devices.allow: c 508:* rwm
+          lxc.cgroup2.devices.allow: c 509:* rwm
+          lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidia1 dev/nvidia1 none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidia-modeset dev/nvidia-modeset none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
+          lxc.mount.entry: /dev/nvidia-caps dev/nvidia-caps none bind,optional,create=dir
       when: enable_gpu_passthrough
 
     - name: Start container
