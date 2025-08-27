@@ -78,31 +78,12 @@
             msg: "Will delete existing device (if any) and create fresh authentication"
           when: not (ansible_check_mode | default(false))
 
-        - name: Update Tailscale ACL policy
-          uri:
-            url: "https://api.tailscale.com/api/v2/tailnet/-/acl"
-            method: POST
-            headers:
-              Authorization: "Bearer {{ tailscale_api_token }}"
-              Content-Type: application/json
-              Accept: application/json
-            body_format: json
-            body:
-              acls:
-                - action: accept
-                  src: ["*"]
-                  dst: ["*:22", "*:8006", "*:8007", "*:3128", "*:3000", "*:11434"]
-                - action: accept
-                  src: ["tag:proxmox"]
-                  dst: ["*:*"]
-              tagOwners:
-                tag:proxmox: ["autogroup:admin"]
-            return_content: yes
-            status_code: [200, 201]
-          register: ts_acl_update
-          delegate_to: localhost
-          become: false
-          changed_when: ts_acl_update.status in [200, 201]
+        - name: Configure Tailscale ACL for Proxmox
+          import_tasks: ../../tasks/tailscale_acl_management.yml
+          vars:
+            acl_tag_name: "proxmox"
+            acl_ports: [22, 8006, 8007, 3128]
+            acl_tag_owners: ['autogroup:admin']
           when:
             - not (ansible_check_mode | default(false))
             - tailscale_api_token is defined and (tailscale_api_token | length) > 0
