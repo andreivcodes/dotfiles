@@ -32,26 +32,47 @@
       timezone:
         name: Europe/Bucharest
     
-    - name: Configure PVE no-subscription repository
+    - name: Check if modern .sources format repositories exist
+      stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/proxmox.sources
+        - /etc/apt/sources.list.d/debian.sources
+      register: modern_sources_check
+    
+    - name: Remove duplicate .list files that conflict with .sources
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/pve-no-subscription.list
+        - /etc/apt/sources.list.d/pbs-no-subscription.list  
+        - /etc/apt/sources.list.d/ceph.list
+      when: modern_sources_check.results[0].stat.exists
+    
+    - name: Configure PVE no-subscription repository (only if .sources doesn't exist)
       apt_repository:
         repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
         state: present
         filename: pve-no-subscription
         update_cache: no
+      when: not modern_sources_check.results[0].stat.exists
     
-    - name: Configure Ceph no-subscription repository
+    - name: Configure Ceph no-subscription repository (only if .sources doesn't exist)
       apt_repository:
         repo: "deb http://download.proxmox.com/debian/ceph-squid {{ ansible_distribution_release }} no-subscription"
         state: present
         filename: ceph
         update_cache: no
+      when: not modern_sources_check.results[0].stat.exists
     
-    - name: Configure PBS no-subscription repository
+    - name: Configure PBS no-subscription repository (only if .sources doesn't exist)  
       apt_repository:
         repo: "deb http://download.proxmox.com/debian/pbs {{ ansible_distribution_release }} pbs-no-subscription"
         state: present
         filename: pbs-no-subscription
         update_cache: no
+      when: not modern_sources_check.results[0].stat.exists
     
     - name: Update apt cache
       apt:

@@ -73,11 +73,18 @@
         policy_out: ACCEPT
         
         [RULES]
+        # Basic Proxmox services
         IN ACCEPT -i vmbr0 -p tcp -dport 8006 # Proxmox web interface
-        IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface
+        IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface  
         IN ACCEPT -i vmbr0 -p tcp -dport 3128 # SPICE proxy
         IN ACCEPT -i vmbr0 -p tcp -dport 5900:5999 # VNC range
         IN ACCEPT -i vmbr0 -p tcp -dport 22 # SSH
+        
+        # Tailscale traffic
+        IN ACCEPT -p udp -dport 41641 # Tailscale
+        
+        # Allow established connections
+        IN ACCEPT -m conntrack --ctstate ESTABLISHED,RELATED
         EOF
       when: pve_firewall_dir.stat.exists
       register: firewall_config

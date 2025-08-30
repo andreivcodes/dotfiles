@@ -1,0 +1,30 @@
+[OPTIONS]
+enable: 1
+policy_in: DROP
+policy_out: ACCEPT
+
+[RULES]
+# Basic Proxmox services
+IN ACCEPT -i vmbr0 -p tcp -dport 8006 # Proxmox web interface
+IN ACCEPT -i vmbr0 -p tcp -dport 8007 # PBS web interface  
+IN ACCEPT -i vmbr0 -p tcp -dport 3128 # SPICE proxy
+IN ACCEPT -i vmbr0 -p tcp -dport 5900:5999 # VNC range
+IN ACCEPT -i vmbr0 -p tcp -dport 22 # SSH
+
+# Tailscale traffic
+IN ACCEPT -p udp -dport 41641 # Tailscale
+
+# SDN DHCP and DNS rules - CRITICAL for SDN functionality
+{% for subnet in sdn_subnets | default([]) %}
+IN DHCPfwd(ACCEPT) -i {{ subnet.vnet }} -log nolog # DHCP forwarding for {{ subnet.vnet }}
+IN DNS(ACCEPT) -i {{ subnet.vnet }} -dest {{ subnet.gateway }} -log nolog # DNS queries for {{ subnet.vnet }}
+{% endfor %}
+
+# Allow established connections
+IN ACCEPT -m conntrack --ctstate ESTABLISHED,RELATED
+
+# Allow ping for connectivity testing
+IN ACCEPT -p icmp --icmp-type echo-request
+
+# Drop everything else (policy is already DROP, but explicit for clarity)
+IN DROP -log nolog

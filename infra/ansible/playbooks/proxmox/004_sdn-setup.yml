@@ -37,11 +37,12 @@
       changed_when: false
       failed_when: false
     
-    - name: Create SDN zones
+    - name: Create SDN zones with DHCP enabled
       command: |
         pvesh create /cluster/sdn/zones \
           --zone {{ item.name }} \
           --type {{ item.type }} \
+          --dhcp dnsmasq \
           --ipam {{ item.ipam | default('pve') }}
       loop: "{{ sdn_zones | default([]) }}"
       when: sdn_zones is defined and item.name not in (existing_zones.stdout | default('[]', true) | from_json | map(attribute='zone') | list | default([]))
@@ -69,13 +70,6 @@
       changed_when: false
       failed_when: false
     
-    - name: Delete existing SDN subnets to recreate with DHCP
-      command: |
-        pvesh delete /cluster/sdn/vnets/{{ item.vnet }}/subnets/{{ item.zone | default('sibzone') }}-{{ item.cidr | replace('/', '-') }}
-      loop: "{{ sdn_subnets | default([]) }}"
-      failed_when: false
-      changed_when: true
-
     - name: Create SDN subnets with DHCP enabled
       shell: |
         pvesh create /cluster/sdn/vnets/{{ item.vnet }}/subnets \
@@ -109,6 +103,18 @@
         creates: /etc/dnsmasq.d/sibzone/10-dns.conf
       register: dns_config
     
+    - name: Configure firewall rules for SDN DHCP and DNS
+      blockinfile:
+        path: /etc/pve/firewall/cluster.fw
+        marker: "# {mark} ANSIBLE MANAGED SDN RULES"
+        insertafter: "^\\[RULES\\]"
+        block: |
+          # SDN DHCP and DNS rules - REQUIRED for SDN to work with firewall
+          IN DHCPfwd(ACCEPT) -i sibnet -log nolog # DHCP forwarding for SDN
+          IN DNS(ACCEPT) -i sibnet -dest 192.168.100.1 -log nolog # DNS queries for SDN
+        create: yes
+      register: sdn_firewall_rules
+
     - name: Apply SDN configuration
       command: pvesh set /cluster/sdn
       changed_when: true

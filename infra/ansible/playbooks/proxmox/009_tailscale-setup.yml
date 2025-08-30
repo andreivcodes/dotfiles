@@ -193,6 +193,8 @@
             tailscale up \
               --authkey={{ ts_auth_key_to_use | default(tailscale_auth_key) }} \
               --hostname={{ inventory_hostname }} \
+              --accept-dns=false \
+              --advertise-routes=192.168.100.0/24 \
               --reset 2>&1 &
             sleep 5
             tailscale status > /dev/null 2>&1 || true
@@ -269,11 +271,13 @@
             - tailscale_api_token is defined and (tailscale_api_token | length) > 0
             - tailscale_do_auth | default(false)
 
-        - name: Configure Tailscale with tags
+        - name: Configure Tailscale with tags and subnet routing
           command: |
             tailscale up \
               --advertise-tags=tag:proxmox \
-              --hostname={{ inventory_hostname }}
+              --hostname={{ inventory_hostname }} \
+              --accept-dns=false \
+              --advertise-routes=192.168.100.0/24
           register: tailscale_configure
           changed_when: tailscale_configure.rc == 0
           failed_when: false
@@ -288,6 +292,15 @@
             regexp: '^FLAGS='
             line: 'FLAGS="--state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock"'
             create: yes
+
+        - name: Ensure IP forwarding is enabled for subnet routing
+          sysctl:
+            name: net.ipv4.ip_forward
+            value: '1'
+            sysctl_set: yes
+            state: present
+            reload: yes
+          when: tailscale_enabled | default(false)
 
         - name: Verify Tailscale configuration
           command: tailscale status --json

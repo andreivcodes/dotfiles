@@ -68,6 +68,36 @@
       changed_when: false
       failed_when: false
     
+    - name: Validate SDN configuration
+      shell: |
+        # Check if SDN zones exist
+        pvesh get /cluster/sdn/zones --output-format json | jq -r '.[].zone' 2>/dev/null || echo "none"
+      register: sdn_zones_check
+      changed_when: false
+      failed_when: false
+
+    - name: Validate SDN VNets
+      shell: |
+        # Check if SDN vnets exist
+        pvesh get /cluster/sdn/vnets --output-format json | jq -r '.[].vnet' 2>/dev/null || echo "none"
+      register: sdn_vnets_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check dnsmasq@sibzone service status
+      systemd:
+        name: dnsmasq@sibzone
+      register: dnsmasq_sibzone_status
+      check_mode: yes
+      failed_when: false
+
+    - name: Check Tailscale status if enabled
+      command: tailscale status --json
+      register: tailscale_status_check
+      changed_when: false
+      failed_when: false
+      when: tailscale_enabled | default(false)
+
     - name: Display configuration summary
       debug:
         msg:
@@ -78,3 +108,7 @@
           - "Active Storages: {{ pve_storage_status.stdout_lines | select('match', '^[a-z]') | list | length }} storage(s) configured"
           - "PBS Backup: {{ 'Configured' if 'local-pbs' in pve_storage_status.stdout else 'Not configured' }}"
           - "NVIDIA GPUs: 2x RTX 3090 ready for LXC passthrough"
+          - "SDN Zones: {{ sdn_zones_check.stdout | default('none') }}"
+          - "SDN VNets: {{ sdn_vnets_check.stdout | default('none') }}"
+          - "DHCP Service: {{ 'Running' if dnsmasq_sibzone_status.status is defined and dnsmasq_sibzone_status.status.ActiveState == 'active' else 'Not running' }}"
+          - "Tailscale: {{ 'Connected (' + ((tailscale_status_check.stdout | default('{}') | from_json).Self.TailscaleIPs | default([]))[0] + ')' if tailscale_enabled and tailscale_status_check.rc == 0 else 'Disabled/Not connected' }}"
