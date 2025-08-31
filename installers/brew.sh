@@ -41,6 +41,7 @@ FORMULAS=(
     "act"
     "ansible"
     "asimov"
+    "mas"
 )
 
 CASKS=(
@@ -112,6 +113,23 @@ sleep 1
 
 log_success "Brew setup completed successfully!"
 log_info "$(brew list --formula | wc -l | xargs) formulas and $(brew list --cask | wc -l | xargs) casks are now installed"
+
+# Install Mac App Store applications
+if command_exists mas; then
+    log_info "Installing Mac App Store applications..."
+    
+    # Amphetamine - Keep your Mac awake
+    if mas list | grep -q "937984704"; then
+        log_info "Amphetamine is already installed, skipping"
+    elif mas install 937984704; then
+        log_success "Successfully installed Amphetamine"
+    else
+        log_error "Failed to install Amphetamine"
+        log_info "You may need to sign in to the Mac App Store first with: mas signin"
+    fi
+else
+    log_warning "mas not available, skipping Mac App Store applications"
+fi
 
 # Install Claude Code
 log_info "Installing Claude Code..."
