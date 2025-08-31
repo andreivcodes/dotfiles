@@ -151,7 +151,7 @@
     
     - name: Configure ZFS auto-snapshot
       template:
-        src: ../../templates/zfs-auto-snapshot.j2
+        src: ../../templates/proxmox/zfs-auto-snapshot.j2
         dest: /etc/cron.d/zfs-auto-snapshot
         mode: '0644'
   

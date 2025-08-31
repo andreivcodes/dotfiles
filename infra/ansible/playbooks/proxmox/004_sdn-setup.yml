@@ -139,7 +139,7 @@
     
     - name: Configure dnsmasq for SDN DHCP
       template:
-        src: ../../templates/dnsmasq-sdn.conf.j2
+        src: ../../templates/proxmox/dnsmasq-sdn.conf.j2
         dest: /etc/dnsmasq.d/sdn.conf
         mode: '0644'
       notify: restart dnsmasq

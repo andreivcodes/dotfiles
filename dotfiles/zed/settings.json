@@ -1,0 +1,143 @@
+{
+  "context_servers": {
+    "browsermcp": {
+      "source": "custom",
+      "enabled": true,
+      "command": "npx",
+      "args": ["@browsermcp/mcp@latest"]
+    },
+    "mcp-server-context7": {
+      "source": "extension",
+      "enabled": true,
+      "settings": {
+        "default_minimum_tokens": "10000"
+      }
+    }
+  },
+  "language_models": {
+    "ollama": {
+      "api_url": "http://100.127.123.30:11434",
+      "available_models": [
+        {
+          "name": "qwen3:30b",
+          "display_name": "Qwen3 256K",
+          "max_tokens": 70000,
+          "supports_tools": true,
+          "supports_thinking": true
+        }
+      ]
+    }
+  },
+  "bottom_dock_layout": "contained",
+  "features": {
+    "edit_prediction_provider": "zed"
+  },
+  "vim_mode": false,
+  "indent_guides": {
+    "enabled": true,
+    "line_width": 1,
+    "active_line_width": 2,
+    "coloring": "indent_aware",
+    "background_coloring": "disabled"
+  },
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "rustfmt": {
+          "extraArgs": ["+nightly"]
+        }
+      }
+    }
+  },
+  "languages": {
+    "JavaScript": {
+      "formatter": {
+        "external": {
+          "command": "prettier",
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}",
+            "--parser",
+            "babel"
+          ]
+        }
+      },
+      "format_on_save": "on"
+    },
+    "TSX": {
+      "formatter": {
+        "external": {
+          "command": "prettier",
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}",
+            "--parser",
+            "typescript"
+          ]
+        }
+      },
+      "format_on_save": "on"
+    },
+    "TypeScript": {
+      "formatter": {
+        "external": {
+          "command": "prettier",
+          "arguments": [
+            "--stdin-filepath",
+            "{buffer_path}",
+            "--parser",
+            "typescript"
+          ]
+        }
+      },
+      "format_on_save": "on"
+    }
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 14,
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+  "agent": {
+    "default_profile": "write",
+    "always_allow_tool_actions": true,
+    "profiles": {
+      "write": {
+        "name": "Write",
+        "tools": {
+          "open": true,
+          "create_directory": true,
+          "batch_tool": true,
+          "code_actions": true,
+          "code_symbols": true,
+          "contents": true,
+          "copy_path": true,
+          "create_file": true,
+          "delete_path": true,
+          "diagnostics": true,
+          "edit_file": true,
+          "fetch": true,
+          "list_directory": true,
+          "move_path": true,
+          "now": true,
+          "find_path": true,
+          "read_file": true,
+          "grep": true,
+          "rename": true,
+          "symbol_info": true,
+          "terminal": true,
+          "thinking": true,
+          "web_search": true
+        },
+        "enable_all_context_servers": true,
+        "context_servers": {}
+      }
+    },
+    "default_model": {
+      "provider": "ollama",
+      "model": "qwen3:30b"
+    }
+  }
+}

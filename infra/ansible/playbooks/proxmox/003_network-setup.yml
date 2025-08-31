@@ -17,14 +17,14 @@
     
     - name: Configure network interfaces
       template:
-        src: ../../templates/interfaces.j2
+        src: ../../templates/proxmox/interfaces.j2
         dest: /etc/network/interfaces
         backup: yes
       notify: restart networking
     
     - name: Configure DNS (skip if managed by systemd-resolved on Debian 12+)
       template:
-        src: ../../templates/resolv.conf.j2
+        src: ../../templates/proxmox/resolv.conf.j2
         dest: /etc/resolv.conf
         mode: '0644'
       when: not (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] | int >= 12 and ansible_facts.services is defined and 'systemd-resolved.service' in ansible_facts.services)
