@@ -48,6 +48,27 @@ defaults write com.apple.finder SidebarPlacesSectionDisclosedState -bool true
 # Hide tags from Finder sidebar
 defaults write com.apple.finder ShowRecentTags -bool false
 
+# Create git folder if it doesn't exist
+log_info "Ensuring git folder exists..."
+if [ ! -d "$HOME/git" ]; then
+    mkdir -p "$HOME/git"
+    log_success "Created git folder at $HOME/git"
+else
+    log_info "Git folder already exists at $HOME/git"
+fi
+
+# Configure Finder Sidebar Favorites
+log_info "Preparing folders for Finder sidebar..."
+
+# Open folders in Finder to make them accessible
+# Note: macOS removed programmatic sidebar management in recent versions
+# Users need to manually add folders using Cmd+Ctrl+T or drag & drop
+open "$HOME" 2>/dev/null || true
+open "$HOME/git" 2>/dev/null || true
+
+log_success "Folders opened in Finder"
+log_info "To add to sidebar: Select each folder and press Cmd+Ctrl+T"
+
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
