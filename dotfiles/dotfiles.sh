@@ -13,10 +13,13 @@ check_not_sudo
 # Create config directory if it doesn't exist
 mkdir -p "$HOME/.config"
 
+# Resolve repo root regardless of current working directory
+REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
+
 # Configuration mappings: source -> target (using parallel arrays for bash 3.2 compatibility)
 SOURCES=(
-    "$PWD/dotfiles/zed"
-    "$PWD/dotfiles/.zshrc"
+    "$REPO_ROOT/dotfiles/zed"
+    "$REPO_ROOT/dotfiles/.zshrc"
 )
 
 TARGETS=(

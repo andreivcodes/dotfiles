@@ -9,6 +9,7 @@ log_info "Starting Dock configuration..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Function to add an application to the Dock
 add_app_to_dock() {
@@ -52,6 +53,7 @@ DOCK_APPS=(
   "/Applications/Signal.app"
   "/System/Applications/Calendar.app"
   "/Applications/Zed.app"
+  "/Applications/Visual Studio Code.app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
   "/Applications/Beekeeper Studio.app"

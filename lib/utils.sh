@@ -26,6 +26,14 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
+# OS guards
+require_macos() {
+    if [ "$(uname -s)" != "Darwin" ]; then
+        log_error "This script is intended to run on macOS (Darwin)."
+        exit 1
+    fi
+}
+
 # Progress indicator
 show_progress() {
     local current=$1

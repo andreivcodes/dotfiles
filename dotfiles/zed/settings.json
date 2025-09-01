@@ -16,16 +16,7 @@
   },
   "language_models": {
     "ollama": {
-      "api_url": "http://100.127.123.30:11434",
-      "available_models": [
-        {
-          "name": "qwen3:30b",
-          "display_name": "Qwen3 256K",
-          "max_tokens": 70000,
-          "supports_tools": true,
-          "supports_thinking": true
-        }
-      ]
+      "api_url": "http://192.168.100.210:11434"
     }
   },
   "bottom_dock_layout": "contained",
@@ -137,7 +128,7 @@
     },
     "default_model": {
       "provider": "ollama",
-      "model": "qwen3:30b"
+      "model": "devstral:24b"
     }
   }
 }

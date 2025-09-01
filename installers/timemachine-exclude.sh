@@ -9,6 +9,7 @@ log_info "Starting Time Machine exclusion setup..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Function to exclude directories matching patterns
 exclude_directories() {

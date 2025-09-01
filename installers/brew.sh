@@ -9,6 +9,7 @@ log_info "Starting Homebrew setup..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Check if Homebrew is already installed
 if command_exists brew; then
@@ -18,11 +19,25 @@ if command_exists brew; then
     else
         log_warning "Homebrew update/upgrade had some issues, but continuing..."
     fi
+    # Turn off Homebrew analytics to reduce noise
+    brew analytics off >/dev/null 2>&1 || true
 else
     log_info "Homebrew not found. Installing..."
     if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-        echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> "$HOME/.zprofile"
-        source "$HOME/.zprofile"
+        # Detect brew binary location (Apple Silicon vs Intel)
+        if [ -x "/opt/homebrew/bin/brew" ]; then
+            BREW_BIN="/opt/homebrew/bin/brew"
+        elif [ -x "/usr/local/bin/brew" ]; then
+            BREW_BIN="/usr/local/bin/brew"
+        else
+            log_error "Homebrew installed but brew binary not found in standard locations"
+            exit 1
+        fi
+        # Persist and load shellenv
+        echo "eval \($($BREW_BIN shellenv)\)" >> "$HOME/.zprofile"
+        eval "$($BREW_BIN shellenv)"
+        # Turn off analytics on fresh installs as well
+        brew analytics off >/dev/null 2>&1 || true
         log_success "Homebrew installed successfully"
     else
         log_error "Failed to install Homebrew"
@@ -33,112 +48,42 @@ fi
 # Ensure shell environment is loaded for brew
 source "$HOME/.zprofile" 2>/dev/null || true
 
-# Define packages to install
-FORMULAS=(
-    "wget"
-    "volta"
-    "nixpacks" 
-    "act"
-    "ansible"
-    "asimov"
-    "mas"
-    "displayplacer"
-)
-
-CASKS=(
-    "discord"
-    "slack"
-    "whatsapp"
-    "telegram"
-    "zed"
-    "github"
-    "docker"
-    "beekeeper-studio"
-    "brave-browser"
-    "wifiman"
-    "1password"
-    "1password-cli"
-    "macs-fan-control"
-    "tailscale"
-    "mullvadvpn"
-    "balenaetcher"
-    "libreoffice"
-    "signal"
-    "topnotch"
-    "cleanshot"
-    "rectangle"
-)
-
-# Install formula packages
-log_info "Installing essential brew packages..."
-total_formulas=${#FORMULAS[@]}
-current=0
-
-for formula in "${FORMULAS[@]}"; do
-    current=$((current + 1))
-    show_progress $current $total_formulas "Installing $formula"
-    
-    if brew list "$formula" &>/dev/null; then
-        log_info "$formula is already installed, skipping"
-    elif brew install "$formula"; then
-        log_success "Successfully installed $formula"
-    else
-        log_error "Failed to install $formula"
-        # Continue with other packages instead of exiting
-    fi
-done
-
-# Ensure shell environment is loaded again after volta install
-source "$HOME/.zprofile" 2>/dev/null || true
-sleep 1
-
-log_success "Essential brew packages installation completed"
-
-# Install cask applications
-log_info "Installing applications via brew cask..."
-total_casks=${#CASKS[@]}
-current=0
-
-for cask in "${CASKS[@]}"; do
-    current=$((current + 1))
-    show_progress $current $total_casks "Installing $cask"
-    
-    if brew list --cask "$cask" &>/dev/null; then
-        log_info "$cask is already installed, skipping"
-    elif brew install --cask "$cask"; then
-        log_success "Successfully installed $cask"
-    else
-        log_error "Failed to install $cask"
-        # Continue with other apps instead of exiting
-    fi
-done
-
-sleep 1
-
-log_success "Brew setup completed successfully!"
-log_info "$(brew list --formula | wc -l | xargs) formulas and $(brew list --cask | wc -l | xargs) casks are now installed"
-
-# Install Mac App Store applications
-if command_exists mas; then
-    log_info "Installing Mac App Store applications..."
-    
-    # Amphetamine - Keep your Mac awake
-    if mas list | grep -q "937984704"; then
-        log_info "Amphetamine is already installed, skipping"
-    elif mas install 937984704; then
-        log_success "Successfully installed Amphetamine"
-    else
-        log_error "Failed to install Amphetamine"
-        log_info "You may need to sign in to the Mac App Store first with: mas signin"
-    fi
-else
-    log_warning "mas not available, skipping Mac App Store applications"
+# Recommend Command Line Tools if missing
+if ! xcode-select -p &>/dev/null; then
+    log_warning "Xcode Command Line Tools not detected. Some formulae may require them. Run: xcode-select --install"
 fi
 
-# Install Claude Code
-log_info "Installing Claude Code..."
-if curl -fsSL https://claude.ai/install.sh | bash; then
-    log_success "Claude Code installed successfully"
+# Install via Brewfile
+REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
+BREWFILE_PATH="$REPO_ROOT/Brewfile"
+
+if [ ! -f "$BREWFILE_PATH" ]; then
+    log_error "Brewfile not found at $BREWFILE_PATH"
+    exit 1
+fi
+
+log_info "Installing packages and apps from Brewfile..."
+if brew bundle --file="$BREWFILE_PATH"; then
+    log_success "Brew bundle completed successfully"
 else
-    log_error "Failed to install Claude Code"
+    log_warning "Brew bundle encountered errors (some items may be unavailable). Continuing..."
+fi
+
+log_info "$(brew list --formula | wc -l | xargs) formulas and $(brew list --cask | wc -l | xargs) casks are now installed"
+
+# Claude Code (optional)
+if command_exists claude; then
+    log_info "Claude Code already installed, skipping"
+else
+    if [ "${INSTALL_CLAUDE:-0}" = "1" ]; then
+        log_info "Installing Claude Code (INSTALL_CLAUDE=1)..."
+        if curl -fsSL --max-time 20 https://claude.ai/install.sh | bash; then
+            log_success "Claude Code installed successfully"
+        else
+            log_warning "Claude Code installation did not complete. You can install manually: curl -fsSL https://claude.ai/install.sh | bash"
+        fi
+    else
+        log_info "Skipping Claude Code auto-install. To install now: INSTALL_CLAUDE=1 bash installers/brew.sh"
+        log_info "Manual install command: curl -fsSL https://claude.ai/install.sh | bash"
+    fi
 fi

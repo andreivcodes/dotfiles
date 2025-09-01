@@ -9,6 +9,7 @@ log_info "Starting macOS system preferences configuration..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Close System Preferences to prevent conflicts
 log_info "Closing System Preferences to prevent conflicts..."
@@ -175,12 +176,13 @@ if command -v displayplacer >/dev/null 2>&1; then
     # Get the display ID
     DISPLAY_ID=$(displayplacer list | grep "Persistent screen id:" | head -1 | awk '{print $4}')
     if [ -n "$DISPLAY_ID" ]; then
-        # Set to More Space (1800x1169 at 120Hz, usually mode 66 on MacBook Pro 14")
-        # This provides more screen real estate
-        displayplacer "id:$DISPLAY_ID res:1800x1169 hz:120 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" 2>/dev/null || \
-        displayplacer "id:$DISPLAY_ID mode:66" 2>/dev/null || \
-        log_warning "Could not set display to More Space mode"
-        log_success "Display set to More Space mode"
+        # Set to More Space (approx 1800x1169 @120Hz on MBP 14"). Try specific resolution, then fallback by mode id.
+        if displayplacer "id:$DISPLAY_ID res:1800x1169 hz:120 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" 2>/dev/null || \
+           displayplacer "id:$DISPLAY_ID mode:66" 2>/dev/null; then
+            log_success "Display set to More Space mode"
+        else
+            log_warning "Could not set display to More Space mode"
+        fi
     else
         log_warning "Could not detect display ID"
     fi

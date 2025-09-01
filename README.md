@@ -23,7 +23,7 @@ dotfiles/
 ├── setup                   # 🚀 Main entry point script
 ├── installers/            # 📦 Application and tool installers
 │   ├── all.sh             #   Orchestrates all setup scripts
-│   ├── brew.sh            #   Installs Homebrew packages and apps
+│   ├── brew.sh            #   Installs packages/apps via Brewfile (brew bundle)
 │   ├── dev.sh             #   Sets up Node.js and Rust development
 │   └── dock.sh            #   Configures macOS Dock layout
 ├── preferences/           # ⚙️  macOS system preferences
@@ -41,7 +41,7 @@ dotfiles/
 You can run components individually if needed:
 
 ```bash
-# Install applications and packages only
+# Install applications and packages only (uses Brewfile)
 bash installers/brew.sh
 
 # Setup development environment only  

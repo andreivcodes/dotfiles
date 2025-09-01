@@ -9,6 +9,7 @@ log_info "Starting comprehensive dotfiles setup..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Define setup scripts and their descriptions
 SCRIPT_DIR="$(dirname "$0")"
