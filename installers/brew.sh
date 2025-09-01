@@ -53,7 +53,7 @@ CASKS=(
     "zed"
     "github"
     "docker"
-    "dbeaver-community"
+    "beekeeper-studio"
     "brave-browser"
     "wifiman"
     "1password"

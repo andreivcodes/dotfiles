@@ -54,7 +54,7 @@ DOCK_APPS=(
   "/Applications/Zed.app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
-  "/Applications/DBeaver.app"
+  "/Applications/Beekeeper Studio.app"
   "/System/Applications/App Store.app"
   "/System/Applications/System Settings.app"
   "/Applications/Brave Browser.app"
