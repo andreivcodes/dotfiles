@@ -13,18 +13,23 @@ check_not_sudo
 # Create config directory if it doesn't exist
 mkdir -p "$HOME/.config"
 
-# Configuration mappings: source -> target
-declare -A CONFIGS=(
-    ["$PWD/dotfiles/zed"]="$HOME/.config/zed"
-    ["$PWD/dotfiles/.zshrc"]="$HOME/.zshrc"
+# Configuration mappings: source -> target (using parallel arrays for bash 3.2 compatibility)
+SOURCES=(
+    "$PWD/dotfiles/zed"
+    "$PWD/dotfiles/.zshrc"
 )
 
-total=${#CONFIGS[@]}
-current=0
+TARGETS=(
+    "$HOME/.config/zed"
+    "$HOME/.zshrc"
+)
 
-for source in "${!CONFIGS[@]}"; do
-    target="${CONFIGS[$source]}"
-    current=$((current + 1))
+total=${#SOURCES[@]}
+
+for i in "${!SOURCES[@]}"; do
+    source="${SOURCES[$i]}"
+    target="${TARGETS[$i]}"
+    current=$((i + 1))
     
     config_name=$(basename "$source")
     show_progress $current $total "Setting up $config_name configuration"

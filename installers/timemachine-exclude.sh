@@ -99,7 +99,6 @@ CACHE_PATHS=(
     "$HOME/.docker"
     "$HOME/Library/Developer/Xcode/DerivedData"
     "$HOME/Library/Developer/CoreSimulator"
-    "$HOME/.Trash"
 )
 
 log_info "Excluding cache and temporary directories..."
@@ -117,9 +116,13 @@ else
     log_warning "Asimov not found. Install with: brew install asimov"
 fi
 
-# Show current exclusions
-log_info "Current Time Machine exclusions:"
-tmutil listexclusions 2>/dev/null | head -20
+# Show current exclusions (skip if command fails - requires admin on newer macOS)
+log_info "Attempting to show current Time Machine exclusions..."
+if tmutil listexclusions 2>/dev/null | head -20; then
+    log_info "Exclusions listed above"
+else
+    log_info "Note: Listing exclusions requires admin privileges on newer macOS versions"
+fi
 
 log_success "Time Machine exclusion setup completed!"
 log_info "Benefits:"

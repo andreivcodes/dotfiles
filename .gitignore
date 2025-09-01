@@ -4,3 +4,4 @@ infra/ansible/.vault_pass
 .ansible/
 __pycache__/
 /infra/ansible/.fact_cache
+dotfiles/zed/prompts/

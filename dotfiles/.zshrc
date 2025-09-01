@@ -1,3 +1,76 @@
+# Path to your oh-my-zsh installation
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load (using default robbyrussell)
+ZSH_THEME="robbyrussell"
+
+# Uncomment the following line to use case-sensitive completion
+# CASE_SENSITIVE="true"
+
+# Uncomment the following line to use hyphen-insensitive completion
+# Case-sensitive completion must be off. _ and - will be interchangeable
+HYPHEN_INSENSITIVE="true"
+
+# Uncomment the following line to automatically update without prompting
+DISABLE_UPDATE_PROMPT="true"
+
+# Uncomment the following line to change how often to auto-update (in days)
+export UPDATE_ZSH_DAYS=13
+
+# Uncomment the following line if pasting URLs and other text is messed up
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# Uncomment the following line to enable command auto-correction
+# ENABLE_CORRECTION="true"
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+plugins=(
+    git
+    macos
+    brew
+    docker
+    npm
+    node
+    nvm
+    rust
+    command-not-found
+    colored-man-pages
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+)
+
+# Load Oh My Zsh
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+
+# Add Claude Code to PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# NVM setup
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Rust setup
+[ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+
+# Aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias gs='git status'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git pull'
+alias gco='git checkout'
+alias gb='git branch'
+alias ga='git add'
+alias gd='git diff'
+
+# Claude wrapper function
 unalias claude 2>/dev/null
 claude() {
     local config_value=""

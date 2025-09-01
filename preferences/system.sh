@@ -45,6 +45,9 @@ defaults write com.apple.finder SidebarDevicesSectionDisclosedState -bool true
 # Enable places section in sidebar
 defaults write com.apple.finder SidebarPlacesSectionDisclosedState -bool true
 
+# Hide tags from Finder sidebar
+defaults write com.apple.finder ShowRecentTags -bool false
+
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
@@ -56,6 +59,9 @@ sudo chflags nohidden /Volumes 2>/dev/null || true
 
 # Dock Preferences
 log_info "Configuring Dock preferences..."
+
+# Set Dock icon size to smaller (36 pixels, about half the default)
+defaults write com.apple.dock tilesize -int 36
 
 # Disable auto-hide for the Dock (keep it visible)
 defaults write com.apple.dock autohide -bool false
@@ -141,6 +147,59 @@ defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
 
 # Save to disk (not to iCloud) by default
 defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+
+# Display Configuration
+log_info "Configuring display scaling..."
+if command -v displayplacer >/dev/null 2>&1; then
+    # Get the display ID
+    DISPLAY_ID=$(displayplacer list | grep "Persistent screen id:" | head -1 | awk '{print $4}')
+    if [ -n "$DISPLAY_ID" ]; then
+        # Set to More Space (1800x1169 at 120Hz, usually mode 66 on MacBook Pro 14")
+        # This provides more screen real estate
+        displayplacer "id:$DISPLAY_ID res:1800x1169 hz:120 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" 2>/dev/null || \
+        displayplacer "id:$DISPLAY_ID mode:66" 2>/dev/null || \
+        log_warning "Could not set display to More Space mode"
+        log_success "Display set to More Space mode"
+    else
+        log_warning "Could not detect display ID"
+    fi
+else
+    log_warning "displayplacer not installed. Display scaling not configured."
+fi
+
+# Rectangle Window Management Configuration
+log_info "Configuring Rectangle window management..."
+if [ -d "/Applications/Rectangle.app" ]; then
+    # Set Rectangle to launch at login
+    defaults write com.knollsoft.Rectangle launchOnLogin -bool true
+    
+    # Hide menu bar icon for cleaner look
+    defaults write com.knollsoft.Rectangle hideMenubarIcon -bool false
+    
+    # Enable snap areas (drag windows to edges)
+    defaults write com.knollsoft.Rectangle snapEdges -int 1
+    
+    # Set gap between windows (in pixels)
+    defaults write com.knollsoft.Rectangle gapSize -float 10
+    
+    # Enable automatic window snapping
+    defaults write com.knollsoft.Rectangle allowAnyShortcutWithOptionModifier -bool true
+    
+    # Configure default keyboard shortcuts
+    defaults write com.knollsoft.Rectangle leftHalf -dict keyCode 123 modifierFlags 786432  # Ctrl+Opt+Left
+    defaults write com.knollsoft.Rectangle rightHalf -dict keyCode 124 modifierFlags 786432  # Ctrl+Opt+Right
+    defaults write com.knollsoft.Rectangle maximize -dict keyCode 126 modifierFlags 786432  # Ctrl+Opt+Up
+    defaults write com.knollsoft.Rectangle restore -dict keyCode 125 modifierFlags 786432  # Ctrl+Opt+Down
+    defaults write com.knollsoft.Rectangle topLeft -dict keyCode 123 modifierFlags 917504  # Ctrl+Opt+Cmd+Left
+    defaults write com.knollsoft.Rectangle topRight -dict keyCode 124 modifierFlags 917504  # Ctrl+Opt+Cmd+Right
+    defaults write com.knollsoft.Rectangle bottomLeft -dict keyCode 123 modifierFlags 1048576  # Cmd+Left
+    defaults write com.knollsoft.Rectangle bottomRight -dict keyCode 124 modifierFlags 1048576  # Cmd+Right
+    defaults write com.knollsoft.Rectangle center -dict keyCode 8 modifierFlags 786432  # Ctrl+Opt+C
+    
+    log_success "Rectangle configured successfully"
+else
+    log_info "Rectangle not installed yet. Will be configured after installation."
+fi
 
 # Restart affected applications
 log_info "Restarting affected applications to apply changes..."

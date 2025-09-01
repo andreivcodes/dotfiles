@@ -42,6 +42,7 @@ FORMULAS=(
     "ansible"
     "asimov"
     "mas"
+    "displayplacer"
 )
 
 CASKS=(
@@ -63,6 +64,9 @@ CASKS=(
     "balenaetcher"
     "libreoffice"
     "signal"
+    "topnotch"
+    "cleanshot"
+    "rectangle"
 )
 
 # Install formula packages

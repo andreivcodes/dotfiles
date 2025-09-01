@@ -13,6 +13,42 @@ check_not_sudo
 # Ensure shell environment is loaded
 source "$HOME/.zprofile" 2>/dev/null || true
 
+# Oh My Zsh setup
+log_info "Setting up Oh My Zsh..."
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    log_info "Oh My Zsh is already installed"
+else
+    log_info "Installing Oh My Zsh..."
+    if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
+        log_success "Oh My Zsh installed successfully"
+    else
+        log_error "Failed to install Oh My Zsh"
+        exit 1
+    fi
+fi
+
+# Install useful Oh My Zsh plugins
+log_info "Installing Oh My Zsh plugins..."
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+
+# zsh-autosuggestions
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+    log_info "Installing zsh-autosuggestions..."
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    log_success "zsh-autosuggestions installed"
+else
+    log_info "zsh-autosuggestions already installed"
+fi
+
+# zsh-syntax-highlighting
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+    log_info "Installing zsh-syntax-highlighting..."
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    log_success "zsh-syntax-highlighting installed"
+else
+    log_info "zsh-syntax-highlighting already installed"
+fi
+
 # Node.js and npm setup using NVM
 log_info "Setting up Node.js environment..."
 if command_exists nvm; then
