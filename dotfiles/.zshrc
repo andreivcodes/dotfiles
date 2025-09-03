@@ -131,19 +131,12 @@ codex() {
         return 1
     fi
     echo "Codex user: $config_value."
-    # Set the config directory based on profile
-    export CODEX_CONFIG_DIR="$HOME/.codex-$config_value"
+    # Set the config directory based on profile using CODEX_HOME
+    export CODEX_HOME="$HOME/.codex-$config_value"
     # Ensure the config directory exists
-    mkdir -p "$CODEX_CONFIG_DIR"
-    # Create symlink for config.toml if it doesn't exist
-    if [[ ! -f "$CODEX_CONFIG_DIR/config.toml" ]]; then
-        # Copy the default config if it exists
-        if [[ -f "$HOME/.codex/config.toml" ]]; then
-            cp "$HOME/.codex/config.toml" "$CODEX_CONFIG_DIR/config.toml"
-        fi
-    fi
+    mkdir -p "$CODEX_HOME"
     # Run codex with the custom config directory
-    HOME="$HOME" XDG_CONFIG_HOME="$CODEX_CONFIG_DIR/.." command codex "${codex_args[@]}"
+    CODEX_HOME="$CODEX_HOME" command codex "${codex_args[@]}"
 }
 
 # Gemini wrapper function
@@ -175,13 +168,15 @@ gemini() {
         return 1
     fi
     echo "Gemini user: $config_value."
-    # Set the config directory based on profile
-    export GEMINI_CONFIG_DIR="$HOME/.gemini-$config_value"
-    # Ensure the config directory exists
-    mkdir -p "$GEMINI_CONFIG_DIR"
-    # Set environment variables for Gemini to use the custom config
-    export GEMINI_DATA_DIR="$GEMINI_CONFIG_DIR"
-    export GEMINI_STATE_DIR="$GEMINI_CONFIG_DIR/state"
-    # Run gemini with the custom config directory
-    HOME="$HOME" XDG_CONFIG_HOME="$GEMINI_CONFIG_DIR/.." XDG_DATA_HOME="$GEMINI_CONFIG_DIR" command gemini "${gemini_args[@]}"
+    # Create a temporary HOME directory for this profile
+    local GEMINI_PROFILE_HOME="$HOME/.gemini-profiles/$config_value"
+    mkdir -p "$GEMINI_PROFILE_HOME"
+    # Create symlinks to essential directories from real home
+    for dir in Documents Downloads Desktop Pictures Music Videos; do
+        if [ -d "$HOME/$dir" ] && [ ! -e "$GEMINI_PROFILE_HOME/$dir" ]; then
+            ln -s "$HOME/$dir" "$GEMINI_PROFILE_HOME/$dir" 2>/dev/null || true
+        fi
+    done
+    # Run gemini with the profile-specific HOME
+    HOME="$GEMINI_PROFILE_HOME" command gemini "${gemini_args[@]}"
 }
