@@ -53,7 +53,6 @@ DOCK_APPS=(
   "/Applications/Signal.app"
   "/System/Applications/Calendar.app"
   "/Applications/Zed.app"
-  "/Applications/Visual Studio Code.app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
   "/Applications/Beekeeper Studio.app"
@@ -72,7 +71,7 @@ for app_path in "${DOCK_APPS[@]}"; do
   current=$((current + 1))
   app_name=$(basename "$app_path" .app)
   show_progress $current $total "Adding $app_name"
-  
+
   if ! add_app_to_dock "$app_path"; then
     failed_apps+=("$app_path")
   fi

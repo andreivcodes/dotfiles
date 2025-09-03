@@ -14,7 +14,6 @@ cask "slack"
 cask "whatsapp"
 cask "telegram"
 cask "zed"
-cask "visual-studio-code"
 cask "github"            # GitHub Desktop
 cask "docker"
 cask "beekeeper-studio"
