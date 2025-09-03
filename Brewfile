@@ -5,6 +5,8 @@ brew "act"
 brew "ansible"
 brew "asimov"
 brew "displayplacer"  # display scaling utility used by preferences script
+brew "codex"          # OpenAI Codex CLI
+brew "gemini-cli"     # Google Gemini CLI
 
 # Applications
 cask "discord"
@@ -16,6 +18,7 @@ cask "visual-studio-code"
 cask "github"            # GitHub Desktop
 cask "docker"
 cask "beekeeper-studio"
+cask "claude-code"       # Claude Code CLI
 cask "brave-browser"
 cask "wifiman"
 cask "1password"

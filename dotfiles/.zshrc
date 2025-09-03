@@ -101,3 +101,87 @@ claude() {
     echo "Claude Code user: $config_value."
     CLAUDE_CONFIG_DIR="$HOME/.claude-$config_value" command claude "${claude_args[@]}"
 }
+
+# Codex wrapper function
+unalias codex 2>/dev/null
+codex() {
+    local config_value=""
+    local codex_args=()
+    local user_provided=false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    config_value="$2"
+                    user_provided=true
+                    shift 2
+                else
+                    echo "Error: -u requires a value" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                codex_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    if [[ "$user_provided" = false ]]; then
+        echo "Error: -u parameter is required. Usage: codex -u <profile> [args...]" >&2
+        return 1
+    fi
+    echo "Codex user: $config_value."
+    # Set the config directory based on profile
+    export CODEX_CONFIG_DIR="$HOME/.codex-$config_value"
+    # Ensure the config directory exists
+    mkdir -p "$CODEX_CONFIG_DIR"
+    # Create symlink for config.toml if it doesn't exist
+    if [[ ! -f "$CODEX_CONFIG_DIR/config.toml" ]]; then
+        # Copy the default config if it exists
+        if [[ -f "$HOME/.codex/config.toml" ]]; then
+            cp "$HOME/.codex/config.toml" "$CODEX_CONFIG_DIR/config.toml"
+        fi
+    fi
+    # Run codex with the custom config directory
+    HOME="$HOME" XDG_CONFIG_HOME="$CODEX_CONFIG_DIR/.." command codex "${codex_args[@]}"
+}
+
+# Gemini wrapper function
+unalias gemini 2>/dev/null
+gemini() {
+    local config_value=""
+    local gemini_args=()
+    local user_provided=false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    config_value="$2"
+                    user_provided=true
+                    shift 2
+                else
+                    echo "Error: -u requires a value" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                gemini_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    if [[ "$user_provided" = false ]]; then
+        echo "Error: -u parameter is required. Usage: gemini -u <profile> [args...]" >&2
+        return 1
+    fi
+    echo "Gemini user: $config_value."
+    # Set the config directory based on profile
+    export GEMINI_CONFIG_DIR="$HOME/.gemini-$config_value"
+    # Ensure the config directory exists
+    mkdir -p "$GEMINI_CONFIG_DIR"
+    # Set environment variables for Gemini to use the custom config
+    export GEMINI_DATA_DIR="$GEMINI_CONFIG_DIR"
+    export GEMINI_STATE_DIR="$GEMINI_CONFIG_DIR/state"
+    # Run gemini with the custom config directory
+    HOME="$HOME" XDG_CONFIG_HOME="$GEMINI_CONFIG_DIR/.." XDG_DATA_HOME="$GEMINI_CONFIG_DIR" command gemini "${gemini_args[@]}"
+}

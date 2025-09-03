@@ -1,4 +1,42 @@
 {
+  "agent_servers": {
+    "Claude personal": {
+      "command": "npx",
+      "args": ["--yes", "@zed-industries/claude-code-acp@latest"],
+      "env": {
+        "CLAUDE_CONFIG_DIR": "/Users/andrei/.claude-personal"
+      }
+    },
+    "Claude work": {
+      "command": "npx",
+      "args": ["--yes", "@zed-industries/claude-code-acp@latest"],
+      "env": {
+        "CLAUDE_CONFIG_DIR": "/Users/andrei/.claude-work"
+      }
+    },
+    "Gemini personal": {
+      "command": "gemini",
+      "args": ["--acp"],
+      "env": {
+        "GEMINI_CONFIG_DIR": "/Users/andrei/.gemini-personal",
+        "GEMINI_DATA_DIR": "/Users/andrei/.gemini-personal",
+        "GEMINI_STATE_DIR": "/Users/andrei/.gemini-personal/state",
+        "XDG_CONFIG_HOME": "/Users/andrei/.gemini-personal/..",
+        "XDG_DATA_HOME": "/Users/andrei/.gemini-personal"
+      }
+    },
+    "Gemini work": {
+      "command": "gemini",
+      "args": ["--acp"],
+      "env": {
+        "GEMINI_CONFIG_DIR": "/Users/andrei/.gemini-work",
+        "GEMINI_DATA_DIR": "/Users/andrei/.gemini-work",
+        "GEMINI_STATE_DIR": "/Users/andrei/.gemini-work/state",
+        "XDG_CONFIG_HOME": "/Users/andrei/.gemini-work/..",
+        "XDG_DATA_HOME": "/Users/andrei/.gemini-work"
+      }
+    }
+  },
   "context_servers": {
     "browsermcp": {
       "source": "custom",
