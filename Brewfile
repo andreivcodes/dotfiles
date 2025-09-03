@@ -16,7 +16,7 @@ cask "telegram"
 cask "zed"
 cask "github"            # GitHub Desktop
 cask "docker"
-cask "beekeeper-studio"
+cask "datagrip"
 cask "claude-code"       # Claude Code CLI
 cask "brave-browser"
 cask "wifiman"
