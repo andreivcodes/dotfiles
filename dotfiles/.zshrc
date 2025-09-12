@@ -180,3 +180,11 @@ gemini() {
     # Run gemini with the profile-specific HOME
     HOME="$GEMINI_PROFILE_HOME" command gemini "${gemini_args[@]}"
 }
+
+# pnpm
+export PNPM_HOME="/Users/andrei/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
