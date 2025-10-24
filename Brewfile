@@ -15,7 +15,6 @@ cask "whatsapp"
 cask "telegram"
 cask "zed"
 cask "github"            # GitHub Desktop
-cask "docker"
 cask "tableplus"
 cask "claude-code"       # Claude Code CLI
 cask "brave-browser"
@@ -32,3 +31,4 @@ cask "topnotch"
 cask "cleanshot"
 cask "rectangle"
 cask "keepingyouawake"   # Alternative to Amphetamine (no MAS required)
+cask "orbstack"
