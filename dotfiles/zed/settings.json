@@ -30,12 +30,6 @@
     }
   },
   "context_servers": {
-    "browsermcp": {
-      "source": "custom",
-      "enabled": true,
-      "command": "npx",
-      "args": ["@browsermcp/mcp@latest"]
-    },
     "mcp-server-context7": {
       "source": "extension",
       "enabled": true,
@@ -47,6 +41,7 @@
   "language_models": {
     "ollama": {
       "api_url": "http://192.168.100.210:11434"
+      // NOTE: Using HTTP on local network. Consider HTTPS for production or untrusted networks.
     }
   },
   "bottom_dock_layout": "contained",
@@ -124,6 +119,7 @@
   "agent": {
     "default_profile": "write",
     "always_allow_tool_actions": true,
+    // NOTE: always_allow_tool_actions is convenient but bypasses security prompts
     "profiles": {
       "write": {
         "name": "Write",
@@ -160,5 +156,26 @@
       "provider": "ollama",
       "model": "devstral:24b"
     }
+  },
+  "terminal": {
+    "shell": {
+      "program": "zsh"
+    },
+    "font_size": 14,
+    "line_height": "comfortable"
+  },
+  "git": {
+    "git_gutter": "tracked_files",
+    "inline_blame": {
+      "enabled": true
+    }
+  },
+  "autosave": "on_focus_change",
+  "telemetry": {
+    "diagnostics": true,
+    "metrics": true
+  },
+  "tab_bar": {
+    "show": true
   }
 }

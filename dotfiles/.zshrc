@@ -1,8 +1,27 @@
+# ============================================================================
+# Oh My Zsh Configuration
+# ============================================================================
+
 # Path to your oh-my-zsh installation
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load (using default robbyrussell)
 ZSH_THEME="robbyrussell"
+
+# ============================================================================
+# History Configuration
+# ============================================================================
+HISTFILE=~/.zsh_history
+HISTSIZE=100000
+SAVEHIST=100000
+setopt SHARE_HISTORY           # Share history between sessions
+setopt HIST_IGNORE_DUPS        # Don't record duplicates
+setopt HIST_IGNORE_SPACE       # Don't record commands starting with space
+setopt HIST_VERIFY             # Show command with history expansion before running
+
+# ============================================================================
+# Oh My Zsh Settings
+# ============================================================================
 
 # Uncomment the following line to use case-sensitive completion
 # CASE_SENSITIVE="true"
@@ -44,23 +63,65 @@ plugins=(
 # Load Oh My Zsh
 source $ZSH/oh-my-zsh.sh
 
-# User configuration
+# ============================================================================
+# User Configuration
+# ============================================================================
 
 # Add Claude Code to PATH
 export PATH="$HOME/.local/bin:$PATH"
 
-# NVM setup
+# ============================================================================
+# NVM Setup (Lazy Loaded for Performance)
+# ============================================================================
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Rust setup
-[ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+# Lazy load nvm - only load when nvm/node/npm is called
+nvm() {
+  unset -f nvm node npm
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  nvm "$@"
+}
 
+node() {
+  unset -f nvm node npm
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  node "$@"
+}
+
+npm() {
+  unset -f nvm node npm
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  npm "$@"
+}
+
+# ============================================================================
+# Rust Setup (Lazy Loaded for Performance)
+# ============================================================================
+cargo() {
+  unset -f cargo rustc
+  [ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+  cargo "$@"
+}
+
+rustc() {
+  unset -f cargo rustc
+  [ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+  rustc "$@"
+}
+
+# ============================================================================
 # Aliases
+# ============================================================================
+
+# File listing
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
+
+# Git shortcuts
 alias gs='git status'
 alias gc='git commit'
 alias gp='git push'
@@ -70,81 +131,74 @@ alias gb='git branch'
 alias ga='git add'
 alias gd='git diff'
 
-# Claude wrapper function
-unalias claude 2>/dev/null
-claude() {
-    local config_value=""
-    local claude_args=()
-    local user_provided=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -u)
-                if [[ -n "$2" && "$2" != -* ]]; then
-                    config_value="$2"
-                    user_provided=true
-                    shift 2
-                else
-                    echo "Error: -u requires a value" >&2
-                    return 1
-                fi
-                ;;
-            *)
-                claude_args+=("$1")
-                shift
-                ;;
-        esac
-    done
-    if [[ "$user_provided" = false ]]; then
-        echo "Error: -u parameter is required. Usage: claude -u <profile> [args...]" >&2
-        return 1
-    fi
-    echo "Claude Code user: $config_value."
-    CLAUDE_CONFIG_DIR="$HOME/.claude-$config_value" command claude "${claude_args[@]}"
+# ============================================================================
+# AI CLI Profile Wrapper Functions
+# ============================================================================
+# These wrappers allow running AI CLIs with different user profiles
+# Usage: claude -u <profile> [args...]
+#        codex -u <profile> [args...]
+#        gemini -u <profile> [args...]
+# ============================================================================
+
+# Generic wrapper factory for simple config-based CLIs
+_create_profile_wrapper() {
+    local cmd=$1
+    local env_var=$2
+    local display_name=$3
+
+    unalias "$cmd" 2>/dev/null
+    eval "$cmd() {
+        local config_value=\"\"
+        local cmd_args=()
+        local user_provided=false
+
+        # Parse arguments
+        while [[ \$# -gt 0 ]]; do
+            case \$1 in
+                -u)
+                    if [[ -n \"\$2\" && \"\$2\" != -* ]]; then
+                        config_value=\"\$2\"
+                        user_provided=true
+                        shift 2
+                    else
+                        echo \"Error: -u requires a value\" >&2
+                        return 1
+                    fi
+                    ;;
+                *)
+                    cmd_args+=(\"\$1\")
+                    shift
+                    ;;
+            esac
+        done
+
+        # Validate required parameter
+        if [[ \"\$user_provided\" = false ]]; then
+            echo \"Error: -u parameter is required. Usage: $cmd -u <profile> [args...]\" >&2
+            return 1
+        fi
+
+        echo \"$display_name user: \$config_value\"
+
+        # Set environment and run command
+        local config_dir=\"\$HOME/.$cmd-\$config_value\"
+        mkdir -p \"\$config_dir\"
+        $env_var=\"\$config_dir\" command $cmd \"\${cmd_args[@]}\"
+    }"
 }
 
-# Codex wrapper function
-unalias codex 2>/dev/null
-codex() {
-    local config_value=""
-    local codex_args=()
-    local user_provided=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -u)
-                if [[ -n "$2" && "$2" != -* ]]; then
-                    config_value="$2"
-                    user_provided=true
-                    shift 2
-                else
-                    echo "Error: -u requires a value" >&2
-                    return 1
-                fi
-                ;;
-            *)
-                codex_args+=("$1")
-                shift
-                ;;
-        esac
-    done
-    if [[ "$user_provided" = false ]]; then
-        echo "Error: -u parameter is required. Usage: codex -u <profile> [args...]" >&2
-        return 1
-    fi
-    echo "Codex user: $config_value."
-    # Set the config directory based on profile using CODEX_HOME
-    export CODEX_HOME="$HOME/.codex-$config_value"
-    # Ensure the config directory exists
-    mkdir -p "$CODEX_HOME"
-    # Run codex with the custom config directory
-    CODEX_HOME="$CODEX_HOME" command codex "${codex_args[@]}"
-}
+# Create wrappers for Claude and Codex (similar pattern)
+_create_profile_wrapper claude CLAUDE_CONFIG_DIR "Claude Code"
+_create_profile_wrapper codex CODEX_HOME "Codex"
 
-# Gemini wrapper function
+# Gemini wrapper (special case - uses HOME and creates symlinks)
 unalias gemini 2>/dev/null
 gemini() {
     local config_value=""
     local gemini_args=()
     local user_provided=false
+
+    # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -u)
@@ -163,23 +217,34 @@ gemini() {
                 ;;
         esac
     done
+
+    # Validate required parameter
     if [[ "$user_provided" = false ]]; then
         echo "Error: -u parameter is required. Usage: gemini -u <profile> [args...]" >&2
         return 1
     fi
-    echo "Gemini user: $config_value."
-    # Create a temporary HOME directory for this profile
-    local GEMINI_PROFILE_HOME="$HOME/.gemini-profiles/$config_value"
-    mkdir -p "$GEMINI_PROFILE_HOME"
+
+    echo "Gemini user: $config_value"
+
+    # Create profile-specific HOME directory
+    local gemini_profile_home="$HOME/.gemini-profiles/$config_value"
+    mkdir -p "$gemini_profile_home"
+
     # Create symlinks to essential directories from real home
+    local dir
     for dir in Documents Downloads Desktop Pictures Music Videos; do
-        if [ -d "$HOME/$dir" ] && [ ! -e "$GEMINI_PROFILE_HOME/$dir" ]; then
-            ln -s "$HOME/$dir" "$GEMINI_PROFILE_HOME/$dir" 2>/dev/null || true
+        if [[ -d "$HOME/$dir" ]] && [[ ! -e "$gemini_profile_home/$dir" ]]; then
+            ln -s "$HOME/$dir" "$gemini_profile_home/$dir" 2>/dev/null || true
         fi
     done
+
     # Run gemini with the profile-specific HOME
-    HOME="$GEMINI_PROFILE_HOME" command gemini "${gemini_args[@]}"
+    HOME="$gemini_profile_home" command gemini "${gemini_args[@]}"
 }
+
+# ============================================================================
+# Additional Tools
+# ============================================================================
 
 # pnpm
 export PNPM_HOME="/Users/andrei/Library/pnpm"
@@ -187,9 +252,20 @@ case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
-# pnpm end
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+
+# Antigravity
+export PATH="/Users/andrei/.antigravity/antigravity/bin:$PATH"
+
+# ============================================================================
+# Completion System (Optimized)
+# ============================================================================
+# Docker CLI completions
 fpath=(/Users/andrei/.docker/completions $fpath)
+
+# Speed up compinit by only checking cache once a day
 autoload -Uz compinit
-compinit
-# End of Docker CLI completions
+if [[ -n ${HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi

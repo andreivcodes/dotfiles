@@ -41,8 +41,12 @@ else
 fi
 
 # Define applications to add to Dock
+# Order: finder, launchpad (added via dockutil), safari, messages, whatsapp, mail,
+#        slack, discord, telegram, calendar, zed, antigravity, terminal, github,
+#        tableplus, app store, settings, notion, figma, ungoogled chrome
+# Note: Launchpad is added separately using dockutil (after line 94)
 DOCK_APPS=(
-  "/System/Applications/Launchpad.app"
+  "/System/Library/CoreServices/Finder.app"
   "/Applications/Safari.app"
   "/System/Applications/Messages.app"
   "/Applications/WhatsApp.app"
@@ -50,15 +54,17 @@ DOCK_APPS=(
   "/Applications/Slack.app"
   "/Applications/Discord.app"
   "/Applications/Telegram.app"
-  "/Applications/Signal.app"
   "/System/Applications/Calendar.app"
   "/Applications/Zed.app"
+  "/Applications/Antigravity.app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
   "/Applications/TablePlus.app"
   "/System/Applications/App Store.app"
   "/System/Applications/System Settings.app"
-  "/Applications/Brave Browser.app"
+  "/Applications/Notion.app"
+  "/Applications/Figma.app"
+  "/Applications/Chromium.app"
 )
 
 # Add applications to Dock
@@ -85,10 +91,28 @@ else
   log_warning "Failed to restart Dock, changes may not be visible immediately"
 fi
 
+# Add Launchpad using dockutil (special case - doesn't work with defaults write)
+log_info "Adding Launchpad to Dock using dockutil..."
+if command_exists dockutil; then
+  # Wait for Dock to fully restart
+  sleep 2
+
+  # Add Launchpad at position 2 (after Finder)
+  if dockutil --add '/System/Applications/Launchpad.app' --position 2 --no-restart 2>/dev/null; then
+    log_success "Added Launchpad to Dock"
+    # Restart Dock again to show Launchpad
+    killall Dock 2>/dev/null || true
+  else
+    log_warning "Failed to add Launchpad (may not exist on this macOS version)"
+  fi
+else
+  log_warning "dockutil not installed - skipping Launchpad (install with: brew install dockutil)"
+fi
+
 # Summary
 if [ ${#failed_apps[@]} -eq 0 ]; then
   log_success "Dock configuration completed successfully!"
-  log_info "Added ${#DOCK_APPS[@]} applications to Dock"
+  log_info "Added ${#DOCK_APPS[@]} applications to Dock (plus Launchpad)"
 else
   log_warning "Dock configuration completed with some failures:"
   for app in "${failed_apps[@]}"; do

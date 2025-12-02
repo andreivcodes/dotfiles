@@ -1,68 +1,308 @@
-# Dotfiles Setup
+# Dotfiles
 
-Complete macOS development environment setup with applications, system preferences, and configurations.
+Personal macOS configuration files and development environment setup.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/andreivcodes/dotfiles.git && cd dotfiles
-./setup
+git clone https://github.com/andreivcodes/dotfiles.git ~/git/dotfiles
+cd ~/git/dotfiles
+./setup.sh
 ```
 
-## What It Sets Up
+## What's Included
 
-- **Applications**: Homebrew packages, development tools, communication apps
-- **System Preferences**: Finder, Dock, Trackpad, Keyboard, Security settings  
+- **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
+- **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh, lazy loading, and AI CLI wrappers
+- **Zed Editor**: Complete settings with AI agent profiles and custom formatters
 - **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
-- **Configuration Files**: Zed editor, shell (zsh), dotfile symlinks
+- **Installation Scripts**: Automated setup and symlink management
 
 ## Repository Structure
 
 ```
 dotfiles/
-├── setup                   # 🚀 Main entry point script
-├── installers/            # 📦 Application and tool installers
-│   ├── all.sh             #   Orchestrates all setup scripts
-│   ├── brew.sh            #   Installs packages/apps via Brewfile (brew bundle)
-│   ├── dev.sh             #   Sets up Node.js and Rust development
-│   └── dock.sh            #   Configures macOS Dock layout
-├── preferences/           # ⚙️  macOS system preferences
-│   └── system.sh          #   Configures Finder, Dock, Trackpad, etc.
-├── dotfiles/              # 🔧 Configuration files and dotfiles
-│   ├── dotfiles.sh        #   Symlinks configurations to home directory
-│   ├── .zshrc             #   Shell configuration with Claude multi-instance
-│   └── zed/               #   Zed editor configuration
-└── lib/                   # 🛠️ Utility functions and helpers
-    └── utils.sh           #   Logging, progress tracking, error handling
+├── README.md                  # This file
+├── Brewfile                   # Homebrew package declarations (organized by category)
+├── setup.sh                   # Main entry point for full setup
+├── .gitignore                 # Files to exclude from git
+├── installers/                # Setup scripts
+│   ├── all.sh                 # Orchestrates all installation steps
+│   ├── brew.sh                # Installs Homebrew packages
+│   ├── dev.sh                 # Sets up development environment (Node.js, Rust)
+│   └── dock.sh                # Configures macOS Dock layout
+├── dotfiles/                  # Configuration files
+│   ├── dotfiles.sh            # Creates symlinks for config files
+│   ├── .zshrc                 # Zsh configuration (performance-optimized)
+│   └── zed/
+│       └── settings.json      # Zed editor settings
+├── preferences/               # macOS system preferences scripts
+│   └── system.sh              # Configures Finder, Dock, Trackpad, etc.
+└── lib/                       # Shared utility functions
+    └── utils.sh               # Logging, progress tracking, error handling
 ```
 
-## Individual Scripts
+## Installation
 
-You can run components individually if needed:
+### Prerequisites
+
+- macOS (tested on macOS 15.2+)
+- [Homebrew](https://brew.sh/) installed
+- [Oh My Zsh](https://ohmyz.sh/) installed
+
+### Install Oh My Zsh Plugins
 
 ```bash
-# Install applications and packages only (uses Brewfile)
+# zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+```
+
+### Full Setup (Recommended)
+
+The `setup.sh` script provides a complete, automated installation:
+
+```bash
+# Clone and run full setup
+git clone https://github.com/andreivcodes/dotfiles.git ~/git/dotfiles
+cd ~/git/dotfiles
+./setup.sh
+```
+
+This will:
+- Install all Homebrew packages and applications
+- Set up Node.js (via NVM) and Rust development environments
+- Configure macOS system preferences (Finder, Dock, Trackpad, etc.)
+- Create symlinks for dotfiles (.zshrc, Zed config)
+- Configure Dock layout with your applications
+- Set up Time Machine exclusions for development directories
+
+### Partial Setup (Individual Components)
+
+You can also run individual setup scripts:
+
+```bash
+# Install packages only
 bash installers/brew.sh
 
-# Setup development environment only  
+# Set up development environment only
 bash installers/dev.sh
 
 # Configure system preferences only
 bash preferences/system.sh
 
-# Setup configuration files only
+# Create dotfile symlinks only
 bash dotfiles/dotfiles.sh
 
 # Configure Dock layout only
 bash installers/dock.sh
 ```
 
-## Features
+## Key Features
 
-- **🎯 Progress Tracking**: Visual progress indicators for all operations
-- **🛡️ Error Handling**: Continues on failure, shows summary of issues
-- **🔄 Idempotency**: Safe to run multiple times, skips already installed items
-- **✋ User Confirmation**: Asks before making major changes
-- **📊 Detailed Logging**: Color-coded status messages with clear feedback
-- **🔒 Safety Checks**: Prevents running with sudo when inappropriate
-- **💾 Auto Backup**: Backs up existing configurations before overwriting
+### Shell Configuration (.zshrc)
+
+- **⚡ Performance Optimized**: Lazy loading for nvm, cargo, and rust (dramatically faster shell startup)
+- **🤖 AI CLI Wrappers**: Profile-based wrappers for Claude, Codex, and Gemini CLIs
+- **📚 History Management**: 100k command history with deduplication and sharing across sessions
+- **⌨️ Git Aliases**: Quick shortcuts for common git operations (gs, gc, gp, etc.)
+- **🚀 Completion Caching**: Daily completion cache refresh for faster shell startup
+- **🎨 Oh My Zsh Integration**: With carefully selected plugins for minimal performance impact
+
+### AI CLI Profile Management
+
+Use different profiles for personal and work contexts:
+
+```bash
+# Claude Code with different profiles
+claude -u personal
+claude -u work
+
+# Codex with profiles
+codex -u personal
+codex -u work
+
+# Gemini with profiles
+gemini -u personal
+gemini -u work
+```
+
+Each profile maintains separate:
+- Configuration directories
+- API keys and credentials
+- Chat history and context
+
+### Brewfile Package Management
+
+Organized package declarations across categories:
+- 📦 CLI tools and utilities (wget, ansible, act, etc.)
+- 🤖 AI/ML CLIs (codex, gemini-cli)
+- 💻 Development tools (nixpacks, orbstack, zed)
+- 💬 Communication apps (Discord, Slack, WhatsApp, Signal, Telegram)
+- 🔒 Security and VPN tools (1Password, Tailscale, Mullvad)
+- 🎯 Productivity utilities (Rectangle, CleanShot, TablePlus)
+
+**Usage:**
+
+The Brewfile stays in the repository (not symlinked to home directory). Use it with:
+
+```bash
+# From the dotfiles directory
+cd ~/git/dotfiles
+brew bundle install    # Install all packages
+brew bundle check      # Check what's not installed
+brew bundle cleanup    # Remove packages not in Brewfile
+
+# Or from anywhere with --file flag
+brew bundle install --file ~/git/dotfiles/Brewfile
+brew bundle check --file ~/git/dotfiles/Brewfile
+
+# Update Brewfile with current installations
+cd ~/git/dotfiles
+brew bundle dump --force
+```
+
+### Zed Editor Configuration
+
+- **🤖 Multiple AI Agent Profiles**: Claude personal/work, Gemini personal/work
+- **🎨 Custom Formatters**: Prettier for JavaScript, TypeScript, and TSX
+- **🏠 Ollama Integration**: Local LLM support
+- **📝 Git Integration**: Git gutter and inline blame
+- **⚙️ Terminal Settings**: Integrated zsh terminal
+- **🎨 Theme**: System-aware theme switching (One Light/One Dark)
+
+## Performance Testing
+
+### Measure Shell Startup Time
+
+```bash
+# Quick test
+/usr/bin/time zsh -i -c exit
+```
+
+Expected result with optimizations: ~0.05-0.15 seconds (vs 0.5-1.5s without lazy loading)
+
+### Profile Shell Initialization
+
+```bash
+# Add this to the top of ~/.zshrc temporarily:
+zmodload zsh/zprof
+
+# Reload shell and check profile:
+exec zsh
+# Then run:
+zprof
+```
+
+## Maintenance
+
+### Updating Packages
+
+```bash
+# Update Homebrew and packages
+brew update && brew upgrade
+
+# Update Oh My Zsh
+omz update
+
+# Update Oh My Zsh plugins
+cd ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && git pull
+cd ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && git pull
+```
+
+### Syncing Changes
+
+After modifying files in your home directory, copy them back:
+```bash
+cp ~/.zshrc ~/git/dotfiles/dotfiles/.zshrc
+cp ~/.config/zed/settings.json ~/git/dotfiles/dotfiles/zed/settings.json
+# Then commit and push changes
+```
+
+### Backup Current Configuration
+
+Before making changes, back up your current dotfiles:
+```bash
+cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d)
+```
+
+## Troubleshooting
+
+### Slow Shell Startup
+
+1. Profile your shell to identify bottlenecks (see Performance Testing above)
+2. Check if nvm/cargo are truly lazy-loaded: `type nvm` should show a function, not a path
+3. Consider removing unused Oh My Zsh plugins from the plugins array
+4. Run `brew doctor` to check for Homebrew issues
+
+### Wrapper Functions Not Working
+
+Ensure the CLI tools are installed:
+```bash
+which claude    # Should show /Users/yourusername/.local/bin/claude
+which codex     # Should show path to codex
+which gemini    # Should show path to gemini
+```
+
+If not found, reinstall via Homebrew:
+```bash
+brew install claude-code codex gemini-cli
+```
+
+### Completion Not Working
+
+Rebuild the completion cache:
+```bash
+rm -f ~/.zcompdump
+exec zsh
+```
+
+### Homebrew Issues
+
+```bash
+# Run diagnostics
+brew doctor
+
+# Fix common issues
+brew cleanup
+brew update
+brew upgrade
+```
+
+## Security Notes
+
+- 🔒 The `.gitignore` file prevents sensitive files from being committed
+- 🔐 AI CLI wrappers create separate profile directories to isolate credentials
+- 🌐 Zed config uses HTTP for Ollama on local network - consider HTTPS for production
+- ⚠️ `always_allow_tool_actions` in Zed bypasses security prompts - adjust if needed
+- 🛡️ Profile wrappers ensure work and personal contexts remain separate
+
+## Resources
+
+### Official Documentation
+- [Homebrew Documentation](https://docs.brew.sh/)
+- [Homebrew Bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
+- [Oh My Zsh](https://ohmyz.sh/)
+- [Zed Editor](https://zed.dev/)
+- [Claude Code Documentation](https://github.com/anthropics/claude-code)
+
+### Best Practices & Guides
+- [Brewfile Best Practices](https://gist.github.com/ChristopherA/a579274536aab36ea9966f301ff14f3f)
+- [Zsh Performance Optimization](https://blog.jonlu.ca/posts/speeding-up-zsh)
+- [Oh My Zsh Performance Tips](https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/)
+- [Shell Function Wrappers](https://kevinjalbert.com/wrapping-shell-commands-and-keep-the-original-name/)
+- [Zsh Best Practices](https://gist.github.com/ChristopherA/562c2e62d01cf60458c5fa87df046fbd)
+
+## Contributing
+
+This is a personal dotfiles repository, but feel free to fork and adapt for your own use. If you find bugs or have suggestions, please open an issue.
+
+## License
+
+MIT License - Feel free to use and modify as needed.
+
+---
+
+**Note**: This configuration is optimized for macOS. Some features may require adjustment for other operating systems.
