@@ -34,7 +34,7 @@ else
             exit 1
         fi
         # Persist and load shellenv
-        echo "eval \($($BREW_BIN shellenv)\)" >> "$HOME/.zprofile"
+        echo "eval \"\$($BREW_BIN shellenv)\"" >> "$HOME/.zprofile"
         eval "$($BREW_BIN shellenv)"
         # Turn off analytics on fresh installs as well
         brew analytics off >/dev/null 2>&1 || true

@@ -28,7 +28,7 @@ brew "ansible"          # Infrastructure automation
 brew "incus"            # CLI client for Incus containers
 
 # AI/ML CLIs
-brew "codex"            # OpenAI Codex CLI
+cask "codex"            # OpenAI Codex CLI
 brew "gemini-cli"       # Google Gemini CLI
 
 # System Utilities
