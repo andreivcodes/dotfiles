@@ -269,3 +269,6 @@ if [[ -n ${HOME}/.zcompdump(#qN.mh+24) ]]; then
 else
   compinit -C
 fi
+
+# Added by Antigravity
+export PATH="/Users/andrei/.antigravity/antigravity/bin:$PATH"

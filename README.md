@@ -30,7 +30,8 @@ dotfiles/
 │   ├── all.sh                 # Orchestrates all installation steps
 │   ├── brew.sh                # Installs Homebrew packages
 │   ├── dev.sh                 # Sets up development environment (Node.js, Rust)
-│   └── dock.sh                # Configures macOS Dock layout
+│   ├── dock.sh                # Configures macOS Dock layout
+│   └── timemachine-exclude.sh # Excludes dev directories from Time Machine
 ├── dotfiles/                  # Configuration files
 │   ├── dotfiles.sh            # Creates symlinks for config files
 │   ├── .zshrc                 # Zsh configuration (performance-optimized)
@@ -98,6 +99,9 @@ bash dotfiles/dotfiles.sh
 
 # Configure Dock layout only
 bash installers/dock.sh
+
+# Configure Time Machine exclusions only
+bash installers/timemachine-exclude.sh
 ```
 
 ## Key Features

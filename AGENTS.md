@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `setup`: Main entry point. Runs full macOS setup.
-- `installers/`: Install steps (brew, dev tools, Dock, Time Machine). Example: `bash installers/all.sh`.
+- `installers/`: Install steps (`brew.sh`, `dev.sh`, `dock.sh`, `timemachine-exclude.sh`). Example: `bash installers/all.sh`.
 - `preferences/`: macOS defaults and system tweaks (`preferences/system.sh`).
 - `dotfiles/`: Configs and symlink logic (`dotfiles/dotfiles.sh`, `.zshrc`, `zed/`).
 - `lib/`: Shared helpers (`lib/utils.sh` for logging, guards, symlinks).
