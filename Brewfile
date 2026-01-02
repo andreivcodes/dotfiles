@@ -74,8 +74,8 @@ cask "wifiman"             # WiFi analyzer
 # ============================================================================
 cask "1password"
 cask "1password-cli"
-cask "tailscale"        # Mesh VPN
-cask "mullvadvpn"       # Privacy VPN
+cask "tailscale-app"    # Mesh VPN
+cask "mullvad-vpn"      # Privacy VPN
 
 # ============================================================================
 # Applications - Productivity & Utilities
