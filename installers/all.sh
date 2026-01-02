@@ -70,7 +70,7 @@ for i in "${!SCRIPTS[@]}"; do
     current=$((current + 1))
     
     echo
-    show_progress $current $total "$description"
+    show_progress "$current" "$total" "$description"
     log_info "Executing: $script"
     
     if bash "$script"; then

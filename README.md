@@ -170,9 +170,8 @@ brew bundle dump --force
 
 ### Zed Editor Configuration
 
-- **🤖 Multiple AI Agent Profiles**: Claude personal/work, Gemini personal/work
+- **🤖 AI Agent Integration**: OpenCode agent server support
 - **🎨 Custom Formatters**: Prettier for JavaScript, TypeScript, and TSX
-- **🏠 Ollama Integration**: Local LLM support
 - **📝 Git Integration**: Git gutter and inline blame
 - **⚙️ Terminal Settings**: Integrated zsh terminal
 - **🎨 Theme**: System-aware theme switching (One Light/One Dark)
@@ -218,11 +217,11 @@ cd ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && git pul
 
 ### Syncing Changes
 
-After modifying files in your home directory, copy them back:
+The dotfiles are symlinked to your home directory, so changes made in `~/.zshrc` or `~/.config/zed/` are automatically reflected in the repository. Just commit and push:
 ```bash
-cp ~/.zshrc ~/git/dotfiles/dotfiles/.zshrc
-cp ~/.config/zed/settings.json ~/git/dotfiles/dotfiles/zed/settings.json
-# Then commit and push changes
+cd ~/git/dotfiles
+git add -A && git commit -m "Update dotfiles"
+git push
 ```
 
 ### Backup Current Configuration
@@ -279,7 +278,6 @@ brew upgrade
 
 - 🔒 The `.gitignore` file prevents sensitive files from being committed
 - 🔐 AI CLI wrappers create separate profile directories to isolate credentials
-- 🌐 Zed config uses HTTP for Ollama on local network - consider HTTPS for production
 - ⚠️ `always_allow_tool_actions` in Zed bypasses security prompts - adjust if needed
 - 🛡️ Profile wrappers ensure work and personal contexts remain separate
 

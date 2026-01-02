@@ -134,7 +134,7 @@ log_info "Configuring Screenshot preferences..."
 
 # Save screenshots to ~/Screenshots
 mkdir -p ~/Screenshots
-defaults write com.apple.screencapture location -string "~/Screenshots"
+defaults write com.apple.screencapture location -string "$HOME/Screenshots"
 
 # Save screenshots in PNG format
 defaults write com.apple.screencapture type -string "png"

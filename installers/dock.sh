@@ -42,8 +42,8 @@ fi
 
 # Define applications to add to Dock
 # Order: finder, launchpad (added via dockutil), safari, messages, whatsapp, mail,
-#        slack, discord, telegram, calendar, zed, antigravity, terminal, github,
-#        tableplus, app store, settings, notion, figma, ungoogled chrome
+#        slack, discord, telegram, calendar, zed preview, terminal, github,
+#        tableplus, app store, settings, notion, figma, google chrome
 # Note: Launchpad is added separately using dockutil (after line 94)
 DOCK_APPS=(
   "/System/Library/CoreServices/Finder.app"
@@ -55,8 +55,7 @@ DOCK_APPS=(
   "/Applications/Discord.app"
   "/Applications/Telegram.app"
   "/System/Applications/Calendar.app"
-  "/Applications/Zed.app"
-  "/Applications/Antigravity.app"
+  "/Applications/Zed Preview.app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
   "/Applications/TablePlus.app"
@@ -64,7 +63,7 @@ DOCK_APPS=(
   "/System/Applications/System Settings.app"
   "/Applications/Notion.app"
   "/Applications/Figma.app"
-  "/Applications/Chromium.app"
+  "/Applications/Google Chrome.app"
 )
 
 # Add applications to Dock
@@ -76,7 +75,7 @@ failed_apps=()
 for app_path in "${DOCK_APPS[@]}"; do
   current=$((current + 1))
   app_name=$(basename "$app_path" .app)
-  show_progress $current $total "Adding $app_name"
+  show_progress "$current" "$total" "Adding $app_name"
 
   if ! add_app_to_dock "$app_path"; then
     failed_apps+=("$app_path")

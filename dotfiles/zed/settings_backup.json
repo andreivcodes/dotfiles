@@ -1,10 +1,52 @@
 {
   "icon_theme": "Colored Zed Icons Theme Dark",
+  "context_servers": {
+    "mcp-server-context7": {
+      "enabled": true,
+      "settings": {
+        "context7_api_key": "ctx7sk-286f4d06-6d29-4dae-bfa0-5c53152227b6",
+      },
+    },
+  },
   "agent_servers": {
     "OpenCode": {
-      "type": "custom",
       "command": "opencode",
       "args": ["acp"],
+    },
+  },
+  "language_models": {
+    "ollama": {
+      "api_url": "http://100.91.180.64:11434",
+      "available_models": [
+        {
+          "name": "devstral-small-2:24b",
+          "max_tokens": 200000,
+          "supports_tools": true,
+        },
+        {
+          "name": "nemotron-3-nano",
+          "max_tokens": 300000,
+          "supports_tools": true,
+        },
+      ],
+    },
+    "openai_compatible": {
+      "MiniMax": {
+        "api_url": "https://api.minimax.io/v1",
+        "available_models": [
+          {
+            "name": "MiniMax-M2.1",
+            "display_name": "MiniMax-M2.1",
+            "max_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": false,
+              "prompt_cache_key": false,
+            },
+          },
+        ],
+      },
     },
   },
   "bottom_dock_layout": "contained",
@@ -114,6 +156,10 @@
         "enable_all_context_servers": true,
         "context_servers": {},
       },
+    },
+    "default_model": {
+      "provider": "ollama",
+      "model": "nemotron-3-nano:latest",
     },
   },
   "terminal": {

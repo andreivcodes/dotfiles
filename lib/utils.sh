@@ -57,7 +57,8 @@ app_exists() {
 backup_if_exists() {
     local path=$1
     if [ -L "$path" ] || [ -e "$path" ]; then
-        local backup_path="${path}.backup.$(date +%Y%m%d_%H%M%S)"
+        local backup_path
+        backup_path="${path}.backup.$(date +%Y%m%d_%H%M%S)"
         log_warning "Backing up existing $path to $backup_path"
         mv "$path" "$backup_path"
         return 0

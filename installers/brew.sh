@@ -33,8 +33,10 @@ else
             log_error "Homebrew installed but brew binary not found in standard locations"
             exit 1
         fi
-        # Persist and load shellenv
-        echo "eval \"\$($BREW_BIN shellenv)\"" >> "$HOME/.zprofile"
+        # Persist and load shellenv (only if not already present)
+        if ! grep -q "brew shellenv" "$HOME/.zprofile" 2>/dev/null; then
+            echo "eval \"\$($BREW_BIN shellenv)\"" >> "$HOME/.zprofile"
+        fi
         eval "$($BREW_BIN shellenv)"
         # Turn off analytics on fresh installs as well
         brew analytics off >/dev/null 2>&1 || true

@@ -9,6 +9,7 @@ log_info "Setting up dotfiles symlinks..."
 
 # Ensure not running as sudo
 check_not_sudo
+require_macos
 
 # Create config directory if it doesn't exist
 mkdir -p "$HOME/.config"
@@ -35,7 +36,7 @@ for i in "${!SOURCES[@]}"; do
     current=$((i + 1))
     
     config_name=$(basename "$source")
-    show_progress $current $total "Setting up $config_name configuration"
+    show_progress "$current" "$total" "Setting up $config_name configuration"
     
     if safe_symlink "$source" "$target"; then
         log_success "Successfully configured $config_name"

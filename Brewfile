@@ -11,8 +11,7 @@
 # ============================================================================
 # Taps
 # ============================================================================
-# Add any custom taps here
-# tap "homebrew/cask-fonts"
+tap "dopplerhq/cli"      # Doppler secrets management
 
 # ============================================================================
 # CLI Tools & Utilities
@@ -26,10 +25,19 @@ brew "nixpacks"         # Build and deploy apps
 brew "act"              # Run GitHub Actions locally
 brew "ansible"          # Infrastructure automation
 brew "incus"            # CLI client for Incus containers
+brew "gh"               # GitHub CLI
+brew "ripgrep"          # Fast search (rg command)
+brew "tree"             # Directory tree view
+brew "direnv"           # Per-directory environment variables
+
+# Secrets Management
+brew "gnupg"            # GPG encryption (required for Doppler)
+brew "doppler"          # Secrets management CLI
 
 # AI/ML CLIs
 cask "codex"            # OpenAI Codex CLI
 brew "gemini-cli"       # Google Gemini CLI
+brew "opencode"         # AI coding agent
 
 # System Utilities
 brew "wget"             # Network downloader
@@ -44,22 +52,21 @@ cask "discord"
 cask "slack"
 cask "whatsapp"
 cask "telegram"
-cask "signal"
 
 # ============================================================================
 # Applications - Development
 # ============================================================================
-cask "zed"              # Code editor
+cask "zed@preview"      # Code editor
 cask "github"           # GitHub Desktop
 cask "tableplus"        # Database management
 cask "claude-code"      # Claude Code CLI
-cask "antigravity"      # AI code assistant
 cask "figma"            # Design and prototyping tool
+cask "docker"           # Container runtime
 
 # ============================================================================
 # Applications - Browsers & Network
 # ============================================================================
-cask "ungoogled-chromium"  # Privacy-focused Chromium
+cask "google-chrome"       # Web browser
 cask "wifiman"             # WiFi analyzer
 
 # ============================================================================

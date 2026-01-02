@@ -11,7 +11,7 @@ ZSH_THEME="robbyrussell"
 # ============================================================================
 # History Configuration
 # ============================================================================
-HISTFILE=~/.zsh_history
+HISTFILE="$HOME/.zsh_history"
 HISTSIZE=100000
 SAVEHIST=100000
 setopt SHARE_HISTORY           # Share history between sessions
@@ -61,7 +61,7 @@ plugins=(
 )
 
 # Load Oh My Zsh
-source $ZSH/oh-my-zsh.sh
+source "$ZSH/oh-my-zsh.sh"
 
 # ============================================================================
 # User Configuration
@@ -75,41 +75,54 @@ export PATH="$HOME/.local/bin:$PATH"
 # ============================================================================
 export NVM_DIR="$HOME/.nvm"
 
-# Lazy load nvm - only load when nvm/node/npm is called
+# Lazy load nvm - only load when nvm/node/npm/npx is called
 nvm() {
-  unset -f nvm node npm
+  unset -f nvm node npm npx
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
   nvm "$@"
 }
 
 node() {
-  unset -f nvm node npm
+  unset -f nvm node npm npx
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
   node "$@"
 }
 
 npm() {
-  unset -f nvm node npm
+  unset -f nvm node npm npx
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
   npm "$@"
+}
+
+npx() {
+  unset -f nvm node npm npx
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  npx "$@"
 }
 
 # ============================================================================
 # Rust Setup (Lazy Loaded for Performance)
 # ============================================================================
 cargo() {
-  unset -f cargo rustc
+  unset -f cargo rustc rustup
   [ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
   cargo "$@"
 }
 
 rustc() {
-  unset -f cargo rustc
+  unset -f cargo rustc rustup
   [ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
   rustc "$@"
+}
+
+rustup() {
+  unset -f cargo rustc rustup
+  [ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+  rustup "$@"
 }
 
 # ============================================================================
@@ -247,20 +260,19 @@ gemini() {
 # ============================================================================
 
 # pnpm
-export PNPM_HOME="/Users/andrei/Library/pnpm"
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
-# Antigravity
-export PATH="/Users/andrei/.antigravity/antigravity/bin:$PATH"
+
 
 # ============================================================================
 # Completion System (Optimized)
 # ============================================================================
 # Docker CLI completions
-fpath=(/Users/andrei/.docker/completions $fpath)
+[[ -d "$HOME/.docker/completions" ]] && fpath=("$HOME/.docker/completions" $fpath)
 
 # Speed up compinit by only checking cache once a day
 autoload -Uz compinit
@@ -270,5 +282,18 @@ else
   compinit -C
 fi
 
-# Added by Antigravity
-export PATH="/Users/andrei/.antigravity/antigravity/bin:$PATH"
+# bun completions
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# Amp CLI
+export PATH="$HOME/.amp/bin:$PATH"
+
+# direnv
+command -v direnv >/dev/null && eval "$(direnv hook zsh)"
