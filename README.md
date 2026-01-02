@@ -15,6 +15,7 @@ cd ~/git/dotfiles
 - **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
 - **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh, lazy loading, and AI CLI wrappers
 - **Zed Editor**: Complete settings with AI agent profiles and custom formatters
+- **OpenCode Profiles**: Per-profile configuration for personal and work contexts
 - **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
 
@@ -35,8 +36,13 @@ dotfiles/
 ├── dotfiles/                  # Configuration files
 │   ├── dotfiles.sh            # Creates symlinks for config files
 │   ├── .zshrc                 # Zsh configuration (performance-optimized)
-│   └── zed/
-│       └── settings.json      # Zed editor settings
+│   ├── zed/
+│   │   └── settings.json      # Zed editor settings
+│   └── opencode/              # OpenCode profile configs
+│       ├── personal/
+│       │   └── opencode.json
+│       └── work/
+│           └── opencode.json
 ├── preferences/               # macOS system preferences scripts
 │   └── system.sh              # Configures Finder, Dock, Trackpad, etc.
 └── lib/                       # Shared utility functions
@@ -76,7 +82,7 @@ This will:
 - Install all Homebrew packages and applications
 - Set up Node.js (via NVM) and Rust development environments
 - Configure macOS system preferences (Finder, Dock, Trackpad, etc.)
-- Create symlinks for dotfiles (.zshrc, Zed config)
+- Create symlinks for dotfiles (.zshrc, Zed config, OpenCode profiles)
 - Configure Dock layout with your applications
 - Set up Time Machine exclusions for development directories
 
@@ -131,6 +137,10 @@ codex -u work
 # Gemini with profiles
 gemini -u personal
 gemini -u work
+
+# OpenCode with profiles
+opencode -u personal
+opencode -u work
 ```
 
 Each profile maintains separate:

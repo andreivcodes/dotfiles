@@ -21,11 +21,15 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 SOURCES=(
     "$REPO_ROOT/dotfiles/zed"
     "$REPO_ROOT/dotfiles/.zshrc"
+    "$REPO_ROOT/dotfiles/opencode/personal/opencode.json"
+    "$REPO_ROOT/dotfiles/opencode/work/opencode.json"
 )
 
 TARGETS=(
     "$HOME/.config/zed"
     "$HOME/.zshrc"
+    "$HOME/.opencode-profiles/personal/config/opencode.json"
+    "$HOME/.opencode-profiles/work/config/opencode.json"
 )
 
 total=${#SOURCES[@]}
@@ -34,6 +38,9 @@ for i in "${!SOURCES[@]}"; do
     source="${SOURCES[$i]}"
     target="${TARGETS[$i]}"
     current=$((i + 1))
+    
+    # Ensure parent directory exists for the target
+    mkdir -p "$(dirname "$target")"
     
     config_name=$(basename "$source")
     show_progress "$current" "$total" "Setting up $config_name configuration"
