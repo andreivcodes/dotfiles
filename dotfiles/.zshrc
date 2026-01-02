@@ -151,6 +151,7 @@ alias gd='git diff'
 # Usage: claude -u <profile> [args...]
 #        codex -u <profile> [args...]
 #        gemini -u <profile> [args...]
+#        opencode -u <profile> [args...]
 # ============================================================================
 
 # Generic wrapper factory for simple config-based CLIs
@@ -253,6 +254,53 @@ gemini() {
 
     # Run gemini with the profile-specific HOME
     HOME="$gemini_profile_home" command gemini "${gemini_args[@]}"
+}
+
+# OpenCode wrapper (special case - needs XDG_DATA_HOME for auth isolation)
+unalias opencode 2>/dev/null
+opencode() {
+    local config_value=""
+    local opencode_args=()
+    local user_provided=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    config_value="$2"
+                    user_provided=true
+                    shift 2
+                else
+                    echo "Error: -u requires a value" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                opencode_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Validate required parameter
+    if [[ "$user_provided" = false ]]; then
+        echo "Error: -u parameter is required. Usage: opencode -u <profile> [args...]" >&2
+        return 1
+    fi
+
+    echo "OpenCode user: $config_value"
+
+    # Create profile-specific directories
+    # XDG_DATA_HOME controls where auth.json is stored
+    # OPENCODE_CONFIG_DIR controls where config overrides are loaded from
+    local profile_dir="$HOME/.opencode-$config_value"
+    local data_dir="$profile_dir/data"
+    local config_dir="$profile_dir/config"
+    mkdir -p "$data_dir" "$config_dir"
+
+    # Run opencode with profile-specific environment
+    XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${opencode_args[@]}"
 }
 
 # ============================================================================
