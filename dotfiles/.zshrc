@@ -152,155 +152,168 @@ alias gd='git diff'
 #        codex -u <profile> [args...]
 #        gemini -u <profile> [args...]
 #        opencode -u <profile> [args...]
+#
+# Profile directories:
+#   ~/.claude-profiles/<profile>/
+#   ~/.codex-profiles/<profile>/
+#   ~/.gemini-profiles/<profile>/
+#   ~/.opencode-profiles/<profile>/
 # ============================================================================
 
-# Generic wrapper factory for simple config-based CLIs
-_create_profile_wrapper() {
-    local cmd=$1
-    local env_var=$2
-    local display_name=$3
-
-    unalias "$cmd" 2>/dev/null
-    eval "$cmd() {
-        local config_value=\"\"
-        local cmd_args=()
-        local user_provided=false
-
-        # Parse arguments
-        while [[ \$# -gt 0 ]]; do
-            case \$1 in
-                -u)
-                    if [[ -n \"\$2\" && \"\$2\" != -* ]]; then
-                        config_value=\"\$2\"
-                        user_provided=true
-                        shift 2
-                    else
-                        echo \"Error: -u requires a value\" >&2
-                        return 1
-                    fi
-                    ;;
-                *)
-                    cmd_args+=(\"\$1\")
-                    shift
-                    ;;
-            esac
-        done
-
-        # Validate required parameter
-        if [[ \"\$user_provided\" = false ]]; then
-            echo \"Error: -u parameter is required. Usage: $cmd -u <profile> [args...]\" >&2
-            return 1
-        fi
-
-        echo \"$display_name user: \$config_value\"
-
-        # Set environment and run command
-        local config_dir=\"\$HOME/.$cmd-\$config_value\"
-        mkdir -p \"\$config_dir\"
-        $env_var=\"\$config_dir\" command $cmd \"\${cmd_args[@]}\"
-    }"
-}
-
-# Create wrappers for Claude and Codex (similar pattern)
-_create_profile_wrapper claude CLAUDE_CONFIG_DIR "Claude Code"
-_create_profile_wrapper codex CODEX_HOME "Codex"
-
-# Gemini wrapper (special case - uses HOME and creates symlinks)
-unalias gemini 2>/dev/null
-gemini() {
-    local config_value=""
-    local gemini_args=()
-    local user_provided=false
+# Claude wrapper (uses CLAUDE_CONFIG_DIR)
+unalias claude 2>/dev/null
+claude() {
+    local profile=""
+    local cmd_args=()
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -u)
                 if [[ -n "$2" && "$2" != -* ]]; then
-                    config_value="$2"
-                    user_provided=true
+                    profile="$2"
                     shift 2
                 else
-                    echo "Error: -u requires a value" >&2
+                    echo "Error: -u requires a profile name" >&2
                     return 1
                 fi
                 ;;
             *)
-                gemini_args+=("$1")
+                cmd_args+=("$1")
                 shift
                 ;;
         esac
     done
 
-    # Validate required parameter
-    if [[ "$user_provided" = false ]]; then
-        echo "Error: -u parameter is required. Usage: gemini -u <profile> [args...]" >&2
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: claude -u <profile> [args...]" >&2
         return 1
     fi
 
-    echo "Gemini user: $config_value"
+    echo "Claude Code profile: $profile"
+    local profile_dir="$HOME/.claude-profiles/$profile"
+    mkdir -p "$profile_dir"
+    CLAUDE_CONFIG_DIR="$profile_dir" command claude "${cmd_args[@]}"
+}
 
-    # Create profile-specific HOME directory
-    local gemini_profile_home="$HOME/.gemini-profiles/$config_value"
-    mkdir -p "$gemini_profile_home"
+# Codex wrapper (uses CODEX_HOME)
+unalias codex 2>/dev/null
+codex() {
+    local profile=""
+    local cmd_args=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    profile="$2"
+                    shift 2
+                else
+                    echo "Error: -u requires a profile name" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                cmd_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: codex -u <profile> [args...]" >&2
+        return 1
+    fi
+
+    echo "Codex profile: $profile"
+    local profile_dir="$HOME/.codex-profiles/$profile"
+    mkdir -p "$profile_dir"
+    CODEX_HOME="$profile_dir" command codex "${cmd_args[@]}"
+}
+
+# Gemini wrapper (uses HOME override with symlinks to essential dirs)
+unalias gemini 2>/dev/null
+gemini() {
+    local profile=""
+    local cmd_args=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    profile="$2"
+                    shift 2
+                else
+                    echo "Error: -u requires a profile name" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                cmd_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: gemini -u <profile> [args...]" >&2
+        return 1
+    fi
+
+    echo "Gemini profile: $profile"
+    local profile_dir="$HOME/.gemini-profiles/$profile"
+    mkdir -p "$profile_dir"
 
     # Create symlinks to essential directories from real home
     local dir
     for dir in Documents Downloads Desktop Pictures Music Videos; do
-        if [[ -d "$HOME/$dir" ]] && [[ ! -e "$gemini_profile_home/$dir" ]]; then
-            ln -s "$HOME/$dir" "$gemini_profile_home/$dir" 2>/dev/null || true
+        if [[ -d "$HOME/$dir" ]] && [[ ! -e "$profile_dir/$dir" ]]; then
+            ln -s "$HOME/$dir" "$profile_dir/$dir" 2>/dev/null || true
         fi
     done
 
-    # Run gemini with the profile-specific HOME
-    HOME="$gemini_profile_home" command gemini "${gemini_args[@]}"
+    HOME="$profile_dir" command gemini "${cmd_args[@]}"
 }
 
-# OpenCode wrapper (special case - needs XDG_DATA_HOME for auth isolation)
+# OpenCode wrapper (uses XDG_DATA_HOME for auth, OPENCODE_CONFIG_DIR for config)
 unalias opencode 2>/dev/null
 opencode() {
-    local config_value=""
-    local opencode_args=()
-    local user_provided=false
+    local profile=""
+    local cmd_args=()
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -u)
                 if [[ -n "$2" && "$2" != -* ]]; then
-                    config_value="$2"
-                    user_provided=true
+                    profile="$2"
                     shift 2
                 else
-                    echo "Error: -u requires a value" >&2
+                    echo "Error: -u requires a profile name" >&2
                     return 1
                 fi
                 ;;
             *)
-                opencode_args+=("$1")
+                cmd_args+=("$1")
                 shift
                 ;;
         esac
     done
 
-    # Validate required parameter
-    if [[ "$user_provided" = false ]]; then
-        echo "Error: -u parameter is required. Usage: opencode -u <profile> [args...]" >&2
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: opencode -u <profile> [args...]" >&2
         return 1
     fi
 
-    echo "OpenCode user: $config_value"
-
-    # Create profile-specific directories
-    # XDG_DATA_HOME controls where auth.json is stored
-    # OPENCODE_CONFIG_DIR controls where config overrides are loaded from
-    local profile_dir="$HOME/.opencode-$config_value"
+    echo "OpenCode profile: $profile"
+    local profile_dir="$HOME/.opencode-profiles/$profile"
     local data_dir="$profile_dir/data"
     local config_dir="$profile_dir/config"
     mkdir -p "$data_dir" "$config_dir"
 
-    # Run opencode with profile-specific environment
-    XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${opencode_args[@]}"
+    XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${cmd_args[@]}"
 }
 
 # ============================================================================
@@ -324,6 +337,7 @@ esac
 
 # Speed up compinit by only checking cache once a day
 autoload -Uz compinit
+# shellcheck disable=SC1036,SC1072,SC1073,SC1009
 if [[ -n ${HOME}/.zcompdump(#qN.mh+24) ]]; then
   compinit
 else
