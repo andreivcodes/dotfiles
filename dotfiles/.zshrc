@@ -313,7 +313,7 @@ opencode() {
     local config_dir="$profile_dir/config"
     mkdir -p "$data_dir" "$config_dir"
 
-    XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${cmd_args[@]}"
+    OPENCODE_CONFIG="$config_dir/opencode.json" XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${cmd_args[@]}"
 }
 
 # ============================================================================
