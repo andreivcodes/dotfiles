@@ -85,6 +85,5 @@ cask "libreoffice"      # Office suite
 cask "rectangle"        # Window management
 cask "keepingyouawake"  # Prevent sleep
 cask "cleanshot"        # Screenshot tool
-cask "topnotch"         # Notch customization
 cask "balenaetcher"     # USB/SD card imaging
 cask "macs-fan-control" # Fan control utility
