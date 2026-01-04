@@ -23,6 +23,9 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/.zshrc"
     "$REPO_ROOT/dotfiles/opencode/personal/opencode.json"
     "$REPO_ROOT/dotfiles/opencode/work/opencode.json"
+    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
+    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
+    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
 )
 
 TARGETS=(
@@ -30,6 +33,9 @@ TARGETS=(
     "$HOME/.zshrc"
     "$HOME/.opencode-profiles/personal/config/opencode.json"
     "$HOME/.opencode-profiles/work/config/opencode.json"
+    "$HOME/.opencode-profiles/personal/config/AGENTS.md"
+    "$HOME/.opencode-profiles/work/config/AGENTS.md"
+    "$HOME/.config/opencode/AGENTS.md"
 )
 
 total=${#SOURCES[@]}

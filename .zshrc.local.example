@@ -1,0 +1,9 @@
+# Private environment variables
+# This file is NOT tracked by git and should contain sensitive data
+# 
+# Copy this file to ~/.zshrc.local and add your actual API key:
+# cp .zshrc.local.example ~/.zshrc.local
+
+# Exa API Key (for OpenCode MCP - exa_get_code_context_exa tool)
+# Get your key from: https://exa.ai
+export EXA_API_KEY="your-exa-api-key-here"

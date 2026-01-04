@@ -320,6 +320,16 @@ opencode() {
 # Additional Tools
 # ============================================================================
 
+# OpenCode Configuration
+export OPENCODE_EXPERIMENTAL=true
+export OPENCODE_EXPERIMENTAL_LSP_TOOL=true
+export OPENCODE_EXPERIMENTAL_OXFMT=true
+export OPENCODE_EXPERIMENTAL_ICON_DISCOVERY=true
+
+# Load private environment variables (API keys, secrets)
+# Create ~/.zshrc.local with: export EXA_API_KEY="your-key-here"
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
