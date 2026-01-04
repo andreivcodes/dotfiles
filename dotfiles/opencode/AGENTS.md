@@ -8,6 +8,38 @@ This file contains critical rules that apply across all OpenCode sessions for bo
 
 **CRITICAL**: Under no circumstance should you commit or push changes without asking for explicit permission first. Always ask the user before running any `git commit`, `git push`, or `git add` commands.
 
+**Commit Message Best Practices**: When the user requests a commit, follow these conventions:
+
+1. **Subject Line** (first line):
+   - Limit to 50 characters (72 character hard limit)
+   - Capitalize the first letter
+   - Do not end with a period
+   - Use imperative mood (e.g., "Add feature" not "Added feature" or "Adds feature")
+   - Should complete the sentence: "If applied, this commit will [your subject line]"
+
+2. **Body** (optional, after blank line):
+   - Wrap at 72 characters
+   - Explain *what* and *why*, not *how*
+   - Focus on the problem being solved and why this approach was chosen
+   - Include side effects or non-obvious consequences if relevant
+
+3. **Format Example**:
+   ```
+   Summarize changes in around 50 characters or less
+
+   More detailed explanatory text, if necessary. Wrap it to about 72
+   characters or so. The blank line separating the summary from the
+   body is critical.
+
+   Explain the problem that this commit is solving. Focus on why you
+   are making this change as opposed to how (the code explains that).
+
+   - Bullet points are okay, too
+   - Use a hyphen or asterisk with a single space
+
+   Resolves: #123
+   ```
+
 ### File Management
 
 **CRITICAL**: Do not write summary files, documentation files, or reference files in the project directory unless explicitly asked to do so after finishing a task. If you need to create summary files for reference purposes, write them to the `/tmp` folder instead.
