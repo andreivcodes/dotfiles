@@ -8,6 +8,17 @@ This file contains critical rules that apply across all OpenCode sessions for bo
 
 **CRITICAL**: Under no circumstance should you commit or push changes without asking for explicit permission first. Always ask the user before running any `git commit`, `git push`, or `git add` commands.
 
+**Pre-Commit Validation**: When the user asks you to commit changes, you MUST perform the following steps before creating the commit:
+
+1. **Run Linting**: Execute the project's linter (e.g., `oxlint`, `eslint`, `prettier --check`, `shellcheck`, `ruff`, etc.) and fix any issues found.
+2. **Run Build**: Execute the project's build command (e.g., `npm run build`, `cargo build`, `go build`, etc.) and ensure it completes successfully.
+3. **Run Tests**: Run a representative subset of the test suite to verify nothing is broken. You don't need to run the entire test suite, but you should:
+   - Run tests related to the files you modified
+   - Run a quick smoke test or unit test suite if available
+   - For example: `npm test -- --related`, `pytest -x`, or run tests in the same directory as changed files
+
+If any of these steps fail, fix the issues before proceeding with the commit. Only after all validations pass should you proceed with the commit.
+
 **Commit Message Best Practices**: When the user requests a commit, follow these conventions:
 
 1. **Subject Line** (first line):
