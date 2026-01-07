@@ -13,7 +13,7 @@ cd ~/git/dotfiles
 ## What's Included
 
 - **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
-- **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh, lazy loading, and AI CLI wrappers
+- **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh and lazy loading
 - **Zed Editor**: Complete settings with AI agent profiles and custom formatters
 - **OpenCode Profiles**: Per-profile configuration for personal and work contexts
 - **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
@@ -115,7 +115,6 @@ bash installers/timemachine-exclude.sh
 ### Shell Configuration (.zshrc)
 
 - **⚡ Performance Optimized**: Lazy loading for nvm, cargo, and rust (dramatically faster shell startup)
-- **🤖 AI CLI Wrappers**: Profile-based wrappers for Claude, Codex, and Gemini CLIs
 - **📚 History Management**: 100k command history with deduplication and sharing across sessions
 - **⌨️ Git Aliases**: Quick shortcuts for common git operations (gs, gc, gp, etc.)
 - **🚀 Completion Caching**: Daily completion cache refresh for faster shell startup
@@ -126,18 +125,6 @@ bash installers/timemachine-exclude.sh
 Use different profiles for personal and work contexts:
 
 ```bash
-# Claude Code with different profiles
-claude -u personal
-claude -u work
-
-# Codex with profiles
-codex -u personal
-codex -u work
-
-# Gemini with profiles
-gemini -u personal
-gemini -u work
-
 # OpenCode with profiles
 opencode -u personal
 opencode -u work
@@ -152,7 +139,7 @@ Each profile maintains separate:
 
 Organized package declarations across categories:
 - 📦 CLI tools and utilities (wget, ansible, act, etc.)
-- 🤖 AI/ML CLIs (codex, gemini-cli)
+- 🤖 AI/ML CLIs (opencode)
 - 💻 Development tools (nixpacks, orbstack, zed)
 - 💬 Communication apps (Discord, Slack, WhatsApp, Signal, Telegram)
 - 🔒 Security and VPN tools (1Password, Tailscale, Mullvad)
@@ -254,14 +241,12 @@ cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d)
 
 Ensure the CLI tools are installed:
 ```bash
-which claude    # Should show /Users/yourusername/.local/bin/claude
-which codex     # Should show path to codex
-which gemini    # Should show path to gemini
+which opencode  # Should show path to opencode
 ```
 
 If not found, reinstall via Homebrew:
 ```bash
-brew install claude-code codex gemini-cli
+brew install opencode
 ```
 
 ### Completion Not Working
@@ -298,7 +283,6 @@ brew upgrade
 - [Homebrew Bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - [Oh My Zsh](https://ohmyz.sh/)
 - [Zed Editor](https://zed.dev/)
-- [Claude Code Documentation](https://github.com/anthropics/claude-code)
 
 ### Best Practices & Guides
 - [Brewfile Best Practices](https://gist.github.com/ChristopherA/a579274536aab36ea9966f301ff14f3f)

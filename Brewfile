@@ -35,8 +35,6 @@ brew "gnupg"            # GPG encryption (required for Doppler)
 brew "doppler"          # Secrets management CLI
 
 # AI/ML CLIs
-cask "codex"            # OpenAI Codex CLI
-brew "gemini-cli"       # Google Gemini CLI
 brew "opencode"         # AI coding agent
 
 # System Utilities
@@ -59,7 +57,6 @@ cask "telegram"
 cask "zed@preview"      # Code editor
 cask "github"           # GitHub Desktop
 cask "tableplus"        # Database management
-cask "claude-code"      # Claude Code CLI
 cask "figma"            # Design and prototyping tool
 cask "docker"           # Container runtime
 
