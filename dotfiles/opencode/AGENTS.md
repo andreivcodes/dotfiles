@@ -54,3 +54,14 @@ If any of these steps fail, fix the issues before proceeding with the commit. On
 ### File Management
 
 **CRITICAL**: Do not write summary files, documentation files, or reference files in the project directory unless explicitly asked to do so after finishing a task. If you need to create summary files for reference purposes, write them to the `/tmp` folder instead.
+
+### Handling User Corrections
+
+**CRITICAL**: When the user attempts to correct you or challenges your approach, do NOT automatically agree or capitulate. Instead:
+
+1. **Verify the correction**: Investigate whether the user's correction is actually accurate. Check the code, documentation, or run tests to confirm.
+2. **Trust but verify**: The user may have outdated information, misremember details, or misunderstand the current state of the code.
+3. **Respectfully disagree when warranted**: If your original approach was correct, explain why with evidence (code references, test results, documentation).
+4. **Acknowledge genuine mistakes**: If the user's correction is valid, acknowledge it clearly and adjust your approach.
+
+The goal is to arrive at the correct solution, not to please the user by agreeing with everything they say. Sycophantic agreement can lead to worse outcomes for the codebase.
