@@ -73,19 +73,4 @@ fi
 
 log_info "$(brew list --formula | wc -l | xargs) formulas and $(brew list --cask | wc -l | xargs) casks are now installed"
 
-# Claude Code (optional)
-if command_exists claude; then
-    log_info "Claude Code already installed, skipping"
-else
-    if [ "${INSTALL_CLAUDE:-0}" = "1" ]; then
-        log_info "Installing Claude Code (INSTALL_CLAUDE=1)..."
-        if curl -fsSL --max-time 20 https://claude.ai/install.sh | bash; then
-            log_success "Claude Code installed successfully"
-        else
-            log_warning "Claude Code installation did not complete. You can install manually: curl -fsSL https://claude.ai/install.sh | bash"
-        fi
-    else
-        log_info "Skipping Claude Code auto-install. To install now: INSTALL_CLAUDE=1 bash installers/brew.sh"
-        log_info "Manual install command: curl -fsSL https://claude.ai/install.sh | bash"
-    fi
-fi
+# Note: AI tools (OpenCode, Claude Code) are installed via installers/ai-tools.sh

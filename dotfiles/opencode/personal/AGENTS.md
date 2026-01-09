@@ -1,6 +1,6 @@
 # Global Agent Guidelines
 
-This file contains critical rules that apply across all OpenCode sessions for both personal and work profiles.
+This file contains critical rules that apply across all OpenCode sessions for the personal profile.
 
 ## Critical Rules
 
@@ -50,6 +50,14 @@ If any of these steps fail, fix the issues before proceeding with the commit. On
 
    Resolves: #123
    ```
+
+**CRITICAL - No AI Attribution**: NEVER add any of the following to commit messages, PR descriptions, code comments, or any other content:
+- `Co-Authored-By:` lines mentioning any AI or assistant
+- `🤖 Generated with` or similar footers
+- Any mention of AI, Claude, OpenCode, assistant, or automated generation
+- Any attribution signatures or watermarks indicating AI involvement
+
+Commit messages should read as if written by the human developer. The user does not want AI attribution in their git history or codebase.
 
 ### File Management
 

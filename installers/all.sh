@@ -15,7 +15,8 @@ require_macos
 SCRIPT_DIR="$(dirname "$0")"
 SCRIPTS=(
     "$SCRIPT_DIR/brew.sh"
-    "$SCRIPT_DIR/dev.sh" 
+    "$SCRIPT_DIR/dev.sh"
+    "$SCRIPT_DIR/ai-tools.sh"
     "$SCRIPT_DIR/../preferences/system.sh"
     "$SCRIPT_DIR/../dotfiles/dotfiles.sh"
     "$SCRIPT_DIR/dock.sh"
@@ -25,6 +26,7 @@ SCRIPTS=(
 DESCRIPTIONS=(
     "Installing applications and packages"
     "Setting up development environment"
+    "Installing AI coding tools"
     "Configuring macOS system preferences"
     "Setting up configuration files"
     "Configuring Dock layout"

@@ -190,6 +190,75 @@ opencode() {
     OPENCODE_CONFIG="$config_dir/opencode.json" XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${cmd_args[@]}"
 }
 
+# Claude Code wrapper (uses CLAUDE_CONFIG_DIR for config isolation)
+# Note: CLAUDE_CONFIG_DIR has known limitations (GitHub #15670):
+#   - Session resume (--resume) may not work across profiles
+#   - VS Code integration uses ~/.claude/ regardless
+#   - Parallel profile execution may have SQLite lock issues
+unalias claude 2>/dev/null
+claude() {
+    local profile=""
+    local cmd_args=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    profile="$2"
+                    shift 2
+                else
+                    echo "Error: -u requires a profile name" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                cmd_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: claude -u <profile> [args...]" >&2
+        return 1
+    fi
+
+    echo "Claude Code profile: $profile"
+    local profile_dir="$HOME/.claude-profiles/$profile"
+    local config_dir="$profile_dir/config"
+    mkdir -p "$profile_dir/data" "$config_dir"
+
+    local agents_file="$config_dir/AGENTS.md"
+    local mcp_file="$config_dir/mcp.json"
+    local agents_content=""
+    local -a extra_args=()
+
+    # Add MCP config if it exists
+    if [[ -f "$mcp_file" ]]; then
+        extra_args+=(--mcp-config "$mcp_file")
+    fi
+
+    # Add AGENTS.md as system prompt if it exists
+    if [[ -f "$agents_file" ]]; then
+        agents_content="$(cat "$agents_file")"
+        extra_args+=(--append-system-prompt "$agents_content")
+    fi
+
+    # Execute with config directory set and profile env var for status line
+    # Use full path to avoid issues with env not finding the binary
+    local claude_bin="${HOME}/.local/bin/claude"
+    [[ ! -x "$claude_bin" ]] && claude_bin="${HOME}/.claude/bin/claude"
+    [[ ! -x "$claude_bin" ]] && claude_bin="$(command -v claude)"
+
+    if [[ ! -x "$claude_bin" ]]; then
+        echo "Error: claude not found. Install: curl -fsSL https://claude.ai/install.sh | bash" >&2
+        return 1
+    fi
+
+    CLAUDE_CONFIG_DIR="$config_dir" CLAUDE_PROFILE="$profile" "$claude_bin" "${extra_args[@]}" "${cmd_args[@]}"
+}
+
 # ============================================================================
 # Additional Tools
 # ============================================================================
@@ -237,6 +306,9 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
+
+# claude code (native installer uses ~/.local/bin)
+export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
 
 # Amp CLI
 export PATH="$HOME/.amp/bin:$PATH"

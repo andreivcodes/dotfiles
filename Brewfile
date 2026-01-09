@@ -34,8 +34,8 @@ brew "direnv"           # Per-directory environment variables
 brew "gnupg"            # GPG encryption (required for Doppler)
 brew "doppler"          # Secrets management CLI
 
-# AI/ML CLIs
-brew "opencode"         # AI coding agent
+# Note: AI tools (OpenCode, Claude Code) are installed via native installers
+# See: installers/ai-tools.sh
 
 # System Utilities
 brew "wget"             # Network downloader

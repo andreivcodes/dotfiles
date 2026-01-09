@@ -19,23 +19,45 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 
 # Configuration mappings: source -> target (using parallel arrays for bash 3.2 compatibility)
 SOURCES=(
+    # Zed editor
     "$REPO_ROOT/dotfiles/zed"
+    # Shell configuration
     "$REPO_ROOT/dotfiles/.zshrc"
+    # OpenCode profiles
     "$REPO_ROOT/dotfiles/opencode/personal/opencode.json"
+    "$REPO_ROOT/dotfiles/opencode/personal/AGENTS.md"
     "$REPO_ROOT/dotfiles/opencode/work/opencode.json"
-    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
-    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
-    "$REPO_ROOT/dotfiles/opencode/AGENTS.md"
+    "$REPO_ROOT/dotfiles/opencode/work/AGENTS.md"
+    # Claude Code profiles
+    "$REPO_ROOT/dotfiles/claude/personal/mcp.json"
+    "$REPO_ROOT/dotfiles/claude/personal/settings.json"
+    "$REPO_ROOT/dotfiles/claude/personal/AGENTS.md"
+    "$REPO_ROOT/dotfiles/claude/statusline.sh"
+    "$REPO_ROOT/dotfiles/claude/work/mcp.json"
+    "$REPO_ROOT/dotfiles/claude/work/settings.json"
+    "$REPO_ROOT/dotfiles/claude/work/AGENTS.md"
+    "$REPO_ROOT/dotfiles/claude/statusline.sh"
 )
 
 TARGETS=(
+    # Zed editor
     "$HOME/.config/zed"
+    # Shell configuration
     "$HOME/.zshrc"
+    # OpenCode profiles
     "$HOME/.opencode-profiles/personal/config/opencode.json"
-    "$HOME/.opencode-profiles/work/config/opencode.json"
     "$HOME/.opencode-profiles/personal/config/AGENTS.md"
+    "$HOME/.opencode-profiles/work/config/opencode.json"
     "$HOME/.opencode-profiles/work/config/AGENTS.md"
-    "$HOME/.config/opencode/AGENTS.md"
+    # Claude Code profiles
+    "$HOME/.claude-profiles/personal/config/mcp.json"
+    "$HOME/.claude-profiles/personal/config/settings.json"
+    "$HOME/.claude-profiles/personal/config/AGENTS.md"
+    "$HOME/.claude-profiles/personal/config/statusline.sh"
+    "$HOME/.claude-profiles/work/config/mcp.json"
+    "$HOME/.claude-profiles/work/config/settings.json"
+    "$HOME/.claude-profiles/work/config/AGENTS.md"
+    "$HOME/.claude-profiles/work/config/statusline.sh"
 )
 
 total=${#SOURCES[@]}
