@@ -199,6 +199,14 @@ unalias claude 2>/dev/null
 claude() {
     local profile=""
     local cmd_args=()
+    local bypass_profile=false
+
+    # Check if first arg is a maintenance command that doesn't need a profile
+    case "$1" in
+        update|install|uninstall|--version|-v|--help|-h)
+            bypass_profile=true
+            ;;
+    esac
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -218,6 +226,15 @@ claude() {
                 ;;
         esac
     done
+
+    # For maintenance commands, run directly without profile isolation
+    if [[ "$bypass_profile" == true ]]; then
+        local claude_bin="${HOME}/.local/bin/claude"
+        [[ ! -x "$claude_bin" ]] && claude_bin="${HOME}/.claude/bin/claude"
+        [[ ! -x "$claude_bin" ]] && claude_bin="$(command -v claude)"
+        "$claude_bin" "${cmd_args[@]}"
+        return $?
+    fi
 
     if [[ -z "$profile" ]]; then
         echo "Error: -u <profile> is required. Usage: claude -u <profile> [args...]" >&2
