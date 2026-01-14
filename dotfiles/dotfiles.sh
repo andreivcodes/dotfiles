@@ -37,6 +37,11 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/claude/work/settings.json"
     "$REPO_ROOT/dotfiles/claude/work/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
+    # Shared skills
+    "$REPO_ROOT/dotfiles/claude/skills"
+    "$REPO_ROOT/dotfiles/claude/skills"
+    "$REPO_ROOT/dotfiles/claude/skills"
+    "$REPO_ROOT/dotfiles/claude/skills"
 )
 
 TARGETS=(
@@ -58,6 +63,11 @@ TARGETS=(
     "$HOME/.claude-profiles/work/config/settings.json"
     "$HOME/.claude-profiles/work/config/AGENTS.md"
     "$HOME/.claude-profiles/work/config/statusline.sh"
+    # Shared skills
+    "$HOME/.claude/skills"
+    "$HOME/.config/opencode/skill"
+    "$HOME/.claude-profiles/personal/config/skills"
+    "$HOME/.claude-profiles/work/config/skills"
 )
 
 total=${#SOURCES[@]}

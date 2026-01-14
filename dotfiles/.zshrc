@@ -156,6 +156,16 @@ unalias opencode 2>/dev/null
 opencode() {
     local profile=""
     local cmd_args=()
+    local bypass_profile=false
+    local maintenance_cmd=""
+
+    # Check if first arg is a maintenance command that doesn't need a profile
+    case "$1" in
+        update|upgrade|install|uninstall|--version|-v|--help|-h)
+            bypass_profile=true
+            maintenance_cmd="$1"
+            ;;
+    esac
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -175,6 +185,27 @@ opencode() {
                 ;;
         esac
     done
+
+    # For maintenance commands, run directly without profile isolation
+    if [[ "$bypass_profile" == true ]]; then
+        if [[ "$maintenance_cmd" == "update" || "$maintenance_cmd" == "upgrade" || "$maintenance_cmd" == "install" ]]; then
+            local installer_args=("${cmd_args[@]}")
+            if [[ ${#installer_args[@]} -gt 0 && "${installer_args[0]}" == "$maintenance_cmd" ]]; then
+                installer_args=("${installer_args[@]:1}")
+            fi
+            curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path "${installer_args[@]}"
+            return $?
+        fi
+
+        local opencode_bin="${HOME}/.opencode/bin/opencode"
+        [[ ! -x "$opencode_bin" ]] && opencode_bin="$(command -v opencode)"
+        if [[ -z "$opencode_bin" ]]; then
+            echo "Error: opencode not found. Install: curl -fsSL https://opencode.ai/install | bash" >&2
+            return 1
+        fi
+        "$opencode_bin" "${cmd_args[@]}"
+        return $?
+    fi
 
     if [[ -z "$profile" ]]; then
         echo "Error: -u <profile> is required. Usage: opencode -u <profile> [args...]" >&2

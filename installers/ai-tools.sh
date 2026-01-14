@@ -16,13 +16,28 @@ require_macos
 # ============================================================================
 if command_exists opencode; then
     log_info "OpenCode is already installed"
-    # Check for updates
-    if opencode version 2>/dev/null; then
-        log_success "OpenCode verified"
+    if [[ "${OPENCODE_UPDATE:-}" == "1" ]]; then
+        log_info "Updating OpenCode via native installer..."
+        update_args=(--no-modify-path)
+        if [[ -n "${OPENCODE_VERSION:-}" ]]; then
+            update_args+=(--version "$OPENCODE_VERSION")
+        fi
+        if curl -fsSL --max-time 60 https://opencode.ai/install | bash -s -- "${update_args[@]}"; then
+            export PATH="$HOME/.opencode/bin:$PATH"
+            log_success "OpenCode updated successfully"
+        else
+            log_warning "OpenCode update did not complete. You can update manually:"
+            log_info "  curl -fsSL https://opencode.ai/install | bash"
+        fi
+    else
+        # Check for updates
+        if opencode version 2>/dev/null; then
+            log_success "OpenCode verified"
+        fi
     fi
 else
     log_info "Installing OpenCode via native installer..."
-    if curl -fsSL --max-time 60 https://opencode.ai/install | bash; then
+    if curl -fsSL --max-time 60 https://opencode.ai/install | bash -s -- --no-modify-path; then
         # Reload path
         export PATH="$HOME/.opencode/bin:$PATH"
         log_success "OpenCode installed successfully"

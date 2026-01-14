@@ -244,9 +244,14 @@ Ensure the CLI tools are installed:
 which opencode  # Should show path to opencode
 ```
 
-If not found, reinstall via Homebrew:
+If not found, install via the native installer:
 ```bash
-brew install opencode
+curl -fsSL https://opencode.ai/install | bash
+```
+
+To update later:
+```bash
+opencode update
 ```
 
 ### Completion Not Working
