@@ -20,6 +20,10 @@
       "type": "remote",
       "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}"
     },
+    "notion": {
+      "type": "remote",
+      "url": "https://mcp.notion.com/mcp"
+    },
     "chrome-devtools": {
       "type": "local",
       "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
