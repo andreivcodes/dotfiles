@@ -16,10 +16,6 @@
       "type": "http",
       "url": "https://mcp.notion.com/mcp"
     },
-    "chrome-devtools": {
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
-    },
     "figma-desktop": {
       "type": "http",
       "url": "http://127.0.0.1:3845/mcp"
