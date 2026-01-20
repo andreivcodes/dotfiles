@@ -6,19 +6,31 @@ allowed-tools: Bash(agent-browser:*)
 
 # Browser Automation with agent-browser
 
+## IMPORTANT: Always use headed mode
+
+**CRITICAL**: Always use `--headed` flag when launching the browser with `open` command. This shows the browser window so the user can see what's happening.
+
+```bash
+# CORRECT - always use --headed
+agent-browser open <url> --headed
+
+# WRONG - never launch without --headed
+agent-browser open <url>
+```
+
 ## Quick start
 
 ```bash
-agent-browser open <url>        # Navigate to page
-agent-browser snapshot -i       # Get interactive elements with refs
-agent-browser click @e1         # Click element by ref
-agent-browser fill @e2 "text"   # Fill input by ref
-agent-browser close             # Close browser
+agent-browser open <url> --headed  # Navigate to page (always use --headed)
+agent-browser snapshot -i          # Get interactive elements with refs
+agent-browser click @e1            # Click element by ref
+agent-browser fill @e2 "text"      # Fill input by ref
+agent-browser close                # Close browser
 ```
 
 ## Core workflow
 
-1. Navigate: `agent-browser open <url>`
+1. Navigate: `agent-browser open <url> --headed` (ALWAYS include --headed)
 2. Snapshot: `agent-browser snapshot -i` (returns elements with refs like `@e1`, `@e2`)
 3. Interact using refs from the snapshot
 4. Re-snapshot after navigation or significant DOM changes
@@ -27,11 +39,11 @@ agent-browser close             # Close browser
 
 ### Navigation
 ```bash
-agent-browser open <url>      # Navigate to URL
-agent-browser back            # Go back
-agent-browser forward         # Go forward
-agent-browser reload          # Reload page
-agent-browser close           # Close browser
+agent-browser open <url> --headed  # Navigate to URL (always use --headed)
+agent-browser back                 # Go back
+agent-browser forward              # Go forward
+agent-browser reload               # Reload page
+agent-browser close                # Close browser
 ```
 
 ### Snapshot (page analysis)
@@ -188,7 +200,7 @@ agent-browser eval "document.title"   # Run JavaScript
 ## Example: Form submission
 
 ```bash
-agent-browser open https://example.com/form
+agent-browser open https://example.com/form --headed
 agent-browser snapshot -i
 # Output shows: textbox "Email" [ref=e1], textbox "Password" [ref=e2], button "Submit" [ref=e3]
 
@@ -203,7 +215,7 @@ agent-browser snapshot -i  # Check result
 
 ```bash
 # Login once
-agent-browser open https://app.example.com/login
+agent-browser open https://app.example.com/login --headed
 agent-browser snapshot -i
 agent-browser fill @e1 "username"
 agent-browser fill @e2 "password"
@@ -213,14 +225,14 @@ agent-browser state save auth.json
 
 # Later sessions: load saved state
 agent-browser state load auth.json
-agent-browser open https://app.example.com/dashboard
+agent-browser open https://app.example.com/dashboard --headed
 ```
 
 ## Sessions (parallel browsers)
 
 ```bash
-agent-browser --session test1 open site-a.com
-agent-browser --session test2 open site-b.com
+agent-browser --session test1 open site-a.com --headed
+agent-browser --session test2 open site-b.com --headed
 agent-browser session list
 ```
 
@@ -235,13 +247,6 @@ agent-browser get text @e1 --json
 ## Debugging
 
 ```bash
-agent-browser open example.com --headed              # Show browser window
-agent-browser console                                # View console messages
-agent-browser errors                                 # View page errors
-agent-browser record start ./debug.webm   # Record from current page
-agent-browser record stop                            # Save recording
-agent-browser open example.com --headed  # Show browser window
-agent-browser --cdp 9222 snapshot        # Connect via CDP
 agent-browser console                    # View console messages
 agent-browser console --clear            # Clear console
 agent-browser errors                     # View page errors
@@ -249,4 +254,7 @@ agent-browser errors --clear             # Clear errors
 agent-browser highlight @e1              # Highlight element
 agent-browser trace start                # Start recording trace
 agent-browser trace stop trace.zip       # Stop and save trace
+agent-browser record start ./debug.webm  # Record from current page
+agent-browser record stop                # Save recording
+agent-browser --cdp 9222 snapshot        # Connect via CDP
 ```
