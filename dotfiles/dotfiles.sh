@@ -37,11 +37,13 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/claude/work/settings.json"
     "$REPO_ROOT/dotfiles/claude/work/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
-    # Shared skills
-    "$REPO_ROOT/dotfiles/claude/skills"
-    "$REPO_ROOT/dotfiles/claude/skills"
-    "$REPO_ROOT/dotfiles/claude/skills"
-    "$REPO_ROOT/dotfiles/claude/skills"
+    # Shared agent skills (source of truth: dotfiles/agents/skills)
+    "$REPO_ROOT/dotfiles/agents/skills"
+    "$REPO_ROOT/dotfiles/agents/skills"
+    "$REPO_ROOT/dotfiles/agents/skills"
+    "$REPO_ROOT/dotfiles/agents/skills"
+    "$REPO_ROOT/dotfiles/agents/skills"
+    "$REPO_ROOT/dotfiles/agents/skills"
 )
 
 TARGETS=(
@@ -63,8 +65,10 @@ TARGETS=(
     "$HOME/.claude-profiles/work/config/settings.json"
     "$HOME/.claude-profiles/work/config/AGENTS.md"
     "$HOME/.claude-profiles/work/config/statusline.sh"
-    # Shared skills
+    # Shared agent skills (all point to dotfiles/agents/skills)
+    "$HOME/.agents/skills"
     "$HOME/.claude/skills"
+    "$HOME/.opencode/skills"
     "$HOME/.config/opencode/skill"
     "$HOME/.claude-profiles/personal/config/skills"
     "$HOME/.claude-profiles/work/config/skills"
