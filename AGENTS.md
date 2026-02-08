@@ -7,7 +7,7 @@ This repository automates macOS development environment setup with Homebrew pack
 - `setup.sh` - Main entry point (runs full macOS setup)
 - `installers/` - Installation scripts (brew.sh, dev.sh, dock.sh, timemachine-exclude.sh, all.sh)
 - `preferences/system.sh` - macOS defaults (Finder, Dock, keyboard, etc.)
-- `dotfiles/` - Config files (.zshrc, opencode/, zed/) and dotfiles.sh symlink script
+- `dotfiles/` - Config files (.zshrc, codex/, zed/) and dotfiles.sh symlink script
 - `lib/utils.sh` - Shared logging, guards, and helper functions
 - `Brewfile` - Homebrew packages and casks
 

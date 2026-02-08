@@ -73,4 +73,4 @@ fi
 
 log_info "$(brew list --formula | wc -l | xargs) formulas and $(brew list --cask | wc -l | xargs) casks are now installed"
 
-# Note: AI tools (OpenCode, Claude Code) are installed via installers/ai-tools.sh
+# Note: AI tools (Codex, Claude Code) are installed via installers/ai-tools.sh

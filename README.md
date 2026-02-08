@@ -15,7 +15,7 @@ cd ~/git/dotfiles
 - **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
 - **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh and lazy loading
 - **Zed Editor**: Complete settings with AI agent profiles and custom formatters
-- **OpenCode Profiles**: Per-profile configuration for personal and work contexts
+- **Codex Profiles**: Per-profile configuration for personal and work contexts
 - **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
 
@@ -38,11 +38,11 @@ dotfiles/
 │   ├── .zshrc                 # Zsh configuration (performance-optimized)
 │   ├── zed/
 │   │   └── settings.json      # Zed editor settings
-│   └── opencode/              # OpenCode profile configs
+│   └── codex/                 # Codex CLI profile configs
 │       ├── personal/
-│       │   └── opencode.json
+│       │   └── config.toml
 │       └── work/
-│           └── opencode.json
+│           └── config.toml
 ├── preferences/               # macOS system preferences scripts
 │   └── system.sh              # Configures Finder, Dock, Trackpad, etc.
 └── lib/                       # Shared utility functions
@@ -82,7 +82,7 @@ This will:
 - Install all Homebrew packages and applications
 - Set up Node.js (via NVM) and Rust development environments
 - Configure macOS system preferences (Finder, Dock, Trackpad, etc.)
-- Create symlinks for dotfiles (.zshrc, Zed config, OpenCode profiles)
+- Create symlinks for dotfiles (.zshrc, Zed config, Codex profiles)
 - Configure Dock layout with your applications
 - Set up Time Machine exclusions for development directories
 
@@ -125,9 +125,9 @@ bash installers/timemachine-exclude.sh
 Use different profiles for personal and work contexts:
 
 ```bash
-# OpenCode with profiles
-opencode -u personal
-opencode -u work
+# Codex with profiles
+codex -u personal
+codex -u work
 ```
 
 Each profile maintains separate:
@@ -139,7 +139,7 @@ Each profile maintains separate:
 
 Organized package declarations across categories:
 - 📦 CLI tools and utilities (wget, ansible, act, etc.)
-- 🤖 AI/ML CLIs (opencode)
+- 🤖 AI/ML CLIs (codex)
 - 💻 Development tools (nixpacks, orbstack, zed)
 - 💬 Communication apps (Discord, Slack, WhatsApp, Signal, Telegram)
 - 🔒 Security and VPN tools (1Password, Tailscale, Mullvad)
@@ -167,7 +167,7 @@ brew bundle dump --force
 
 ### Zed Editor Configuration
 
-- **🤖 AI Agent Integration**: OpenCode agent server support
+- **🤖 AI Agent Integration**: Codex agent server support
 - **🎨 Custom Formatters**: Prettier for JavaScript, TypeScript, and TSX
 - **📝 Git Integration**: Git gutter and inline blame
 - **⚙️ Terminal Settings**: Integrated zsh terminal
@@ -241,17 +241,12 @@ cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d)
 
 Ensure the CLI tools are installed:
 ```bash
-which opencode  # Should show path to opencode
+which codex  # Should show path to codex
 ```
 
-If not found, install via the native installer:
+If not found, install via npm:
 ```bash
-curl -fsSL https://opencode.ai/install | bash
-```
-
-To update later:
-```bash
-opencode update
+npm install -g @openai/codex
 ```
 
 ### Completion Not Working

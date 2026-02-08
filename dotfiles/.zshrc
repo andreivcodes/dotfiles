@@ -145,25 +145,23 @@ alias gd='git diff'
 # AI CLI Profile Wrapper Functions
 # ============================================================================
 # These wrappers allow running AI CLIs with different user profiles
-# Usage: opencode -u <profile> [args...]
+# Usage: codex -u <profile> [args...]
 #
 # Profile directories:
-#   ~/.opencode-profiles/<profile>/
+#   ~/.codex-profiles/<profile>/
 # ============================================================================
 
-# OpenCode wrapper (uses XDG_DATA_HOME for auth, OPENCODE_CONFIG_DIR for config)
-unalias opencode 2>/dev/null
-opencode() {
+# Codex CLI wrapper (uses CODEX_HOME for config directory isolation)
+unalias codex 2>/dev/null
+codex() {
     local profile=""
     local cmd_args=()
     local bypass_profile=false
-    local maintenance_cmd=""
 
     # Check if first arg is a maintenance command that doesn't need a profile
     case "$1" in
-        update|upgrade|install|uninstall|--version|-v|--help|-h)
+        --version|-v|--help|-h)
             bypass_profile=true
-            maintenance_cmd="$1"
             ;;
     esac
 
@@ -188,37 +186,20 @@ opencode() {
 
     # For maintenance commands, run directly without profile isolation
     if [[ "$bypass_profile" == true ]]; then
-        if [[ "$maintenance_cmd" == "update" || "$maintenance_cmd" == "upgrade" || "$maintenance_cmd" == "install" ]]; then
-            local installer_args=("${cmd_args[@]}")
-            if [[ ${#installer_args[@]} -gt 0 && "${installer_args[0]}" == "$maintenance_cmd" ]]; then
-                installer_args=("${installer_args[@]:1}")
-            fi
-            curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path "${installer_args[@]}"
-            return $?
-        fi
-
-        local opencode_bin="${HOME}/.opencode/bin/opencode"
-        [[ ! -x "$opencode_bin" ]] && opencode_bin="$(command -v opencode)"
-        if [[ -z "$opencode_bin" ]]; then
-            echo "Error: opencode not found. Install: curl -fsSL https://opencode.ai/install | bash" >&2
-            return 1
-        fi
-        "$opencode_bin" "${cmd_args[@]}"
+        command codex "${cmd_args[@]}"
         return $?
     fi
 
     if [[ -z "$profile" ]]; then
-        echo "Error: -u <profile> is required. Usage: opencode -u <profile> [args...]" >&2
+        echo "Error: -u <profile> is required. Usage: codex -u <profile> [args...]" >&2
         return 1
     fi
 
-    echo "OpenCode profile: $profile"
-    local profile_dir="$HOME/.opencode-profiles/$profile"
-    local data_dir="$profile_dir/data"
-    local config_dir="$profile_dir/config"
-    mkdir -p "$data_dir" "$config_dir"
+    echo "Codex profile: $profile"
+    local profile_dir="$HOME/.codex-profiles/$profile"
+    mkdir -p "$profile_dir"
 
-    OPENCODE_CONFIG="$config_dir/opencode.json" XDG_DATA_HOME="$data_dir" OPENCODE_CONFIG_DIR="$config_dir" command opencode "${cmd_args[@]}"
+    CODEX_HOME="$profile_dir" command codex "${cmd_args[@]}"
 }
 
 # Claude Code wrapper (uses CLAUDE_CONFIG_DIR for config isolation)
@@ -311,12 +292,6 @@ claude() {
 # Additional Tools
 # ============================================================================
 
-# OpenCode Configuration
-export OPENCODE_EXPERIMENTAL=true
-export OPENCODE_EXPERIMENTAL_LSP_TOOL=true
-export OPENCODE_EXPERIMENTAL_OXFMT=true
-export OPENCODE_EXPERIMENTAL_ICON_DISCOVERY=true
-
 # Load private environment variables (API keys, secrets)
 # Create ~/.zshrc.local with: export EXA_API_KEY="your-key-here"
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
@@ -352,9 +327,6 @@ fi
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
-
 # claude code (native installer uses ~/.local/bin)
 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
 
@@ -363,3 +335,9 @@ export PATH="$HOME/.amp/bin:$PATH"
 
 # direnv
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+
+# Added by LM Studio CLI (lms)
+if [ -d "$HOME/.lmstudio/bin" ]; then
+  export PATH="$PATH:$HOME/.lmstudio/bin"
+fi
+# End of LM Studio CLI section

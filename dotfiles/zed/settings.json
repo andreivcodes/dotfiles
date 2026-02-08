@@ -1,16 +1,13 @@
 {
   "icon_theme": "Colored Zed Icons Theme Dark",
   "agent_servers": {
-    "OpenCode": {
+    "Codex": {
       "type": "custom",
-      "command": "opencode",
+      "command": "codex",
       "args": ["acp"],
     },
   },
   "bottom_dock_layout": "contained",
-  "features": {
-    "edit_prediction_provider": "zed",
-  },
   "vim_mode": false,
   "indent_guides": {
     "enabled": true,

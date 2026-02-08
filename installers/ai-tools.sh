@@ -12,38 +12,20 @@ check_not_sudo
 require_macos
 
 # ============================================================================
-# OpenCode Installation (Native)
+# Codex CLI Installation (Homebrew cask)
 # ============================================================================
-if command_exists opencode; then
-    log_info "OpenCode is already installed"
-    if [[ "${OPENCODE_UPDATE:-}" == "1" ]]; then
-        log_info "Updating OpenCode via native installer..."
-        update_args=(--no-modify-path)
-        if [[ -n "${OPENCODE_VERSION:-}" ]]; then
-            update_args+=(--version "$OPENCODE_VERSION")
-        fi
-        if curl -fsSL --max-time 60 https://opencode.ai/install | bash -s -- "${update_args[@]}"; then
-            export PATH="$HOME/.opencode/bin:$PATH"
-            log_success "OpenCode updated successfully"
-        else
-            log_warning "OpenCode update did not complete. You can update manually:"
-            log_info "  curl -fsSL https://opencode.ai/install | bash"
-        fi
-    else
-        # Check for updates
-        if opencode version 2>/dev/null; then
-            log_success "OpenCode verified"
-        fi
+if command_exists codex; then
+    log_info "Codex CLI is already installed"
+    if codex --version 2>/dev/null; then
+        log_success "Codex CLI verified"
     fi
 else
-    log_info "Installing OpenCode via native installer..."
-    if curl -fsSL --max-time 60 https://opencode.ai/install | bash -s -- --no-modify-path; then
-        # Reload path
-        export PATH="$HOME/.opencode/bin:$PATH"
-        log_success "OpenCode installed successfully"
+    log_info "Installing Codex CLI via Homebrew..."
+    if brew install --cask codex; then
+        log_success "Codex CLI installed successfully"
     else
-        log_warning "OpenCode installation did not complete. You can install manually:"
-        log_info "  curl -fsSL https://opencode.ai/install | bash"
+        log_warning "Codex CLI installation failed. Install manually:"
+        log_info "  brew install --cask codex"
     fi
 fi
 
@@ -98,5 +80,5 @@ fi
 
 log_success "AI tools setup completed!"
 log_info "Remember to authenticate with each tool:"
-log_info "  - OpenCode: opencode -u <profile> then /connect"
+log_info "  - Codex: codex -u <profile>"
 log_info "  - Claude Code: claude -u <profile> then follow prompts"

@@ -4,7 +4,7 @@
 # Copy this file to ~/.zshrc.local and add your actual API key:
 # cp .zshrc.local.example ~/.zshrc.local
 
-# Exa API Key (for OpenCode MCP - exa_get_code_context_exa tool)
+# Exa API Key (for Codex/Claude MCP - exa search tool)
 # Get your key from: https://exa.ai
 export EXA_API_KEY="your-exa-api-key-here"
 
