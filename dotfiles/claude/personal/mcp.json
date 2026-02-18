@@ -22,10 +22,6 @@
     "figma-desktop": {
       "type": "http",
       "url": "http://127.0.0.1:3845/mcp"
-    },
-    "linear": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
     }
   }
 }

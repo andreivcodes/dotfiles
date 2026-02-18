@@ -1,6 +1,7 @@
-model = "gpt-5.2-codex"
+model = "gpt-5.3-codex"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
+model_reasoning_effort = "xhigh"
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
@@ -19,6 +20,8 @@ url = "https://mcp.notion.com/mcp"
 [mcp_servers.figma-desktop]
 url = "http://127.0.0.1:3845/mcp"
 
-[mcp_servers.linear]
-command = "npx"
-args = ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+[notice.model_migrations]
+"gpt-5.2-codex" = "gpt-5.3-codex"
+
+[features]
+multi_agent = true
