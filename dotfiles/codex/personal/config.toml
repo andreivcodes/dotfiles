@@ -1,4 +1,4 @@
-model = "gpt-5.3-codex"
+model = "gpt-5.3-codex-spark"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 model_reasoning_effort = "xhigh"
@@ -16,6 +16,12 @@ bearer_token_env_var = "EXA_API_KEY"
 
 [mcp_servers.notion]
 url = "https://mcp.notion.com/mcp"
+
+[mcp_servers.posthog]
+url = "https://mcp.posthog.com/mcp"
+
+[mcp_servers.sentry]
+url = "https://mcp.sentry.dev/mcp"
 
 [mcp_servers.figma-desktop]
 url = "http://127.0.0.1:3845/mcp"
