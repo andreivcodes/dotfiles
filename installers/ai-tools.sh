@@ -51,6 +51,24 @@ else
 fi
 
 # ============================================================================
+# OpenCode Installation (Homebrew formula)
+# ============================================================================
+if command_exists opencode; then
+    log_info "OpenCode is already installed"
+    if opencode --version 2>/dev/null; then
+        log_success "OpenCode verified"
+    fi
+else
+    log_info "Installing OpenCode via Homebrew..."
+    if brew install anomalyco/tap/opencode; then
+        log_success "OpenCode installed successfully"
+    else
+        log_warning "OpenCode installation failed. Install manually:"
+        log_info "  brew install anomalyco/tap/opencode"
+    fi
+fi
+
+# ============================================================================
 # Agent Browser Installation (Vercel Labs)
 # ============================================================================
 log_info "Setting up Agent Browser..."
@@ -82,3 +100,4 @@ log_success "AI tools setup completed!"
 log_info "Remember to authenticate with each tool:"
 log_info "  - Codex: codex -u <profile>"
 log_info "  - Claude Code: claude -u <profile> then follow prompts"
+log_info "  - OpenCode: opencode -u <profile> auth login"

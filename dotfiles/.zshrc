@@ -288,6 +288,66 @@ claude() {
     CLAUDE_CONFIG_DIR="$config_dir" CLAUDE_PROFILE="$profile" "$claude_bin" "${extra_args[@]}" "${cmd_args[@]}"
 }
 
+# OpenCode wrapper (uses XDG directories for full profile isolation)
+unalias opencode 2>/dev/null
+opencode() {
+    local profile=""
+    local cmd_args=()
+    local bypass_profile=false
+
+    # Check if first arg is a maintenance command that doesn't need a profile
+    case "$1" in
+        upgrade|uninstall|completion|--version|-v|--help|-h)
+            bypass_profile=true
+            ;;
+    esac
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u)
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    profile="$2"
+                    shift 2
+                else
+                    echo "Error: -u requires a profile name" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                cmd_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # For maintenance commands, run directly without profile isolation
+    if [[ "$bypass_profile" == true ]]; then
+        command opencode "${cmd_args[@]}"
+        return $?
+    fi
+
+    if [[ -z "$profile" ]]; then
+        echo "Error: -u <profile> is required. Usage: opencode -u <profile> [args...]" >&2
+        return 1
+    fi
+
+    echo "OpenCode profile: $profile"
+    local profile_root="$HOME/.opencode-profiles/$profile"
+    local xdg_config_home="$profile_root/config"
+    local xdg_data_home="$profile_root/data"
+    local xdg_cache_home="$profile_root/cache"
+    local xdg_state_home="$profile_root/state"
+    mkdir -p "$xdg_config_home/opencode" "$xdg_data_home" "$xdg_cache_home" "$xdg_state_home"
+
+    XDG_CONFIG_HOME="$xdg_config_home" \
+    XDG_DATA_HOME="$xdg_data_home" \
+    XDG_CACHE_HOME="$xdg_cache_home" \
+    XDG_STATE_HOME="$xdg_state_home" \
+    OPENCODE_PROFILE="$profile" \
+    command opencode "${cmd_args[@]}"
+}
+
 # ============================================================================
 # Additional Tools
 # ============================================================================

@@ -1,7 +1,8 @@
-model = "gpt-5.3-codex-spark"
+model = "gpt-5.3-codex"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 model_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "xhigh"
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"

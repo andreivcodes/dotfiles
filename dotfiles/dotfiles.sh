@@ -37,6 +37,11 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/claude/work/settings.json"
     "$REPO_ROOT/dotfiles/claude/work/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
+    # OpenCode profiles
+    "$REPO_ROOT/dotfiles/opencode/personal/opencode.json"
+    "$REPO_ROOT/dotfiles/opencode/personal/AGENTS.md"
+    "$REPO_ROOT/dotfiles/opencode/work/opencode.json"
+    "$REPO_ROOT/dotfiles/opencode/work/AGENTS.md"
     # Note: Agent skills are synced via rsync below (not symlinked)
     # This avoids double-symlink issues with per-agent skill discovery
 )
@@ -60,6 +65,11 @@ TARGETS=(
     "$HOME/.claude-profiles/work/config/settings.json"
     "$HOME/.claude-profiles/work/config/AGENTS.md"
     "$HOME/.claude-profiles/work/config/statusline.sh"
+    # OpenCode profiles
+    "$HOME/.opencode-profiles/personal/config/opencode/opencode.json"
+    "$HOME/.opencode-profiles/personal/config/opencode/AGENTS.md"
+    "$HOME/.opencode-profiles/work/config/opencode/opencode.json"
+    "$HOME/.opencode-profiles/work/config/opencode/AGENTS.md"
 )
 
 total=${#SOURCES[@]}
@@ -131,6 +141,17 @@ for profile in personal work; do
         rm -rf "$codex_skills" 2>/dev/null || true
         ln -sf "$HOME/.agents/skills" "$codex_skills"
         log_success "Created skills symlink for Codex $profile profile"
+    fi
+done
+
+# OpenCode profiles
+for profile in personal work; do
+    opencode_skills="$HOME/.opencode-profiles/$profile/config/opencode/skills"
+    if [ ! -L "$opencode_skills" ]; then
+        rm -rf "$opencode_skills" 2>/dev/null || true
+        mkdir -p "$(dirname "$opencode_skills")"
+        ln -sf "$HOME/.agents/skills" "$opencode_skills"
+        log_success "Created skills symlink for OpenCode $profile profile"
     fi
 done
 

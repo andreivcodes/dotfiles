@@ -12,6 +12,7 @@
 # Taps
 # ============================================================================
 tap "dopplerhq/cli"      # Doppler secrets management
+tap "anomalyco/tap"      # OpenCode CLI (latest)
 
 # ============================================================================
 # CLI Tools & Utilities
@@ -36,6 +37,7 @@ brew "doppler"          # Secrets management CLI
 
 # AI Tools
 cask "codex"            # OpenAI Codex CLI (coding agent)
+brew "anomalyco/tap/opencode" # OpenCode CLI (coding agent)
 # Note: Claude Code is installed via native installer (see installers/ai-tools.sh)
 
 # System Utilities

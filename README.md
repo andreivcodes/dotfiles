@@ -15,7 +15,7 @@ cd ~/git/dotfiles
 - **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
 - **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh and lazy loading
 - **Zed Editor**: Complete settings with AI agent profiles and custom formatters
-- **Codex Profiles**: Per-profile configuration for personal and work contexts
+- **AI CLI Profiles**: Per-profile configuration for Codex, Claude Code, and OpenCode
 - **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
 
@@ -38,11 +38,9 @@ dotfiles/
 │   ├── .zshrc                 # Zsh configuration (performance-optimized)
 │   ├── zed/
 │   │   └── settings.json      # Zed editor settings
-│   └── codex/                 # Codex CLI profile configs
-│       ├── personal/
-│       │   └── config.toml
-│       └── work/
-│           └── config.toml
+│   ├── codex/                 # Codex CLI profile configs
+│   ├── claude/                # Claude Code profile configs
+│   └── opencode/              # OpenCode profile configs
 ├── preferences/               # macOS system preferences scripts
 │   └── system.sh              # Configures Finder, Dock, Trackpad, etc.
 └── lib/                       # Shared utility functions
@@ -82,7 +80,7 @@ This will:
 - Install all Homebrew packages and applications
 - Set up Node.js (via NVM) and Rust development environments
 - Configure macOS system preferences (Finder, Dock, Trackpad, etc.)
-- Create symlinks for dotfiles (.zshrc, Zed config, Codex profiles)
+- Create symlinks for dotfiles (.zshrc, Zed config, AI CLI profiles)
 - Configure Dock layout with your applications
 - Set up Time Machine exclusions for development directories
 
@@ -125,9 +123,17 @@ bash installers/timemachine-exclude.sh
 Use different profiles for personal and work contexts:
 
 ```bash
-# Codex with profiles
+# Codex
 codex -u personal
 codex -u work
+
+# Claude Code
+claude -u personal
+claude -u work
+
+# OpenCode
+opencode -u personal
+opencode -u work
 ```
 
 Each profile maintains separate:
@@ -139,7 +145,7 @@ Each profile maintains separate:
 
 Organized package declarations across categories:
 - 📦 CLI tools and utilities (wget, ansible, act, etc.)
-- 🤖 AI/ML CLIs (codex)
+- 🤖 AI/ML CLIs (codex, opencode)
 - 💻 Development tools (nixpacks, orbstack, zed)
 - 💬 Communication apps (Discord, Slack, WhatsApp, Signal, Telegram)
 - 🔒 Security and VPN tools (1Password, Tailscale, Mullvad)
@@ -242,11 +248,20 @@ cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d)
 Ensure the CLI tools are installed:
 ```bash
 which codex  # Should show path to codex
+which claude # Should show path to claude
+which opencode # Should show path to opencode
 ```
 
-If not found, install via npm:
+If not found, install:
 ```bash
+# Codex
 npm install -g @openai/codex
+
+# Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
+
+# OpenCode
+brew install anomalyco/tap/opencode
 ```
 
 ### Completion Not Working
