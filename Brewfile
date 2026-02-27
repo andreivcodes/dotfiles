@@ -24,7 +24,6 @@ brew "mas"              # Mac App Store CLI
 # Development Tools
 brew "nixpacks"         # Build and deploy apps
 brew "act"              # Run GitHub Actions locally
-brew "ansible"          # Infrastructure automation
 brew "incus"            # CLI client for Incus containers
 brew "gh"               # GitHub CLI
 brew "ripgrep"          # Fast search (rg command)
@@ -81,7 +80,6 @@ cask "mullvad-vpn"      # Privacy VPN
 # Applications - Productivity & Utilities
 # ============================================================================
 cask "notion"           # Notes and workspace
-cask "libreoffice"      # Office suite
 cask "rectangle"        # Window management
 cask "keepingyouawake"  # Prevent sleep
 cask "cleanshot"        # Screenshot tool
