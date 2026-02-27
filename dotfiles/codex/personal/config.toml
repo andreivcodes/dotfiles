@@ -21,6 +21,9 @@ url = "https://mcp.notion.com/mcp"
 [mcp_servers.posthog]
 url = "https://mcp.posthog.com/mcp"
 
+[mcp_servers.planetscale]
+url = "https://mcp.pscale.dev/mcp/planetscale"
+
 [mcp_servers.sentry]
 url = "https://mcp.sentry.dev/mcp"
 
