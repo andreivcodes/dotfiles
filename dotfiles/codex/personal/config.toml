@@ -24,6 +24,10 @@ url = "https://mcp.posthog.com/mcp"
 [mcp_servers.sentry]
 url = "https://mcp.sentry.dev/mcp"
 
+[mcp_servers.railway]
+command = "npx"
+args = ["-y", "@railway/mcp-server"]
+
 [mcp_servers.figma-desktop]
 url = "http://127.0.0.1:3845/mcp"
 
