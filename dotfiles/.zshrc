@@ -352,6 +352,9 @@ opencode() {
 # Additional Tools
 # ============================================================================
 
+# Enable the local developer harness by default in new shells.
+export AGENT_HARNESS=1
+
 # Load private environment variables (API keys, secrets)
 # Create ~/.zshrc.local with: export EXA_API_KEY="your-key-here"
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
@@ -401,3 +404,6 @@ if [ -d "$HOME/.lmstudio/bin" ]; then
   export PATH="$PATH:$HOME/.lmstudio/bin"
 fi
 # End of LM Studio CLI section
+
+# opencode
+export PATH=/Users/andrei/.opencode/bin:$PATH

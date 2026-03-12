@@ -13,5 +13,6 @@
     "typescript-lsp@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "figma@claude-plugins-official": true
-  }
+  },
+  "effortLevel": "high"
 }
