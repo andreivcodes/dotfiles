@@ -3,7 +3,6 @@ approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
-service_tier = "fast"
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
@@ -27,7 +26,7 @@ url = "http://127.0.0.1:3845/mcp"
 hide_full_access_warning = true
 
 [notice.model_migrations]
-"gpt-5.2-codex" = "gpt-5.3-codex"
+"gpt-5.2-codex" = "gpt-5.4"
 
 [features]
 multi_agent = true
@@ -39,4 +38,10 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/andrei/git/houseofstake.org-hos-repo"]
+trust_level = "trusted"
+
+[projects."/Users/andrei"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/andreiv.com"]
 trust_level = "trusted"
