@@ -77,8 +77,10 @@
     "dark": "One Dark",
   },
   "agent": {
+    "tool_permissions": {
+      "default": "allow"
+    },
     "default_profile": "write",
-    "always_allow_tool_actions": true,
     // NOTE: always_allow_tool_actions is convenient but bypasses security prompts
     "profiles": {
       "write": {
