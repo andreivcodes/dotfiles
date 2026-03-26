@@ -183,7 +183,9 @@ claude() {
 export AGENT_HARNESS=1
 
 # Load private environment variables (API keys, secrets)
-# Create ~/.zshrc.local with: export EXA_API_KEY="your-key-here"
+# Create ~/.zshrc.local with entries like:
+# export CONTEXT7_API_KEY="your-context7-key"
+# export EXA_API_KEY="your-exa-key"
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
 # pnpm

@@ -15,25 +15,13 @@
       "type": "http",
       "url": "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
     },
-    "notion": {
+    "vercel": {
       "type": "http",
-      "url": "https://mcp.notion.com/mcp"
-    },
-    "posthog": {
-      "type": "http",
-      "url": "https://mcp.posthog.com/mcp"
-    },
-    "planetscale": {
-      "type": "http",
-      "url": "https://mcp.pscale.dev/mcp/planetscale"
+      "url": "https://mcp.vercel.com"
     },
     "railway": {
       "command": "npx",
       "args": ["-y", "@railway/mcp-server"]
-    },
-    "figma-desktop": {
-      "type": "http",
-      "url": "http://127.0.0.1:3845/mcp"
     }
   }
 }

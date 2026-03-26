@@ -18,12 +18,12 @@ url = "https://mcp.grep.app"
 url = "https://mcp.exa.ai/mcp"
 bearer_token_env_var = "EXA_API_KEY"
 
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"
+
 [mcp_servers.railway]
 command = "npx"
 args = ["-y", "@railway/mcp-server"]
-
-[mcp_servers.figma-desktop]
-url = "http://127.0.0.1:3845/mcp"
 
 [notice]
 hide_full_access_warning = true

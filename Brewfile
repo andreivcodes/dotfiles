@@ -31,6 +31,7 @@ brew "ripgrep"          # Fast search (rg command)
 brew "tree"             # Directory tree view
 brew "direnv"           # Per-directory environment variables
 brew "oven-sh/bun/bun"  # JavaScript runtime and package manager
+brew "railway"          # Railway CLI
 
 # Secrets Management
 brew "gnupg"            # GPG encryption (required for Doppler)

@@ -15,7 +15,7 @@ cd ~/git/dotfiles
 - **Brewfile**: Declarative package management for Homebrew CLI tools and apps
 - **Shell Configuration**: Performance-optimized `.zshrc` with lazy loading
 - **AI CLI Configuration**: Shared Codex, Claude Code, and OpenCode setup
-- **Shared Agent Rules & Skills**: One canonical instructions file and synced skills
+- **Shared Agent Rules & Skills**: One canonical instructions file, synced repo skills, and preserved external skill installs
 - **Development Environment**: Node.js (via NVM), Rust, Bun, and essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
 
@@ -32,6 +32,7 @@ dotfiles/
 │   ├── brew.sh
 │   ├── dev.sh
 │   ├── dock.sh
+│   ├── mcp-env.sh
 │   └── timemachine-exclude.sh
 ├── dotfiles/
 │   ├── dotfiles.sh
@@ -81,7 +82,8 @@ cd ~/git/dotfiles
 This will:
 - Install all Homebrew packages and applications
 - Set up Node.js, Bun, and Rust development environments
-- Install Codex, Claude Code, OpenCode, and Agent Browser
+- Install Codex, Claude Code, OpenCode, Agent Browser, Railway CLI, and Vercel CLI
+- Prompt for MCP API keys used by the shared AI tool configs
 - Configure macOS system preferences
 - Create symlinks for shell, editor, and shared AI CLI configs
 - Configure Dock layout
@@ -93,6 +95,7 @@ This will:
 bash installers/brew.sh
 bash installers/dev.sh
 bash installers/ai-tools.sh
+bash installers/mcp-env.sh
 bash preferences/system.sh
 bash dotfiles/dotfiles.sh
 bash installers/dock.sh
@@ -135,11 +138,26 @@ opencode auth login
 
 The repo only manages stable config files and shared skills. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles`, `~/.claude-profiles`, or `~/.opencode-profiles` directories are no longer used by this repo.
 
+During setup, `installers/mcp-env.sh` prompts for `CONTEXT7_API_KEY` and `EXA_API_KEY` and writes them to `~/.zshrc.local`.
+
+Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railway` across Codex, Claude Code, and OpenCode.
+
 ### Shared Skills
 
 - Repo skills are synced into `~/.agents/skills`
+- External skills exposed through `~/.agents/skills` are preserved during sync
 - Native tool skill directories are linked to that shared location
 - One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
+
+### Superpowers
+
+This repo tracks the current upstream install pattern for `superpowers` across the supported AI CLIs:
+
+- Claude Code: enabled via `enabledPlugins` as `superpowers@claude-plugins-official`
+- OpenCode: added to `plugin` as `superpowers@git+https://github.com/obra/superpowers.git`
+- Codex: `installers/ai-tools.sh` clones `obra/superpowers` into `~/.codex/superpowers`, and `dotfiles/dotfiles.sh` links `~/.agents/skills/superpowers` to that checkout so native skill discovery can find it
+
+After syncing dotfiles, restart Claude Code or run `/reload-plugins`, and restart OpenCode so the plugin installs load. For Codex, rerun `bash dotfiles/dotfiles.sh` after `bash installers/ai-tools.sh` if you install or update Superpowers separately.
 
 ### Brewfile Package Management
 
@@ -222,6 +240,8 @@ If a tool is missing, install it with:
 brew install --cask codex
 curl -fsSL https://claude.ai/install.sh | bash
 brew install anomalyco/tap/opencode
+brew install railway
+npm i -g vercel@latest
 ```
 
 If Claude is installed but not loading the shared MCP config, reload your shell and verify `~/.claude/mcp.json` exists.

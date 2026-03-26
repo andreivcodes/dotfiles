@@ -19,35 +19,18 @@
       "url": "https://mcp.exa.ai/mcp?exaApiKey={env:EXA_API_KEY}",
       "enabled": true
     },
-    "notion": {
+    "vercel": {
       "type": "remote",
-      "url": "https://mcp.notion.com/mcp",
-      "enabled": true
-    },
-    "posthog": {
-      "type": "remote",
-      "url": "https://mcp.posthog.com/mcp",
-      "enabled": true
-    },
-    "planetscale": {
-      "type": "remote",
-      "url": "https://mcp.pscale.dev/mcp/planetscale",
-      "enabled": true
-    },
-    "sentry": {
-      "type": "remote",
-      "url": "https://mcp.sentry.dev/mcp",
+      "url": "https://mcp.vercel.com",
       "enabled": true
     },
     "railway": {
       "type": "local",
       "command": ["npx", "-y", "@railway/mcp-server"],
       "enabled": true
-    },
-    "figma-desktop": {
-      "type": "remote",
-      "url": "http://127.0.0.1:3845/mcp",
-      "enabled": true
     }
-  }
+  },
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git"
+  ]
 }

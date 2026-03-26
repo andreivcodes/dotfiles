@@ -11,6 +11,21 @@ log_info "Starting AI tools setup..."
 check_not_sudo
 require_macos
 
+# Ensure shell environment is loaded for npm/npx installed via NVM
+source "$HOME/.zprofile" 2>/dev/null || true
+
+ensure_npm_available() {
+    if command_exists npm; then
+        return 0
+    fi
+
+    if [ -s "$HOME/.nvm/nvm.sh" ]; then
+        source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+    fi
+
+    command_exists npm
+}
+
 # ============================================================================
 # Codex CLI Installation (Homebrew cask)
 # ============================================================================
@@ -69,6 +84,72 @@ else
 fi
 
 # ============================================================================
+# Railway CLI Installation
+# ============================================================================
+if command_exists railway; then
+    log_info "Railway CLI is already installed"
+    if railway --version 2>/dev/null; then
+        log_success "Railway CLI verified"
+    fi
+else
+    log_info "Installing Railway CLI via Homebrew..."
+    if brew install railway; then
+        log_success "Railway CLI installed successfully"
+    else
+        log_warning "Railway CLI installation failed. Install manually:"
+        log_info "  brew install railway"
+    fi
+fi
+
+# ============================================================================
+# Vercel CLI Installation
+# ============================================================================
+if command_exists vercel; then
+    log_info "Vercel CLI is already installed"
+    if vercel --version 2>/dev/null; then
+        log_success "Vercel CLI verified"
+    fi
+else
+    log_info "Installing Vercel CLI via npm..."
+    if ensure_npm_available && npm install -g vercel@latest; then
+        log_success "Vercel CLI installed successfully"
+    else
+        log_warning "Vercel CLI installation failed. Install manually:"
+        log_info "  npm i -g vercel@latest"
+    fi
+fi
+
+# ============================================================================
+# Superpowers for Codex
+# ============================================================================
+SUPERPOWERS_DIR="$HOME/.codex/superpowers"
+SUPERPOWERS_REPO_URL="https://github.com/obra/superpowers.git"
+
+log_info "Setting up Superpowers for Codex..."
+if ! command_exists git; then
+    log_warning "Git is required to install Superpowers for Codex; skipping"
+elif [ -d "$SUPERPOWERS_DIR/.git" ]; then
+    if git -C "$SUPERPOWERS_DIR" pull --ff-only; then
+        log_success "Superpowers updated in $SUPERPOWERS_DIR"
+    else
+        log_warning "Superpowers update failed. Update manually:"
+        log_info "  git -C $SUPERPOWERS_DIR pull --ff-only"
+    fi
+elif [ -e "$SUPERPOWERS_DIR" ]; then
+    log_warning "Existing path is not a git repository: $SUPERPOWERS_DIR"
+    log_info "  Remove or rename it, then run:"
+    log_info "  git clone $SUPERPOWERS_REPO_URL $SUPERPOWERS_DIR"
+else
+    mkdir -p "$(dirname "$SUPERPOWERS_DIR")"
+    if git clone "$SUPERPOWERS_REPO_URL" "$SUPERPOWERS_DIR"; then
+        log_success "Superpowers cloned to $SUPERPOWERS_DIR"
+    else
+        log_warning "Superpowers clone failed. Install manually:"
+        log_info "  git clone $SUPERPOWERS_REPO_URL $SUPERPOWERS_DIR"
+    fi
+fi
+
+# ============================================================================
 # Agent Browser Installation (Vercel Labs)
 # ============================================================================
 log_info "Setting up Agent Browser..."
@@ -79,7 +160,7 @@ if command_exists agent-browser; then
     fi
 else
     log_info "Installing Agent Browser globally..."
-    if npm install -g agent-browser; then
+    if ensure_npm_available && npm install -g agent-browser; then
         log_success "Agent Browser installed successfully"
     else
         log_warning "Agent Browser installation failed. You can install manually:"
@@ -101,3 +182,6 @@ log_info "Remember to authenticate with each tool:"
 log_info "  - Codex: codex login"
 log_info "  - Claude Code: claude auth login"
 log_info "  - OpenCode: opencode auth login"
+log_info "  - Railway CLI: railway login"
+log_info "  - Vercel CLI: vercel login"
+log_info "Restart Claude Code and OpenCode after dotfiles sync so Superpowers loads."
