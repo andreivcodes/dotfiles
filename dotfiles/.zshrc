@@ -142,210 +142,37 @@ alias ga='git add'
 alias gd='git diff'
 
 # ============================================================================
-# AI CLI Profile Wrapper Functions
-# ============================================================================
-# These wrappers allow running AI CLIs with different user profiles
-# Usage: codex -u <profile> [args...]
-#
-# Profile directories:
-#   ~/.codex-profiles/<profile>/
+# AI CLI Integration
 # ============================================================================
 
-# Codex CLI wrapper (uses CODEX_HOME for config directory isolation)
-unalias codex 2>/dev/null
-codex() {
-    local profile=""
-    local cmd_args=()
-    local bypass_profile=false
-
-    # Check if first arg is a maintenance command that doesn't need a profile
-    case "$1" in
-        --version|-v|--help|-h)
-            bypass_profile=true
-            ;;
-    esac
-
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -u)
-                if [[ -n "$2" && "$2" != -* ]]; then
-                    profile="$2"
-                    shift 2
-                else
-                    echo "Error: -u requires a profile name" >&2
-                    return 1
-                fi
-                ;;
-            *)
-                cmd_args+=("$1")
-                shift
-                ;;
-        esac
-    done
-
-    # For maintenance commands, run directly without profile isolation
-    if [[ "$bypass_profile" == true ]]; then
-        command codex "${cmd_args[@]}"
-        return $?
-    fi
-
-    if [[ -z "$profile" ]]; then
-        echo "Error: -u <profile> is required. Usage: codex -u <profile> [args...]" >&2
-        return 1
-    fi
-
-    echo "Codex profile: $profile"
-    local profile_dir="$HOME/.codex-profiles/$profile"
-    mkdir -p "$profile_dir"
-
-    CODEX_HOME="$profile_dir" command codex "${cmd_args[@]}"
-}
-
-# Claude Code wrapper (uses CLAUDE_CONFIG_DIR for config isolation)
-# Note: CLAUDE_CONFIG_DIR has known limitations (GitHub #15670):
-#   - Session resume (--resume) may not work across profiles
-#   - VS Code integration uses ~/.claude/ regardless
-#   - Parallel profile execution may have SQLite lock issues
+# Claude Code wrapper to load the repo-managed MCP config from ~/.claude/mcp.json.
+# Codex and OpenCode use their documented shared config directories directly.
 unalias claude 2>/dev/null
 claude() {
-    local profile=""
-    local cmd_args=()
-    local bypass_profile=false
-
-    # Check if first arg is a maintenance command that doesn't need a profile
-    case "$1" in
-        update|install|uninstall|--version|-v|--help|-h)
-            bypass_profile=true
-            ;;
-    esac
-
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -u)
-                if [[ -n "$2" && "$2" != -* ]]; then
-                    profile="$2"
-                    shift 2
-                else
-                    echo "Error: -u requires a profile name" >&2
-                    return 1
-                fi
-                ;;
-            *)
-                cmd_args+=("$1")
-                shift
-                ;;
-        esac
-    done
-
-    # For maintenance commands, run directly without profile isolation
-    if [[ "$bypass_profile" == true ]]; then
-        local claude_bin="${HOME}/.local/bin/claude"
-        [[ ! -x "$claude_bin" ]] && claude_bin="${HOME}/.claude/bin/claude"
-        [[ ! -x "$claude_bin" ]] && claude_bin="$(command -v claude)"
-        "$claude_bin" "${cmd_args[@]}"
-        return $?
-    fi
-
-    if [[ -z "$profile" ]]; then
-        echo "Error: -u <profile> is required. Usage: claude -u <profile> [args...]" >&2
-        return 1
-    fi
-
-    echo "Claude Code profile: $profile"
-    local profile_dir="$HOME/.claude-profiles/$profile"
-    local config_dir="$profile_dir/config"
-    mkdir -p "$profile_dir/data" "$config_dir"
-
-    local agents_file="$config_dir/AGENTS.md"
-    local mcp_file="$config_dir/mcp.json"
-    local agents_content=""
-    local -a extra_args=()
-
-    # Add MCP config if it exists
-    if [[ -f "$mcp_file" ]]; then
-        extra_args+=(--mcp-config "$mcp_file")
-    fi
-
-    # Add AGENTS.md as system prompt if it exists
-    if [[ -f "$agents_file" ]]; then
-        agents_content="$(cat "$agents_file")"
-        extra_args+=(--append-system-prompt "$agents_content")
-    fi
-
-    # Execute with config directory set and profile env var for status line
-    # Use full path to avoid issues with env not finding the binary
     local claude_bin="${HOME}/.local/bin/claude"
-    [[ ! -x "$claude_bin" ]] && claude_bin="${HOME}/.claude/bin/claude"
-    [[ ! -x "$claude_bin" ]] && claude_bin="$(command -v claude)"
+    local use_repo_mcp=true
 
+    [[ ! -x "$claude_bin" ]] && claude_bin="${HOME}/.claude/bin/claude"
+    [[ ! -x "$claude_bin" ]] && claude_bin="$(whence -p claude 2>/dev/null || true)"
     if [[ ! -x "$claude_bin" ]]; then
         echo "Error: claude not found. Install: curl -fsSL https://claude.ai/install.sh | bash" >&2
         return 1
     fi
 
-    CLAUDE_CONFIG_DIR="$config_dir" CLAUDE_PROFILE="$profile" "$claude_bin" "${extra_args[@]}" "${cmd_args[@]}"
-}
-
-# OpenCode wrapper (uses XDG directories for full profile isolation)
-unalias opencode 2>/dev/null
-opencode() {
-    local profile=""
-    local cmd_args=()
-    local bypass_profile=false
-
-    # Check if first arg is a maintenance command that doesn't need a profile
-    case "$1" in
-        upgrade|uninstall|completion|--version|-v|--help|-h)
-            bypass_profile=true
-            ;;
-    esac
-
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -u)
-                if [[ -n "$2" && "$2" != -* ]]; then
-                    profile="$2"
-                    shift 2
-                else
-                    echo "Error: -u requires a profile name" >&2
-                    return 1
-                fi
-                ;;
-            *)
-                cmd_args+=("$1")
-                shift
+    for arg in "$@"; do
+        case "$arg" in
+            --mcp-config|--mcp-config=*)
+                use_repo_mcp=false
+                break
                 ;;
         esac
     done
 
-    # For maintenance commands, run directly without profile isolation
-    if [[ "$bypass_profile" == true ]]; then
-        command opencode "${cmd_args[@]}"
-        return $?
+    if [[ "$use_repo_mcp" == true && -f "$HOME/.claude/mcp.json" ]]; then
+        "$claude_bin" --mcp-config "$HOME/.claude/mcp.json" "$@"
+    else
+        "$claude_bin" "$@"
     fi
-
-    if [[ -z "$profile" ]]; then
-        echo "Error: -u <profile> is required. Usage: opencode -u <profile> [args...]" >&2
-        return 1
-    fi
-
-    echo "OpenCode profile: $profile"
-    local profile_root="$HOME/.opencode-profiles/$profile"
-    local xdg_config_home="$profile_root/config"
-    local xdg_data_home="$profile_root/data"
-    local xdg_cache_home="$profile_root/cache"
-    local xdg_state_home="$profile_root/state"
-    mkdir -p "$xdg_config_home/opencode" "$xdg_data_home" "$xdg_cache_home" "$xdg_state_home"
-
-    XDG_CONFIG_HOME="$xdg_config_home" \
-    XDG_DATA_HOME="$xdg_data_home" \
-    XDG_CACHE_HOME="$xdg_cache_home" \
-    XDG_STATE_HOME="$xdg_state_home" \
-    OPENCODE_PROFILE="$profile" \
-    command opencode "${cmd_args[@]}"
 }
 
 # ============================================================================
@@ -406,4 +233,4 @@ fi
 # End of LM Studio CLI section
 
 # opencode
-export PATH=/Users/andrei/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"

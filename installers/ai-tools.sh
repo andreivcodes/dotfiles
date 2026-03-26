@@ -98,6 +98,6 @@ fi
 
 log_success "AI tools setup completed!"
 log_info "Remember to authenticate with each tool:"
-log_info "  - Codex: codex -u <profile>"
-log_info "  - Claude Code: claude -u <profile> then follow prompts"
-log_info "  - OpenCode: opencode -u <profile> auth login"
+log_info "  - Codex: codex login"
+log_info "  - Claude Code: claude auth login"
+log_info "  - OpenCode: opencode auth login"

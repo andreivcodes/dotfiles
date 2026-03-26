@@ -12,39 +12,47 @@ cd ~/git/dotfiles
 
 ## What's Included
 
-- **Brewfile**: Declarative package management for Homebrew (CLI tools & applications)
-- **Shell Configuration**: Performance-optimized .zshrc with Oh My Zsh and lazy loading
-- **Zed Editor**: Complete settings with AI agent profiles and custom formatters
-- **AI CLI Profiles**: Per-profile configuration for Codex, Claude Code, and OpenCode
-- **Development Environment**: Node.js (via NVM), Rust, essential CLI tools
+- **Brewfile**: Declarative package management for Homebrew CLI tools and apps
+- **Shell Configuration**: Performance-optimized `.zshrc` with lazy loading
+- **AI CLI Configuration**: Shared Codex, Claude Code, and OpenCode setup
+- **Shared Agent Rules & Skills**: One canonical instructions file and synced skills
+- **Development Environment**: Node.js (via NVM), Rust, Bun, and essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
 
 ## Repository Structure
 
-```
+```text
 dotfiles/
-├── README.md                  # This file
-├── Brewfile                   # Homebrew package declarations (organized by category)
-├── setup.sh                   # Main entry point for full setup
-├── .gitignore                 # Files to exclude from git
-├── installers/                # Setup scripts
-│   ├── all.sh                 # Orchestrates all installation steps
-│   ├── brew.sh                # Installs Homebrew packages
-│   ├── dev.sh                 # Sets up development environment (Node.js, Rust)
-│   ├── dock.sh                # Configures macOS Dock layout
-│   └── timemachine-exclude.sh # Excludes dev directories from Time Machine
-├── dotfiles/                  # Configuration files
-│   ├── dotfiles.sh            # Creates symlinks for config files
-│   ├── .zshrc                 # Zsh configuration (performance-optimized)
-│   ├── zed/
-│   │   └── settings.json      # Zed editor settings
-│   ├── codex/                 # Codex CLI profile configs
-│   ├── claude/                # Claude Code profile configs
-│   └── opencode/              # OpenCode profile configs
-├── preferences/               # macOS system preferences scripts
-│   └── system.sh              # Configures Finder, Dock, Trackpad, etc.
-└── lib/                       # Shared utility functions
-    └── utils.sh               # Logging, progress tracking, error handling
+├── README.md
+├── Brewfile
+├── setup.sh
+├── installers/
+│   ├── all.sh
+│   ├── ai-tools.sh
+│   ├── brew.sh
+│   ├── dev.sh
+│   ├── dock.sh
+│   └── timemachine-exclude.sh
+├── dotfiles/
+│   ├── dotfiles.sh
+│   ├── .zshrc
+│   ├── agents/
+│   │   ├── AGENTS.md
+│   │   └── skills/
+│   ├── codex/
+│   │   └── config.toml
+│   ├── claude/
+│   │   ├── mcp.json
+│   │   ├── settings.json
+│   │   └── statusline.sh
+│   ├── opencode/
+│   │   └── opencode.json
+│   └── zed/
+│       └── settings.json
+├── preferences/
+│   └── system.sh
+└── lib/
+    └── utils.sh
 ```
 
 ## Installation
@@ -58,19 +66,13 @@ dotfiles/
 ### Install Oh My Zsh Plugins
 
 ```bash
-# zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-
-# zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 ```
 
 ### Full Setup (Recommended)
 
-The `setup.sh` script provides a complete, automated installation:
-
 ```bash
-# Clone and run full setup
 git clone https://github.com/andreivcodes/dotfiles.git ~/git/dotfiles
 cd ~/git/dotfiles
 ./setup.sh
@@ -78,127 +80,104 @@ cd ~/git/dotfiles
 
 This will:
 - Install all Homebrew packages and applications
-- Set up Node.js (via NVM) and Rust development environments
-- Configure macOS system preferences (Finder, Dock, Trackpad, etc.)
-- Create symlinks for dotfiles (.zshrc, Zed config, AI CLI profiles)
-- Configure Dock layout with your applications
+- Set up Node.js, Bun, and Rust development environments
+- Install Codex, Claude Code, OpenCode, and Agent Browser
+- Configure macOS system preferences
+- Create symlinks for shell, editor, and shared AI CLI configs
+- Configure Dock layout
 - Set up Time Machine exclusions for development directories
 
-### Partial Setup (Individual Components)
-
-You can also run individual setup scripts:
+### Partial Setup
 
 ```bash
-# Install packages only
 bash installers/brew.sh
-
-# Set up development environment only
 bash installers/dev.sh
-
-# Configure system preferences only
+bash installers/ai-tools.sh
 bash preferences/system.sh
-
-# Create dotfile symlinks only
 bash dotfiles/dotfiles.sh
-
-# Configure Dock layout only
 bash installers/dock.sh
-
-# Configure Time Machine exclusions only
 bash installers/timemachine-exclude.sh
 ```
 
 ## Key Features
 
-### Shell Configuration (.zshrc)
+### Shell Configuration
 
-- **⚡ Performance Optimized**: Lazy loading for nvm, cargo, and rust (dramatically faster shell startup)
-- **📚 History Management**: 100k command history with deduplication and sharing across sessions
-- **⌨️ Git Aliases**: Quick shortcuts for common git operations (gs, gc, gp, etc.)
-- **🚀 Completion Caching**: Daily completion cache refresh for faster shell startup
-- **🎨 Oh My Zsh Integration**: With carefully selected plugins for minimal performance impact
+- Lazy loading for `nvm`, `cargo`, and `rustup`
+- 100k command history with deduplication and sharing across sessions
+- Git aliases for common workflows
+- Daily completion cache refresh for faster shell startup
+- Minimal Claude wrapper that injects the repo-managed MCP config
 
-### AI CLI Profile Management
+### AI CLI Configuration
 
-Use different profiles for personal and work contexts:
+This repo manages shared config files for the three CLI tools:
+
+- Codex: `~/.codex/config.toml`, `~/.codex/AGENTS.md`
+- Claude Code: `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, `~/.claude/mcp.json`, `~/.claude/statusline.sh`
+- OpenCode: `~/.config/opencode/opencode.json`, `~/.config/opencode/AGENTS.md`
+
+Usage is plain:
 
 ```bash
-# Codex
-codex -u personal
-codex -u work
-
-# Claude Code
-claude -u personal
-claude -u work
-
-# OpenCode
-opencode -u personal
-opencode -u work
+codex
+claude
+opencode
 ```
 
-Each profile maintains separate:
-- Configuration directories
-- API keys and credentials
-- Chat history and context
+Authentication is also plain:
+
+```bash
+codex login
+claude auth login
+opencode auth login
+```
+
+The repo only manages stable config files and shared skills. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles`, `~/.claude-profiles`, or `~/.opencode-profiles` directories are no longer used by this repo.
+
+### Shared Skills
+
+- Repo skills are synced into `~/.agents/skills`
+- Native tool skill directories are linked to that shared location
+- One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
 
 ### Brewfile Package Management
 
-Organized package declarations across categories:
-- 📦 CLI tools and utilities (wget, ansible, act, etc.)
-- 🤖 AI/ML CLIs (codex, opencode)
-- 💻 Development tools (nixpacks, orbstack, zed)
-- 💬 Communication apps (Discord, Slack, WhatsApp, Signal, Telegram)
-- 🔒 Security and VPN tools (1Password, Tailscale, Mullvad)
-- 🎯 Productivity utilities (Rectangle, CleanShot, TablePlus)
-
-**Usage:**
-
-The Brewfile stays in the repository (not symlinked to home directory). Use it with:
+Use the checked-in Brewfile directly:
 
 ```bash
-# From the dotfiles directory
 cd ~/git/dotfiles
-brew bundle install    # Install all packages
-brew bundle check      # Check what's not installed
-brew bundle cleanup    # Remove packages not in Brewfile
+brew bundle install
+brew bundle check
+brew bundle cleanup
 
-# Or from anywhere with --file flag
 brew bundle install --file ~/git/dotfiles/Brewfile
 brew bundle check --file ~/git/dotfiles/Brewfile
-
-# Update Brewfile with current installations
-cd ~/git/dotfiles
-brew bundle dump --force
 ```
 
-### Zed Editor Configuration
+### Zed Configuration
 
-- **🤖 AI Agent Integration**: Codex agent server support
-- **🎨 Custom Formatters**: Prettier for JavaScript, TypeScript, and TSX
-- **📝 Git Integration**: Git gutter and inline blame
-- **⚙️ Terminal Settings**: Integrated zsh terminal
-- **🎨 Theme**: System-aware theme switching (One Light/One Dark)
+- Codex agent server support
+- Prettier formatters for JavaScript, TypeScript, and TSX
+- Git gutter and inline blame
+- Integrated zsh terminal
+- System-aware One Light / One Dark theme
 
 ## Performance Testing
 
 ### Measure Shell Startup Time
 
 ```bash
-# Quick test
 /usr/bin/time zsh -i -c exit
 ```
 
-Expected result with optimizations: ~0.05-0.15 seconds (vs 0.5-1.5s without lazy loading)
+Expected result with the current lazy-loading setup: roughly `0.05-0.15s`.
 
 ### Profile Shell Initialization
 
 ```bash
-# Add this to the top of ~/.zshrc temporarily:
 zmodload zsh/zprof
-
-# Reload shell and check profile:
 exec zsh
-# Then run:
 zprof
 ```
 
@@ -207,66 +186,48 @@ zprof
 ### Updating Packages
 
 ```bash
-# Update Homebrew and packages
 brew update && brew upgrade
-
-# Update Oh My Zsh
 omz update
 
-# Update Oh My Zsh plugins
 cd ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && git pull
 cd ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && git pull
 ```
 
 ### Syncing Changes
 
-The dotfiles are symlinked to your home directory, so changes made in `~/.zshrc` or `~/.config/zed/` are automatically reflected in the repository. Just commit and push:
-```bash
-cd ~/git/dotfiles
-git add -A && git commit -m "Update dotfiles"
-git push
-```
-
-### Backup Current Configuration
-
-Before making changes, back up your current dotfiles:
-```bash
-cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d)
-```
+The dotfiles are symlinked into your home directory, so edits to managed paths such as `~/.zshrc`, `~/.codex/config.toml`, or `~/.config/zed/` are reflected in the repository.
 
 ## Troubleshooting
 
 ### Slow Shell Startup
 
-1. Profile your shell to identify bottlenecks (see Performance Testing above)
-2. Check if nvm/cargo are truly lazy-loaded: `type nvm` should show a function, not a path
-3. Consider removing unused Oh My Zsh plugins from the plugins array
-4. Run `brew doctor` to check for Homebrew issues
+1. Profile the shell with `zprof`
+2. Check that `nvm` and `cargo` are still lazy-loaded
+3. Trim unused Oh My Zsh plugins
+4. Run `brew doctor`
 
-### Wrapper Functions Not Working
+### AI CLIs Not Working
 
-Ensure the CLI tools are installed:
+Verify the commands resolve correctly:
+
 ```bash
-which codex  # Should show path to codex
-which claude # Should show path to claude
-which opencode # Should show path to opencode
+type codex
+type claude
+type opencode
 ```
 
-If not found, install:
+If a tool is missing, install it with:
+
 ```bash
-# Codex
-npm install -g @openai/codex
-
-# Claude Code
+brew install --cask codex
 curl -fsSL https://claude.ai/install.sh | bash
-
-# OpenCode
 brew install anomalyco/tap/opencode
 ```
 
+If Claude is installed but not loading the shared MCP config, reload your shell and verify `~/.claude/mcp.json` exists.
+
 ### Completion Not Working
 
-Rebuild the completion cache:
 ```bash
 rm -f ~/.zcompdump
 exec zsh
@@ -275,10 +236,7 @@ exec zsh
 ### Homebrew Issues
 
 ```bash
-# Run diagnostics
 brew doctor
-
-# Fix common issues
 brew cleanup
 brew update
 brew upgrade
@@ -286,34 +244,17 @@ brew upgrade
 
 ## Security Notes
 
-- 🔒 The `.gitignore` file prevents sensitive files from being committed
-- 🔐 AI CLI wrappers create separate profile directories to isolate credentials
-- ⚠️ `always_allow_tool_actions` in Zed bypasses security prompts - adjust if needed
-- 🛡️ Profile wrappers ensure work and personal contexts remain separate
+- `.gitignore` keeps secrets and local-only files out of the repo
+- This repo only symlinks stable AI config files; auth and session state stay tool-managed
+- `always_allow_tool_actions` in Zed bypasses security prompts; adjust if needed
 
 ## Resources
 
-### Official Documentation
 - [Homebrew Documentation](https://docs.brew.sh/)
 - [Homebrew Bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - [Oh My Zsh](https://ohmyz.sh/)
 - [Zed Editor](https://zed.dev/)
 
-### Best Practices & Guides
-- [Brewfile Best Practices](https://gist.github.com/ChristopherA/a579274536aab36ea9966f301ff14f3f)
-- [Zsh Performance Optimization](https://blog.jonlu.ca/posts/speeding-up-zsh)
-- [Oh My Zsh Performance Tips](https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/)
-- [Shell Function Wrappers](https://kevinjalbert.com/wrapping-shell-commands-and-keep-the-original-name/)
-- [Zsh Best Practices](https://gist.github.com/ChristopherA/562c2e62d01cf60458c5fa87df046fbd)
-
-## Contributing
-
-This is a personal dotfiles repository, but feel free to fork and adapt for your own use. If you find bugs or have suggestions, please open an issue.
-
 ## License
 
-MIT License - Feel free to use and modify as needed.
-
----
-
-**Note**: This configuration is optimized for macOS. Some features may require adjustment for other operating systems.
+MIT License. Adjust as needed for your own setup.

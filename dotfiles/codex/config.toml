@@ -4,6 +4,8 @@ sandbox_mode = "danger-full-access"
 web_search = "live"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
+approvals_reviewer = "user"
+service_tier = "fast"
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
@@ -51,4 +53,34 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/andrei/git/dotfiles"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/hos-api"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/nicepfp.art"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/openinvoice"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/pulse"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/rh-portfolio-tracker"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/hh-near-journey"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/silent-mesh"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/silent-mesh-rust"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/milkroad-portfolio"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/hos-intel"]
 trust_level = "trusted"

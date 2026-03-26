@@ -7,7 +7,7 @@ This repository automates macOS development environment setup with Homebrew pack
 - `setup.sh` - Main entry point (runs full macOS setup)
 - `installers/` - Installation scripts (brew.sh, dev.sh, dock.sh, timemachine-exclude.sh, all.sh)
 - `preferences/system.sh` - macOS defaults (Finder, Dock, keyboard, etc.)
-- `dotfiles/` - Config files (.zshrc, codex/, zed/) and dotfiles.sh symlink script
+- `dotfiles/` - Config files (`.zshrc`, `agents/`, `codex/`, `claude/`, `opencode/`, `zed/`) and dotfiles.sh symlink script
 - `lib/utils.sh` - Shared logging, guards, and helper functions
 - `Brewfile` - Homebrew packages and casks
 
@@ -29,10 +29,8 @@ bash -n installers/brew.sh
 # Test individual components
 bash installers/brew.sh           # Homebrew + packages
 bash installers/dev.sh            # Dev toolchain
+bash installers/ai-tools.sh       # AI coding tools
 bash dotfiles/dotfiles.sh         # Symlink configs
-
-# With optional environment variables
-INSTALL_CLAUDE=1 bash installers/brew.sh
 ```
 
 **Testing**: No automated tests. Validate with `bash -n` + `shellcheck`, then execute. Scripts have confirmation prompts.
