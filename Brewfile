@@ -13,6 +13,7 @@
 # ============================================================================
 tap "dopplerhq/cli"      # Doppler secrets management
 tap "anomalyco/tap"      # OpenCode CLI (latest)
+tap "oven-sh/bun"        # Bun JavaScript runtime
 
 # ============================================================================
 # CLI Tools & Utilities
@@ -29,6 +30,7 @@ brew "gh"               # GitHub CLI
 brew "ripgrep"          # Fast search (rg command)
 brew "tree"             # Directory tree view
 brew "direnv"           # Per-directory environment variables
+brew "oven-sh/bun/bun"  # JavaScript runtime and package manager
 
 # Secrets Management
 brew "gnupg"            # GPG encryption (required for Doppler)
