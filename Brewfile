@@ -44,6 +44,12 @@ cask "codex"            # OpenAI Codex CLI (coding agent)
 brew "anomalyco/tap/opencode" # OpenCode CLI (coding agent)
 # Note: Claude Code is installed via native installer (see installers/ai-tools.sh)
 
+# ============================================================================
+# Applications - AI
+# ============================================================================
+cask "claude"           # Anthropic Claude desktop app
+cask "t3-code"          # T3 Code desktop app for AI coding agents
+
 # System Utilities
 brew "wget"             # Network downloader
 brew "asimov"           # Prevent Time Machine backups of dev folders

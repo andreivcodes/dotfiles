@@ -57,9 +57,10 @@ else
 fi
 
 # Define applications to add to Dock
-# Order: finder, launchpad (added via dockutil), safari, messages, whatsapp, mail,
-#        slack, discord, telegram, calendar, zed preview, terminal, github,
-#        tableplus, app store, settings, notion, figma, google chrome
+# Order: finder, launcher (added via dockutil), safari, messages, whatsapp, mail,
+#        slack, discord, telegram, calendar, zed preview, claude, t3 code,
+#        terminal, github, tableplus, app store, settings, notion, figma,
+#        google chrome
 # Note: the macOS app launcher is added separately using dockutil.
 DOCK_APPS=(
   "/System/Library/CoreServices/Finder.app"
@@ -72,6 +73,8 @@ DOCK_APPS=(
   "/Applications/Telegram.app"
   "/System/Applications/Calendar.app"
   "/Applications/Zed Preview.app"
+  "/Applications/Claude.app"
+  "/Applications/T3 Code (Alpha).app"
   "/System/Applications/Utilities/Terminal.app"
   "/Applications/GitHub Desktop.app"
   "/Applications/TablePlus.app"

@@ -73,3 +73,26 @@ Commit messages should read as if written by the human developer. The user does 
 4. **Acknowledge genuine mistakes**: If the user's correction is valid, acknowledge it clearly and adjust your approach.
 
 The goal is to arrive at the correct solution, not to please the user by agreeing with everything they say. Sycophantic agreement can lead to worse outcomes for the codebase.
+
+### Research Tools
+
+**CRITICAL**: When these CLI agents need external information, prefer the configured MCP tools before generic web browsing.
+
+1. **Use Context7 first for technical documentation**:
+   - Library, framework, SDK, API, and tool documentation
+   - Usage examples, config reference, migration notes, and version-specific behavior
+   - Questions where official docs are the primary source of truth
+
+2. **Use Exa for fresh or general web research**:
+   - Current information, release posts, changelogs, announcements, and comparisons
+   - Non-Context7 documentation, blog posts, issue discussions, and general web discovery
+   - Cases where direct source attribution or recent coverage matters
+
+3. **Tool-selection rule**:
+   - If the question is "how does this library/framework/API work?" start with Context7
+   - If the question is "what is the latest/current/recent/best source on this?" start with Exa
+   - If Context7 is insufficient, fall back to Exa to find the relevant primary source
+
+4. **Do not skip these tools without reason**:
+   - Do not default to generic search when Context7 or Exa is a better fit
+   - If you choose not to use them, have a concrete reason such as local repo context already being sufficient or the user explicitly asking for a different source

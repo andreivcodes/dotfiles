@@ -74,7 +74,7 @@ cd ~/git/dotfiles
 This will:
 - Install all Homebrew packages and applications
 - Set up Node.js, Bun, and Rust development environments
-- Install Codex, Claude Code, OpenCode, Agent Browser, Railway CLI, and Vercel CLI
+- Install Codex, Claude Code, Claude Desktop, T3 Code, OpenCode, Agent Browser, Railway CLI, and Vercel CLI
 - Prompt for MCP API keys used by the shared AI tool configs
 - Configure macOS system preferences
 - Create symlinks for shell, editor, and shared AI CLI configs
@@ -176,6 +176,15 @@ brew bundle check --file ~/git/dotfiles/Brewfile
 - Git gutter and inline blame
 - Integrated zsh terminal
 - System-aware One Light / One Dark theme
+
+### Desktop AI Apps
+
+Full setup also installs:
+
+- Claude Desktop via the official Homebrew `claude` cask
+- T3 Code via the official Homebrew `t3-code` cask
+
+The Dock installer places both right after `Zed Preview` when they are installed.
 
 ## Performance Testing
 
