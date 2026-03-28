@@ -3,6 +3,7 @@
 set -euo pipefail
 
 # Source utility functions
+# shellcheck disable=SC1091
 source "$(dirname "$0")/../lib/utils.sh"
 
 log_info "Setting up dotfiles symlinks..."
@@ -23,6 +24,8 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/zed"
     # Shell configuration
     "$REPO_ROOT/dotfiles/.zshrc"
+    # Asimeow configuration
+    "$REPO_ROOT/dotfiles/asimeow/config.yaml"
     # Codex shared configuration
     "$REPO_ROOT/dotfiles/codex/config.toml"
     "$REPO_ROOT/dotfiles/agents/AGENTS.md"
@@ -43,6 +46,8 @@ TARGETS=(
     "$HOME/.config/zed"
     # Shell configuration
     "$HOME/.zshrc"
+    # Asimeow configuration
+    "$HOME/.config/asimeow/config.yaml"
     # Codex shared configuration
     "$HOME/.codex/config.toml"
     "$HOME/.codex/AGENTS.md"

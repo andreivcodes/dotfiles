@@ -14,6 +14,7 @@
 tap "dopplerhq/cli"      # Doppler secrets management
 tap "anomalyco/tap"      # OpenCode CLI (latest)
 tap "oven-sh/bun"        # Bun JavaScript runtime
+tap "mdnmdn/asimeow"     # Asimeow Time Machine exclusion manager
 
 # ============================================================================
 # CLI Tools & Utilities
@@ -52,7 +53,7 @@ cask "t3-code"          # T3 Code desktop app for AI coding agents
 
 # System Utilities
 brew "wget"             # Network downloader
-brew "asimov"           # Prevent Time Machine backups of dev folders
+brew "asimeow"          # Prevent Time Machine backups of dev folders
 brew "displayplacer"    # Display scaling utility
 brew "dockutil"         # Manage macOS Dock items from command line
 

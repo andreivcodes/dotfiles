@@ -42,6 +42,8 @@ dotfiles/
 │   │   └── skills/
 │   ├── codex/
 │   │   └── config.toml
+│   ├── asimeow/
+│   │   └── config.yaml
 │   ├── claude/
 │   │   ├── mcp.json
 │   │   ├── settings.json
@@ -80,6 +82,42 @@ This will:
 - Create symlinks for shell, editor, and shared AI CLI configs
 - Configure Dock layout
 - Set up Time Machine exclusions for development directories
+
+### Time Machine Exclusions
+
+The dotfiles setup installs `asimeow`, links the repo-managed config to `~/.config/asimeow/config.yaml`, runs an immediate exclusion pass, and then starts the native Homebrew service for ongoing scans.
+
+The managed config intentionally keeps automatic roots outside privacy-protected locations like `~/Desktop`, `~/Documents`, and `~/Downloads`. Background services are less reliable there on modern macOS, so the defaults focus on common unprotected dev roots and keep the scheduled setup predictable.
+
+Defaults are:
+
+- `~/git`
+- `~/src`
+- `~/code`
+- `~/dev`
+- `~/work`
+
+User-level dependency caches are also registered directly as exclusions outside the `asimeow` work roots. The installer resolves the actual cache locations where possible and excludes them directly. Examples include:
+
+- `~/Library/Caches`
+- npm cache
+- pnpm store
+- Bun global cache
+- Cargo registry and git caches
+- Go build and module caches
+- pip and `uv` caches
+- Gradle caches and wrapper distributions
+- Maven local repository
+- Yarn cache
+
+To change automatic roots or rules, edit the repo-managed config at `dotfiles/asimeow/config.yaml` and resync dotfiles:
+
+```bash
+bash dotfiles/dotfiles.sh
+bash installers/timemachine-exclude.sh
+```
+
+`asimeow` itself scans on the schedule provided by its Homebrew service, which is currently every 6 hours upstream.
 
 ### Partial Setup
 

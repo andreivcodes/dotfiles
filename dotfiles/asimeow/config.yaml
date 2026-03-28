@@ -1,0 +1,138 @@
+# Dotfiles-managed Asimeow configuration.
+# Keep automatic roots outside privacy-protected folders so the background
+# Homebrew service stays reliable on modern macOS releases.
+roots:
+  - path: ~/git
+  - path: ~/src
+  - path: ~/code
+  - path: ~/dev
+  - path: ~/work
+
+ignore:
+  - .git
+  - .jj
+  - node_modules
+  - dist
+  - build
+  - .next
+  - .turbo
+  - .parcel-cache
+  - coverage
+  - target
+  - vendor
+  - .venv
+  - venv
+  - __pycache__
+  - .pytest_cache
+  - .mypy_cache
+  - .ruff_cache
+  - Pods
+  - Carthage
+  - .build
+  - .stack-work
+  - .terraform
+  - .direnv
+
+rules:
+  - name: "dotnet"
+    file_match: "*.csproj"
+    exclusions: ["obj", "bin", "packages"]
+
+  - name: "rust"
+    file_match: "Cargo.toml"
+    exclusions: ["target"]
+
+  - name: "go"
+    file_match: "go.mod"
+    exclusions: ["vendor"]
+
+  - name: "node"
+    file_match: "package.json"
+    exclusions:
+      - "node_modules"
+      - "dist"
+      - "build"
+      - ".next"
+      - ".turbo"
+      - ".parcel-cache"
+      - "coverage"
+
+  - name: "python-requirements"
+    file_match: "requirements.txt"
+    exclusions:
+      - "__pycache__"
+      - ".venv"
+      - "venv"
+      - ".pytest_cache"
+      - ".mypy_cache"
+      - ".ruff_cache"
+      - "build"
+      - "dist"
+
+  - name: "python-pyproject"
+    file_match: "pyproject.toml"
+    exclusions:
+      - "__pycache__"
+      - ".venv"
+      - "venv"
+      - ".pytest_cache"
+      - ".mypy_cache"
+      - ".ruff_cache"
+      - "build"
+      - "dist"
+
+  - name: "python-virtualenv"
+    file_match: "pyvenv.cfg"
+    exclusions: ["."]
+
+  - name: "ruby"
+    file_match: "Gemfile"
+    exclusions: ["bundle", "vendor"]
+
+  - name: "java-maven"
+    file_match: "pom.xml"
+    exclusions: ["target"]
+
+  - name: "java-gradle"
+    file_match: "build.gradle"
+    exclusions: ["build", ".gradle"]
+
+  - name: "java-gradle-kts"
+    file_match: "build.gradle.kts"
+    exclusions: ["build", ".gradle"]
+
+  - name: "php"
+    file_match: "composer.json"
+    exclusions: ["vendor"]
+
+  - name: "terraform"
+    file_match: "*.tf"
+    exclusions: [".terraform"]
+
+  - name: "vagrant"
+    file_match: "Vagrantfile"
+    exclusions: [".vagrant"]
+
+  - name: "bower"
+    file_match: "bower.json"
+    exclusions: ["bower_components"]
+
+  - name: "haskell"
+    file_match: "stack.yaml"
+    exclusions: [".stack-work"]
+
+  - name: "carthage"
+    file_match: "Cartfile"
+    exclusions: ["Carthage"]
+
+  - name: "cocoapods"
+    file_match: "Podfile"
+    exclusions: ["Pods"]
+
+  - name: "swift"
+    file_match: "Package.swift"
+    exclusions: [".build"]
+
+  - name: "elixir"
+    file_match: "mix.exs"
+    exclusions: ["_build", "deps"]
