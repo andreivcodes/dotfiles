@@ -110,23 +110,16 @@ prompt_for_key() {
             skipped_keys+=("$key")
             return
         fi
-    else
-        if ! confirm "Configure $key in ~/.zshrc.local now?"; then
-            skipped_keys+=("$key")
-            return
-        fi
     fi
 
-    while true; do
-        read -r -s -p "$key: " value
-        echo
+    # Prompt for the key value directly; Enter to skip
+    read -r -s -p "  $key (press Enter to skip): " value
+    echo
 
-        if [ -n "$value" ]; then
-            break
-        fi
-
-        log_warning "$key cannot be empty"
-    done
+    if [ -z "$value" ]; then
+        skipped_keys+=("$key")
+        return
+    fi
 
     upsert_export "$key" "$value"
     configured_keys+=("$key")

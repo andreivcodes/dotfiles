@@ -84,3 +84,6 @@ trust_level = "trusted"
 
 [projects."/Users/andrei/git/hos-intel"]
 trust_level = "trusted"
+
+[plugins."github@openai-curated"]
+enabled = true

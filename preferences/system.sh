@@ -11,6 +11,9 @@ log_info "Starting macOS system preferences configuration..."
 check_not_sudo
 require_macos
 
+# Ensure Homebrew is in PATH (needed for displayplacer)
+source "$HOME/.zprofile" 2>/dev/null || true
+
 # Close System Preferences to prevent conflicts
 log_info "Closing System Preferences to prevent conflicts..."
 osascript -e 'tell application "System Preferences" to quit' 2>/dev/null || true

@@ -83,13 +83,18 @@ for i in "${!SCRIPTS[@]}"; do
     else
         log_error "Failed: $description"
         failed_scripts+=("$script")
-        
+
         # Ask if user wants to continue after failure
         if ! confirm "Continue with remaining setup scripts?"; then
             log_info "Setup aborted by user"
             exit 1
         fi
     fi
+
+    # Re-source environment so PATH changes propagate to subsequent scripts
+    # (e.g., brew.sh adds /opt/homebrew/bin, dev.sh adds cargo/nvm)
+    source "$HOME/.zprofile" 2>/dev/null || true
+    [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env" 2>/dev/null || true
 done
 
 # Summary

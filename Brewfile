@@ -28,6 +28,8 @@ brew "act"              # Run GitHub Actions locally
 brew "incus"            # CLI client for Incus containers
 brew "gh"               # GitHub CLI
 brew "ripgrep"          # Fast search (rg command)
+brew "jq"               # JSON processor used by AI CLI integrations
+brew "shellcheck"       # Shell script linter
 brew "tree"             # Directory tree view
 brew "direnv"           # Per-directory environment variables
 brew "oven-sh/bun/bun"  # JavaScript runtime and package manager

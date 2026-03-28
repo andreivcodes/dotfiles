@@ -140,7 +140,6 @@ RUST_TOOLS=(
     "cargo-edit"
     "cargo-sort"
     "sea-orm-cli"
-    "cargo-nextest"
 )
 
 log_info "Installing Rust development tools..."
@@ -152,7 +151,7 @@ for tool in "${RUST_TOOLS[@]}"; do
     current=$((current + 1))
     show_progress "$current" "$total" "Installing $tool"
     
-    if cargo install "$tool"; then
+    if cargo install --locked "$tool"; then
         log_success "Successfully installed $tool"
     else
         log_error "Failed to install $tool"

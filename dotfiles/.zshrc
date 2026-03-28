@@ -146,6 +146,8 @@ alias gd='git diff'
 # ============================================================================
 
 # Claude Code wrapper to load the repo-managed MCP config from ~/.claude/mcp.json.
+# Use the inline --mcp-config=... form so Claude does not consume subsequent
+# subcommands or prompt arguments as extra config paths.
 # Codex and OpenCode use their documented shared config directories directly.
 unalias claude 2>/dev/null
 claude() {
@@ -169,7 +171,7 @@ claude() {
     done
 
     if [[ "$use_repo_mcp" == true && -f "$HOME/.claude/mcp.json" ]]; then
-        "$claude_bin" --mcp-config "$HOME/.claude/mcp.json" "$@"
+        "$claude_bin" --mcp-config="$HOME/.claude/mcp.json" "$@"
     else
         "$claude_bin" "$@"
     fi

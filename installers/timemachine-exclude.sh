@@ -11,6 +11,9 @@ log_info "Starting Time Machine exclusion setup..."
 check_not_sudo
 require_macos
 
+# Ensure Homebrew is in PATH (needed for asimov)
+source "$HOME/.zprofile" 2>/dev/null || true
+
 # Function to exclude specific paths
 exclude_paths() {
     local paths=("$@")

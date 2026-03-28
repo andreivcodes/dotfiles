@@ -26,6 +26,45 @@ ensure_npm_available() {
     command_exists npm
 }
 
+ensure_claude_marketplace() {
+    local marketplace_name="claude-plugins-official"
+    local marketplace_source="anthropics/claude-plugins-official"
+
+    if claude plugins marketplace list 2>/dev/null | grep -Fq "$marketplace_name"; then
+        log_info "Claude Code marketplace $marketplace_name already configured"
+        return 0
+    fi
+
+    log_info "Adding Claude Code marketplace $marketplace_name..."
+    if claude plugins marketplace add "$marketplace_source"; then
+        log_success "Claude Code marketplace $marketplace_name added"
+        return 0
+    fi
+
+    log_warning "Failed to add Claude Code marketplace $marketplace_name. Install manually:"
+    log_info "  claude plugins marketplace add $marketplace_source"
+    return 1
+}
+
+ensure_claude_plugin() {
+    local plugin=$1
+
+    if claude plugins list 2>/dev/null | grep -Fq "$plugin"; then
+        log_info "Claude Code plugin $plugin already installed"
+        return 0
+    fi
+
+    log_info "Installing Claude Code plugin $plugin..."
+    if claude plugins install --scope user "$plugin"; then
+        log_success "Claude Code plugin $plugin installed"
+        return 0
+    fi
+
+    log_warning "Failed to install Claude Code plugin $plugin. Install manually:"
+    log_info "  claude plugins install --scope user $plugin"
+    return 1
+}
+
 # ============================================================================
 # Codex CLI Installation (Homebrew cask)
 # ============================================================================
@@ -62,6 +101,26 @@ else
     else
         log_warning "Claude Code installation did not complete. You can install manually:"
         log_info "  curl -fsSL https://claude.ai/install.sh | bash"
+    fi
+fi
+
+# ============================================================================
+# Claude Code Plugins
+# ============================================================================
+CLAUDE_PLUGINS=(
+    "rust-analyzer-lsp@claude-plugins-official"
+    "typescript-lsp@claude-plugins-official"
+    "code-review@claude-plugins-official"
+    "skill-creator@claude-plugins-official"
+    "superpowers@claude-plugins-official"
+)
+
+if command_exists claude; then
+    log_info "Ensuring Claude Code marketplace and plugins are installed..."
+    if ensure_claude_marketplace; then
+        for plugin in "${CLAUDE_PLUGINS[@]}"; do
+            ensure_claude_plugin "$plugin"
+        done
     fi
 fi
 
@@ -184,4 +243,4 @@ log_info "  - Claude Code: claude auth login"
 log_info "  - OpenCode: opencode auth login"
 log_info "  - Railway CLI: railway login"
 log_info "  - Vercel CLI: vercel login"
-log_info "Restart Claude Code and OpenCode after dotfiles sync so Superpowers loads."
+log_info "Restart Codex, Claude Code, and OpenCode after dotfiles sync so skills and plugins reload."

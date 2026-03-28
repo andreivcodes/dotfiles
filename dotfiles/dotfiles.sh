@@ -29,6 +29,7 @@ SOURCES=(
     # Claude Code shared configuration
     "$REPO_ROOT/dotfiles/claude/settings.json"
     "$REPO_ROOT/dotfiles/claude/mcp.json"
+    "$REPO_ROOT/dotfiles/claude/CLAUDE.md"
     "$REPO_ROOT/dotfiles/agents/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
     # OpenCode shared configuration
@@ -48,6 +49,7 @@ TARGETS=(
     "$HOME/.claude/settings.json"
     "$HOME/.claude/mcp.json"
     "$HOME/.claude/CLAUDE.md"
+    "$HOME/.claude/AGENTS.md"
     "$HOME/.claude/statusline.sh"
     # OpenCode shared configuration
     "$HOME/.config/opencode/opencode.json"
