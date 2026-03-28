@@ -14,6 +14,9 @@ require_macos
 # Ensure shell environment is loaded
 source "$HOME/.zprofile" 2>/dev/null || true
 
+NVM_INSTALL_VERSION="v0.40.4"
+DEFAULT_NODE_VERSION="24"
+
 # Oh My Zsh setup
 log_info "Setting up Oh My Zsh..."
 if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -58,7 +61,7 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
     log_success "NVM environment loaded"
 else
     log_info "NVM not found. Installing NVM..."
-    if curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash; then
+    if curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_INSTALL_VERSION}/install.sh" | bash; then
         source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
         source "$HOME/.zprofile" 2>/dev/null || true
         log_success "NVM installed successfully"
@@ -69,17 +72,17 @@ else
 fi
 
 # Install and setup Node.js
-show_progress "1" "4" "Installing latest Node.js"
-if nvm install node; then
-    log_success "Node.js installed successfully"
+show_progress "1" "4" "Installing Node.js ${DEFAULT_NODE_VERSION}"
+if nvm install "$DEFAULT_NODE_VERSION"; then
+    log_success "Node.js ${DEFAULT_NODE_VERSION} installed successfully"
 else
     log_error "Failed to install Node.js"
     exit 1
 fi
 
-show_progress "2" "4" "Setting Node.js as default"
-if nvm use node; then
-    log_success "Node.js set as default"
+show_progress "2" "4" "Setting Node.js ${DEFAULT_NODE_VERSION} as default"
+if nvm alias default "$DEFAULT_NODE_VERSION" >/dev/null && nvm use "$DEFAULT_NODE_VERSION"; then
+    log_success "Node.js ${DEFAULT_NODE_VERSION} set as default"
 else
     log_warning "Could not set Node.js as default, but continuing..."
 fi

@@ -11,6 +11,22 @@ log_info "Starting Dock configuration..."
 check_not_sudo
 require_macos
 
+# Resolve the current macOS app launcher path. Launchpad was replaced by Apps
+# on newer macOS releases, so prefer whichever launcher the system ships.
+get_launcher_app() {
+  if [ -d "/System/Applications/Apps.app" ]; then
+    printf '%s\n' "/System/Applications/Apps.app"
+    return 0
+  fi
+
+  if [ -d "/System/Applications/Launchpad.app" ]; then
+    printf '%s\n' "/System/Applications/Launchpad.app"
+    return 0
+  fi
+
+  return 1
+}
+
 # Function to add an application to the Dock
 add_app_to_dock() {
   local app_path="$1"
@@ -44,7 +60,7 @@ fi
 # Order: finder, launchpad (added via dockutil), safari, messages, whatsapp, mail,
 #        slack, discord, telegram, calendar, zed preview, terminal, github,
 #        tableplus, app store, settings, notion, figma, google chrome
-# Note: Launchpad is added separately using dockutil (after line 94)
+# Note: the macOS app launcher is added separately using dockutil.
 DOCK_APPS=(
   "/System/Library/CoreServices/Finder.app"
   "/Applications/Safari.app"
@@ -65,6 +81,12 @@ DOCK_APPS=(
   "/Applications/Figma.app"
   "/Applications/Google Chrome.app"
 )
+
+LAUNCHER_APP=""
+LAUNCHER_NAME=""
+if LAUNCHER_APP=$(get_launcher_app); then
+  LAUNCHER_NAME=$(basename "$LAUNCHER_APP" .app)
+fi
 
 # Add applications to Dock
 log_info "Adding applications to Dock..."
@@ -90,28 +112,34 @@ else
   log_warning "Failed to restart Dock, changes may not be visible immediately"
 fi
 
-# Add Launchpad using dockutil (special case - doesn't work with defaults write)
-log_info "Adding Launchpad to Dock using dockutil..."
-if command_exists dockutil; then
+# Add the macOS app launcher using dockutil (special case - doesn't work with defaults write)
+log_info "Adding app launcher to Dock using dockutil..."
+if [ -z "$LAUNCHER_APP" ]; then
+  log_warning "No macOS app launcher app found. Skipping launcher item."
+elif command_exists dockutil; then
   # Wait for Dock to fully restart
   sleep 2
 
-  # Add Launchpad at position 2 (after Finder)
-  if dockutil --add '/System/Applications/Launchpad.app' --position 2 --no-restart 2>/dev/null; then
-    log_success "Added Launchpad to Dock"
-    # Restart Dock again to show Launchpad
+  # Add the launcher at position 2 (after Finder)
+  if dockutil --add "$LAUNCHER_APP" --position 2 --no-restart 2>/dev/null; then
+    log_success "Added $LAUNCHER_NAME to Dock"
+    # Restart Dock again to show the launcher
     killall Dock 2>/dev/null || true
   else
-    log_warning "Failed to add Launchpad (may not exist on this macOS version)"
+    log_warning "Failed to add $LAUNCHER_NAME to Dock"
   fi
 else
-  log_warning "dockutil not installed - skipping Launchpad (install with: brew install dockutil)"
+  log_warning "dockutil not installed - skipping app launcher (install with: brew install dockutil)"
 fi
 
 # Summary
 if [ ${#failed_apps[@]} -eq 0 ]; then
   log_success "Dock configuration completed successfully!"
-  log_info "Added ${#DOCK_APPS[@]} applications to Dock (plus Launchpad)"
+  if [ -n "$LAUNCHER_NAME" ]; then
+    log_info "Added ${#DOCK_APPS[@]} applications to Dock (plus $LAUNCHER_NAME)"
+  else
+    log_info "Added ${#DOCK_APPS[@]} applications to Dock"
+  fi
 else
   log_warning "Dock configuration completed with some failures:"
   for app in "${failed_apps[@]}"; do

@@ -1,11 +1,18 @@
 {
   "icon_theme": "Colored Zed Icons Theme Dark",
   "agent_servers": {
-    "Codex": {
-      "type": "custom",
-      "command": "codex",
-      "args": ["acp"],
+    "claude-acp": {
+      "type": "registry",
+      "env": {
+        "CLAUDE_CODE_EXECUTABLE": "/Users/andrei/.claude/claude-zed.sh"
+      }
     },
+    "codex-acp": {
+      "type": "registry"
+    },
+    "opencode": {
+      "type": "registry"
+    }
   },
   "bottom_dock_layout": "contained",
   "vim_mode": false,
@@ -14,16 +21,18 @@
     "line_width": 1,
     "active_line_width": 2,
     "coloring": "indent_aware",
-    "background_coloring": "disabled",
+    "background_coloring": "disabled"
   },
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
         "rustfmt": {
-          "extraArgs": ["+nightly"],
-        },
-      },
-    },
+          "extraArgs": [
+            "+nightly"
+          ]
+        }
+      }
+    }
   },
   "languages": {
     "JavaScript": {
@@ -34,11 +43,11 @@
             "--stdin-filepath",
             "{buffer_path}",
             "--parser",
-            "babel",
-          ],
-        },
+            "babel"
+          ]
+        }
       },
-      "format_on_save": "on",
+      "format_on_save": "on"
     },
     "TSX": {
       "formatter": {
@@ -48,11 +57,11 @@
             "--stdin-filepath",
             "{buffer_path}",
             "--parser",
-            "typescript",
-          ],
-        },
+            "typescript"
+          ]
+        }
       },
-      "format_on_save": "on",
+      "format_on_save": "on"
     },
     "TypeScript": {
       "formatter": {
@@ -62,26 +71,25 @@
             "--stdin-filepath",
             "{buffer_path}",
             "--parser",
-            "typescript",
-          ],
-        },
+            "typescript"
+          ]
+        }
       },
-      "format_on_save": "on",
-    },
+      "format_on_save": "on"
+    }
   },
   "ui_font_size": 16,
   "buffer_font_size": 14,
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "One Dark",
+    "dark": "One Dark"
   },
   "agent": {
     "tool_permissions": {
       "default": "allow"
     },
     "default_profile": "write",
-    // NOTE: always_allow_tool_actions is convenient but bypasses security prompts
     "profiles": {
       "write": {
         "name": "Write",
@@ -108,32 +116,32 @@
           "symbol_info": true,
           "terminal": true,
           "thinking": true,
-          "web_search": true,
+          "web_search": true
         },
         "enable_all_context_servers": true,
-        "context_servers": {},
-      },
-    },
+        "context_servers": {}
+      }
+    }
   },
   "terminal": {
     "shell": {
-      "program": "zsh",
+      "program": "zsh"
     },
     "font_size": 14,
-    "line_height": "comfortable",
+    "line_height": "comfortable"
   },
   "git": {
     "git_gutter": "tracked_files",
     "inline_blame": {
-      "enabled": true,
-    },
+      "enabled": true
+    }
   },
   "autosave": "on_focus_change",
   "telemetry": {
     "diagnostics": true,
-    "metrics": true,
+    "metrics": true
   },
   "tab_bar": {
-    "show": true,
-  },
+    "show": true
+  }
 }

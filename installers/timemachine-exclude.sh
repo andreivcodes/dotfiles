@@ -54,26 +54,27 @@ exclude_paths "${CACHE_PATHS[@]}"
 # Asimov is smarter: checks for package.json before excluding node_modules
 log_info "Running Asimov to exclude development dependencies..."
 if command -v asimov >/dev/null 2>&1; then
+    ASIMOV_BIN=$(command -v asimov)
+
     if asimov; then
         log_success "Asimov completed successfully"
     else
         log_warning "Asimov encountered some issues"
     fi
 
-    # Enable Asimov as a daily service using user-level LaunchAgent
-    # Note: sudo brew services has issues on Apple Silicon with SIP enabled
+    # Enable Asimov as a daily service using a user-level LaunchAgent
+    # managed through the current launchctl bootstrap workflow.
     log_info "Setting up Asimov daily service..."
     ASIMOV_PLIST="$HOME/Library/LaunchAgents/local.asimov.plist"
+    LAUNCH_DOMAIN="gui/$(id -u)"
+    SERVICE_LABEL="local.asimov"
+    SERVICE_TARGET="$LAUNCH_DOMAIN/$SERVICE_LABEL"
     
     # Create LaunchAgents directory if needed
     mkdir -p "$HOME/Library/LaunchAgents"
     
-    # Check if already loaded
-    if launchctl list | grep -q "local.asimov"; then
-        log_info "Asimov service already running"
-    else
-        # Create the LaunchAgent plist
-        cat > "$ASIMOV_PLIST" << 'EOF'
+    # Create or update the LaunchAgent plist
+    cat > "$ASIMOV_PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -82,7 +83,7 @@ if command -v asimov >/dev/null 2>&1; then
 	<string>local.asimov</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/opt/homebrew/bin/asimov</string>
+		<string>${ASIMOV_BIN}</string>
 	</array>
 	<key>StartInterval</key>
 	<integer>86400</integer>
@@ -95,13 +96,18 @@ if command -v asimov >/dev/null 2>&1; then
 </dict>
 </plist>
 EOF
-        
-        # Load the agent
-        if launchctl load -w "$ASIMOV_PLIST" 2>/dev/null; then
-            log_success "Asimov service enabled (runs daily at user login)"
-        else
-            log_warning "Could not enable Asimov service. You can run 'asimov' manually."
-        fi
+
+    # Reload the agent so plist changes take effect on modern macOS.
+    if launchctl print "$SERVICE_TARGET" >/dev/null 2>&1; then
+        launchctl bootout "$SERVICE_TARGET" 2>/dev/null || true
+    fi
+
+    if launchctl bootstrap "$LAUNCH_DOMAIN" "$ASIMOV_PLIST" 2>/dev/null; then
+        launchctl enable "$SERVICE_TARGET" 2>/dev/null || true
+        launchctl kickstart -k "$SERVICE_TARGET" 2>/dev/null || true
+        log_success "Asimov service enabled (runs daily at user login)"
+    else
+        log_warning "Could not enable Asimov service. You can run 'asimov' manually."
     fi
 else
     log_error "Asimov not found. Install with: brew install asimov"

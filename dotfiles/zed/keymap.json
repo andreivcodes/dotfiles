@@ -1,5 +1,39 @@
 [
   {
+    "bindings": {
+      "cmd-alt-x": [
+        "agent::NewExternalAgentThread",
+        {
+          "agent": {
+            "custom": {
+              "name": "codex-acp"
+            }
+          }
+        }
+      ],
+      "cmd-alt-c": [
+        "agent::NewExternalAgentThread",
+        {
+          "agent": {
+            "custom": {
+              "name": "claude-acp"
+            }
+          }
+        }
+      ],
+      "cmd-alt-o": [
+        "agent::NewExternalAgentThread",
+        {
+          "agent": {
+            "custom": {
+              "name": "opencode"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
     "context": "Terminal",
     "bindings": {
       "shift-enter": [

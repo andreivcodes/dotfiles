@@ -61,15 +61,7 @@ dotfiles/
 ### Prerequisites
 
 - macOS (tested on macOS 15.2+)
-- [Homebrew](https://brew.sh/) installed
-- [Oh My Zsh](https://ohmyz.sh/) installed
-
-### Install Oh My Zsh Plugins
-
-```bash
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-```
+- internet access for Homebrew, npm, git, and installer downloads
 
 ### Full Setup (Recommended)
 
@@ -144,10 +136,12 @@ Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railwa
 
 ### Shared Skills
 
-- Repo skills are synced into `~/.agents/skills`
-- External skills exposed through `~/.agents/skills` are preserved during sync
+- Repo skills are linked into the shared skills directory at `~/.agents/skills`
+- Skills installed separately, including `skills.sh` symlink installs, are preserved during sync
 - Native tool skill directories are linked to that shared location
 - One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
+
+Because `~/.codex/skills`, `~/.claude/skills`, and `~/.config/opencode/skills` all point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
 
 ### Superpowers
 
@@ -158,6 +152,8 @@ This repo tracks the current upstream install pattern for `superpowers` across t
 - Codex: `installers/ai-tools.sh` clones `obra/superpowers` into `~/.codex/superpowers`, and `dotfiles/dotfiles.sh` links `~/.agents/skills/superpowers` to that checkout so native skill discovery can find it
 
 After syncing dotfiles, restart Claude Code or run `/reload-plugins`, and restart OpenCode so the plugin installs load. For Codex, rerun `bash dotfiles/dotfiles.sh` after `bash installers/ai-tools.sh` if you install or update Superpowers separately.
+
+If you install skills with `skills.sh`, use its recommended symlink mode. This repo is designed to coexist with that layout.
 
 ### Brewfile Package Management
 

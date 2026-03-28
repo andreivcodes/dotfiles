@@ -75,6 +75,11 @@ safe_symlink() {
         log_error "Source file/directory does not exist: $source"
         return 1
     fi
+
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+        log_info "Symlink already up to date: $target → $source"
+        return 0
+    fi
     
     backup_if_exists "$target"
     
