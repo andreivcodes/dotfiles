@@ -96,3 +96,18 @@ The goal is to arrive at the correct solution, not to please the user by agreein
 4. **Do not skip these tools without reason**:
    - Do not default to generic search when Context7 or Exa is a better fit
    - If you choose not to use them, have a concrete reason such as local repo context already being sufficient or the user explicitly asking for a different source
+
+### Browser Automation
+
+**CRITICAL**: When a task requires navigating a live website, interacting with a rendered page, filling forms, taking screenshots, or extracting browser-rendered content, use `agent-browser`.
+
+1. **Prefer the ref workflow**:
+   - `agent-browser open <url>`
+   - `agent-browser snapshot -i`
+   - Interact using refs like `@e1`, `@e2`
+   - Re-run `snapshot` after navigation or significant DOM changes
+2. **Use the repo-managed skill when needed**:
+   - The shared `agent-browser` skill is available to Codex, Claude Code, and OpenCode through the shared `~/.agents/skills` directory
+3. **Assume the macOS install path managed by this repo**:
+   - `brew install agent-browser`
+   - `agent-browser install`

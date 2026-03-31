@@ -43,6 +43,7 @@ brew "doppler"          # Secrets management CLI
 # AI Tools
 cask "codex"            # OpenAI Codex CLI (coding agent)
 brew "anomalyco/tap/opencode" # OpenCode CLI (coding agent)
+brew "agent-browser"    # Browser automation CLI for AI agents
 # Note: Claude Code is installed via native installer (see installers/ai-tools.sh)
 
 # ============================================================================

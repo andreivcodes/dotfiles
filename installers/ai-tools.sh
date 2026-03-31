@@ -3,6 +3,7 @@
 set -euo pipefail
 
 # Source utility functions
+# shellcheck disable=SC1091
 source "$(dirname "$0")/../lib/utils.sh"
 
 log_info "Starting AI tools setup..."
@@ -12,6 +13,7 @@ check_not_sudo
 require_macos
 
 # Ensure shell environment is loaded for npm/npx installed via NVM
+# shellcheck disable=SC1091
 source "$HOME/.zprofile" 2>/dev/null || true
 
 ensure_npm_available() {
@@ -20,6 +22,7 @@ ensure_npm_available() {
     fi
 
     if [ -s "$HOME/.nvm/nvm.sh" ]; then
+        # shellcheck disable=SC1091
         source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
     fi
 
@@ -209,31 +212,40 @@ else
 fi
 
 # ============================================================================
-# Agent Browser Installation (Vercel Labs)
+# Agent Browser Installation (Homebrew formula)
 # ============================================================================
 log_info "Setting up Agent Browser..."
-if command_exists agent-browser; then
-    log_info "Agent Browser is already installed"
-    if agent-browser --version 2>/dev/null; then
-        log_success "Agent Browser verified"
-    fi
+if brew list --formula agent-browser >/dev/null 2>&1; then
+    log_info "Agent Browser is already installed via Homebrew"
 else
-    log_info "Installing Agent Browser globally..."
-    if ensure_npm_available && npm install -g agent-browser; then
+    if command_exists agent-browser; then
+        log_warning "Agent Browser is installed outside Homebrew; installing the Homebrew formula for shared agent setup"
+    fi
+
+    log_info "Installing Agent Browser via Homebrew..."
+    if brew install agent-browser; then
         log_success "Agent Browser installed successfully"
     else
         log_warning "Agent Browser installation failed. You can install manually:"
-        log_info "  npm install -g agent-browser"
+        log_info "  brew install agent-browser"
     fi
 fi
 
-# Install Chromium for Agent Browser
-log_info "Ensuring Chromium is installed for Agent Browser..."
-if agent-browser install 2>/dev/null; then
-    log_success "Chromium installed/verified for Agent Browser"
+if command_exists agent-browser; then
+    if agent-browser --version 2>/dev/null; then
+        log_success "Agent Browser verified"
+    fi
+
+    # Install Chromium for Agent Browser
+    log_info "Ensuring Chromium is installed for Agent Browser..."
+    if agent-browser install 2>/dev/null; then
+        log_success "Chromium installed/verified for Agent Browser"
+    else
+        log_warning "Chromium installation skipped or failed. You can install manually:"
+        log_info "  agent-browser install"
+    fi
 else
-    log_warning "Chromium installation skipped or failed. You can install manually:"
-    log_info "  agent-browser install"
+    log_warning "Agent Browser command is unavailable after installation attempt; skipping Chromium setup"
 fi
 
 log_success "AI tools setup completed!"

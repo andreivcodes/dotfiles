@@ -181,6 +181,17 @@ Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railwa
 
 Because `~/.codex/skills`, `~/.claude/skills`, and `~/.config/opencode/skills` all point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
 
+### Browser Automation
+
+`agent-browser` is installed through Homebrew on macOS:
+
+```bash
+brew install agent-browser
+agent-browser install
+```
+
+The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The repo-managed `agent-browser` skill lives under `dotfiles/agents/skills/agent-browser`, and the shared `AGENTS.md` rules tell Codex, Claude Code, and OpenCode to use it for browser automation tasks.
+
 ### Superpowers
 
 This repo tracks the current upstream install pattern for `superpowers` across the supported AI CLIs:
@@ -275,6 +286,7 @@ Verify the commands resolve correctly:
 type codex
 type claude
 type opencode
+type agent-browser
 ```
 
 If a tool is missing, install it with:
@@ -283,6 +295,8 @@ If a tool is missing, install it with:
 brew install --cask codex
 curl -fsSL https://claude.ai/install.sh | bash
 brew install anomalyco/tap/opencode
+brew install agent-browser
+agent-browser install
 brew install railway
 npm i -g vercel@latest
 ```
