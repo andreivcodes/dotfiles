@@ -12,6 +12,7 @@ check_not_sudo
 require_macos
 
 # Ensure Homebrew is in PATH (needed for displayplacer)
+# shellcheck source=/dev/null
 source "$HOME/.zprofile" 2>/dev/null || true
 
 SUDO_AVAILABLE=false

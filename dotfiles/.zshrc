@@ -148,7 +148,7 @@ alias gd='git diff'
 # Claude Code wrapper to load the repo-managed MCP config from ~/.claude/mcp.json.
 # Use the inline --mcp-config=... form so Claude does not consume subsequent
 # subcommands or prompt arguments as extra config paths.
-# Codex and OpenCode use their documented shared config directories directly.
+# Codex uses its documented shared config directory directly.
 unalias claude 2>/dev/null
 claude() {
     local claude_bin="${HOME}/.local/bin/claude"
@@ -236,5 +236,6 @@ if [ -d "$HOME/.lmstudio/bin" ]; then
 fi
 # End of LM Studio CLI section
 
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/andrei/.lmstudio/bin"
+# End of LM Studio CLI section

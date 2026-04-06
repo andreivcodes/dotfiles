@@ -12,6 +12,7 @@ check_not_sudo
 require_macos
 
 # Ensure shell environment is loaded
+# shellcheck source=/dev/null
 source "$HOME/.zprofile" 2>/dev/null || true
 
 NVM_INSTALL_VERSION="v0.40.4"
@@ -57,12 +58,15 @@ fi
 log_info "Setting up Node.js environment..."
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
     log_info "NVM is already installed. Setting up Node environment."
+    # shellcheck source=/dev/null
     source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
     log_success "NVM environment loaded"
 else
     log_info "NVM not found. Installing NVM..."
     if curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_INSTALL_VERSION}/install.sh" | bash; then
+        # shellcheck source=/dev/null
         source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+        # shellcheck source=/dev/null
         source "$HOME/.zprofile" 2>/dev/null || true
         log_success "NVM installed successfully"
     else
@@ -123,11 +127,13 @@ fi
 log_info "Setting up Rust development environment..."
 if command_exists rustup; then
     log_info "rustup is already installed. Ensuring Rust environment is configured."
+    # shellcheck source=/dev/null
     . "$HOME/.cargo/env" 2>/dev/null || true
     log_success "Rust environment loaded"
 else
     log_info "rustup not found. Installing Rust..."
     if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; then
+        # shellcheck source=/dev/null
         . "$HOME/.cargo/env" 2>/dev/null || true
         log_success "Rust installed successfully"
     else

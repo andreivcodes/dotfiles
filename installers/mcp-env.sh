@@ -24,8 +24,8 @@ KEY_LABELS=(
 )
 
 KEY_DETAILS=(
-    "Used by the Context7 MCP server in Codex, Claude Code, and OpenCode."
-    "Used by the Exa MCP server in Codex, Claude Code, and OpenCode."
+    "Used by the Context7 MCP server in Codex and Claude Code."
+    "Used by the Exa MCP server in Codex and Claude Code."
 )
 
 configured_keys=()

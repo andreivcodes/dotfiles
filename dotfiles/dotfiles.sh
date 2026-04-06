@@ -3,7 +3,6 @@
 set -euo pipefail
 
 # Source utility functions
-# shellcheck disable=SC1091
 source "$(dirname "$0")/../lib/utils.sh"
 
 log_info "Setting up dotfiles symlinks..."
@@ -36,9 +35,6 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/agents/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
     "$REPO_ROOT/dotfiles/claude/claude-zed.sh"
-    # OpenCode shared configuration
-    "$REPO_ROOT/dotfiles/opencode/opencode.json"
-    "$REPO_ROOT/dotfiles/agents/AGENTS.md"
 )
 
 TARGETS=(
@@ -58,9 +54,6 @@ TARGETS=(
     "$HOME/.claude/AGENTS.md"
     "$HOME/.claude/statusline.sh"
     "$HOME/.claude/claude-zed.sh"
-    # OpenCode shared configuration
-    "$HOME/.config/opencode/opencode.json"
-    "$HOME/.config/opencode/AGENTS.md"
 )
 
 total=${#SOURCES[@]}
@@ -183,13 +176,11 @@ if [ -d "$HOME/.agents/skills" ]; then
     SKILL_TARGETS=(
         "$HOME/.codex/skills"
         "$HOME/.claude/skills"
-        "$HOME/.config/opencode/skills"
     )
 
     SKILL_LABELS=(
         "Codex"
         "Claude Code"
-        "OpenCode"
     )
 
     for i in "${!SKILL_TARGETS[@]}"; do

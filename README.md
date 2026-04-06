@@ -14,7 +14,7 @@ cd ~/git/dotfiles
 
 - **Brewfile**: Declarative package management for Homebrew CLI tools and apps
 - **Shell Configuration**: Performance-optimized `.zshrc` with lazy loading
-- **AI CLI Configuration**: Shared Codex, Claude Code, and OpenCode setup
+- **AI CLI Configuration**: Shared Codex and Claude Code setup
 - **Shared Agent Rules & Skills**: One canonical instructions file, synced repo skills, and preserved external skill installs
 - **Development Environment**: Node.js (via NVM), Rust, Bun, and essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
@@ -48,8 +48,6 @@ dotfiles/
 │   │   ├── mcp.json
 │   │   ├── settings.json
 │   │   └── statusline.sh
-│   ├── opencode/
-│   │   └── opencode.json
 │   └── zed/
 │       └── settings.json
 ├── preferences/
@@ -76,7 +74,7 @@ cd ~/git/dotfiles
 This will:
 - Install all Homebrew packages and applications
 - Set up Node.js, Bun, and Rust development environments
-- Install Codex, Claude Code, Claude Desktop, T3 Code, OpenCode, Agent Browser, Railway CLI, and Vercel CLI
+- Install Codex, Claude Code, Claude Desktop, T3 Code, Agent Browser, Railway CLI, and Vercel CLI
 - Prompt for MCP API keys used by the shared AI tool configs
 - Configure macOS system preferences
 - Create symlinks for shell, editor, and shared AI CLI configs
@@ -144,18 +142,16 @@ bash installers/timemachine-exclude.sh
 
 ### AI CLI Configuration
 
-This repo manages shared config files for the three CLI tools:
+This repo manages shared config files for the two CLI tools:
 
 - Codex: `~/.codex/config.toml`, `~/.codex/AGENTS.md`
 - Claude Code: `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, `~/.claude/mcp.json`, `~/.claude/statusline.sh`
-- OpenCode: `~/.config/opencode/opencode.json`, `~/.config/opencode/AGENTS.md`
 
 Usage is plain:
 
 ```bash
 codex
 claude
-opencode
 ```
 
 Authentication is also plain:
@@ -163,14 +159,13 @@ Authentication is also plain:
 ```bash
 codex login
 claude auth login
-opencode auth login
 ```
 
-The repo only manages stable config files and shared skills. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles`, `~/.claude-profiles`, or `~/.opencode-profiles` directories are no longer used by this repo.
+The repo only manages stable config files and shared skills. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles` or `~/.claude-profiles` directories are no longer used by this repo.
 
 During setup, `installers/mcp-env.sh` prompts for `CONTEXT7_API_KEY` and `EXA_API_KEY` and writes them to `~/.zshrc.local`.
 
-Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railway` across Codex, Claude Code, and OpenCode.
+Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railway` across Codex and Claude Code.
 
 ### Shared Skills
 
@@ -179,7 +174,7 @@ Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railwa
 - Native tool skill directories are linked to that shared location
 - One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
 
-Because `~/.codex/skills`, `~/.claude/skills`, and `~/.config/opencode/skills` all point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
+Because `~/.codex/skills` and `~/.claude/skills` both point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
 
 ### Browser Automation
 
@@ -190,17 +185,16 @@ brew install agent-browser
 agent-browser install
 ```
 
-The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The repo-managed `agent-browser` skill lives under `dotfiles/agents/skills/agent-browser`, and the shared `AGENTS.md` rules tell Codex, Claude Code, and OpenCode to use it for browser automation tasks.
+The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The repo-managed `agent-browser` skill lives under `dotfiles/agents/skills/agent-browser`, and the shared `AGENTS.md` rules tell Codex and Claude Code to use it for browser automation tasks.
 
 ### Superpowers
 
 This repo tracks the current upstream install pattern for `superpowers` across the supported AI CLIs:
 
 - Claude Code: enabled via `enabledPlugins` as `superpowers@claude-plugins-official`
-- OpenCode: added to `plugin` as `superpowers@git+https://github.com/obra/superpowers.git`
 - Codex: `installers/ai-tools.sh` clones `obra/superpowers` into `~/.codex/superpowers`, and `dotfiles/dotfiles.sh` links `~/.agents/skills/superpowers` to that checkout so native skill discovery can find it
 
-After syncing dotfiles, restart Claude Code or run `/reload-plugins`, and restart OpenCode so the plugin installs load. For Codex, rerun `bash dotfiles/dotfiles.sh` after `bash installers/ai-tools.sh` if you install or update Superpowers separately.
+After syncing dotfiles, restart Claude Code or run `/reload-plugins`. For Codex, rerun `bash dotfiles/dotfiles.sh` after `bash installers/ai-tools.sh` if you install or update Superpowers separately.
 
 If you install skills with `skills.sh`, use its recommended symlink mode. This repo is designed to coexist with that layout.
 
@@ -285,7 +279,6 @@ Verify the commands resolve correctly:
 ```bash
 type codex
 type claude
-type opencode
 type agent-browser
 ```
 
@@ -294,7 +287,6 @@ If a tool is missing, install it with:
 ```bash
 brew install --cask codex
 curl -fsSL https://claude.ai/install.sh | bash
-brew install anomalyco/tap/opencode
 brew install agent-browser
 agent-browser install
 brew install railway

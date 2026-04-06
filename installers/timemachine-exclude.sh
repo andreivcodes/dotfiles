@@ -3,7 +3,6 @@
 set -euo pipefail
 
 # Source utility functions
-# shellcheck disable=SC1091
 source "$(dirname "$0")/../lib/utils.sh"
 
 log_info "Starting Time Machine exclusion setup..."

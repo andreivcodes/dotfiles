@@ -48,6 +48,7 @@ else
 fi
 
 # Ensure shell environment is loaded for brew
+# shellcheck source=/dev/null
 source "$HOME/.zprofile" 2>/dev/null || true
 
 # Recommend Command Line Tools if missing

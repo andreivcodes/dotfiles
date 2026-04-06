@@ -54,7 +54,7 @@ If any of these steps fail, fix the issues before proceeding with the commit. On
 **CRITICAL - No AI Attribution**: NEVER add any of the following to commit messages, PR descriptions, code comments, or any other content:
 - `Co-Authored-By:` lines mentioning any AI or assistant
 - `🤖 Generated with` or similar footers
-- Any mention of AI, Claude, Codex, OpenCode, assistant, or automated generation
+- Any mention of AI, Claude, Codex, assistant, or automated generation
 - Any attribution signatures or watermarks indicating AI involvement
 
 Commit messages should read as if written by the human developer. The user does not want AI attribution in their git history or codebase.
@@ -107,7 +107,7 @@ The goal is to arrive at the correct solution, not to please the user by agreein
    - Interact using refs like `@e1`, `@e2`
    - Re-run `snapshot` after navigation or significant DOM changes
 2. **Use the repo-managed skill when needed**:
-   - The shared `agent-browser` skill is available to Codex, Claude Code, and OpenCode through the shared `~/.agents/skills` directory
+   - The shared `agent-browser` skill is available to Codex and Claude Code through the shared `~/.agents/skills` directory
 3. **Assume the macOS install path managed by this repo**:
    - `brew install agent-browser`
    - `agent-browser install`

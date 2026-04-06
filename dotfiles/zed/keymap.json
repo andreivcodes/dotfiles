@@ -20,16 +20,6 @@
             }
           }
         }
-      ],
-      "cmd-alt-o": [
-        "agent::NewExternalAgentThread",
-        {
-          "agent": {
-            "custom": {
-              "name": "opencode"
-            }
-          }
-        }
       ]
     }
   },

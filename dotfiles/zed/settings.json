@@ -1,4 +1,9 @@
 {
+  "language_models": {
+    "ollama": {
+      "api_url": "http://ai-box:11434"
+    }
+  },
   "icon_theme": "Colored Zed Icons Theme Dark",
   "agent_servers": {
     "claude-acp": {
@@ -8,9 +13,6 @@
       }
     },
     "codex-acp": {
-      "type": "registry"
-    },
-    "opencode": {
       "type": "registry"
     }
   },
@@ -86,6 +88,11 @@
     "dark": "One Dark"
   },
   "agent": {
+    "default_model": {
+      "provider": "lmstudio",
+      "model": "google/gemma-4-31b",
+      "enable_thinking": false
+    },
     "tool_permissions": {
       "default": "allow"
     },

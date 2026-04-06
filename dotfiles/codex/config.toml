@@ -4,8 +4,7 @@ sandbox_mode = "danger-full-access"
 web_search = "live"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
-approvals_reviewer = "user"
-service_tier = "fast"
+personality = "pragmatic"
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
@@ -85,5 +84,14 @@ trust_level = "trusted"
 [projects."/Users/andrei/git/hos-intel"]
 trust_level = "trusted"
 
+[projects."/Users/andrei/git/silentmesh-ultra"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/open-interns"]
+trust_level = "trusted"
+
 [plugins."github@openai-curated"]
+enabled = true
+
+[plugins."stripe@openai-curated"]
 enabled = true

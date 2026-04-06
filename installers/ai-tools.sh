@@ -3,7 +3,6 @@
 set -euo pipefail
 
 # Source utility functions
-# shellcheck disable=SC1091
 source "$(dirname "$0")/../lib/utils.sh"
 
 log_info "Starting AI tools setup..."
@@ -13,7 +12,7 @@ check_not_sudo
 require_macos
 
 # Ensure shell environment is loaded for npm/npx installed via NVM
-# shellcheck disable=SC1091
+# shellcheck source=/dev/null
 source "$HOME/.zprofile" 2>/dev/null || true
 
 ensure_npm_available() {
@@ -22,7 +21,7 @@ ensure_npm_available() {
     fi
 
     if [ -s "$HOME/.nvm/nvm.sh" ]; then
-        # shellcheck disable=SC1091
+        # shellcheck source=/dev/null
         source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
     fi
 
@@ -127,25 +126,6 @@ if command_exists claude; then
     fi
 fi
 
-# ============================================================================
-# OpenCode Installation (Homebrew formula)
-# ============================================================================
-if command_exists opencode; then
-    log_info "OpenCode is already installed"
-    if opencode --version 2>/dev/null; then
-        log_success "OpenCode verified"
-    fi
-else
-    log_info "Installing OpenCode via Homebrew..."
-    if brew install anomalyco/tap/opencode; then
-        log_success "OpenCode installed successfully"
-    else
-        log_warning "OpenCode installation failed. Install manually:"
-        log_info "  brew install anomalyco/tap/opencode"
-    fi
-fi
-
-# ============================================================================
 # Railway CLI Installation
 # ============================================================================
 if command_exists railway; then
@@ -252,7 +232,6 @@ log_success "AI tools setup completed!"
 log_info "Remember to authenticate with each tool:"
 log_info "  - Codex: codex login"
 log_info "  - Claude Code: claude auth login"
-log_info "  - OpenCode: opencode auth login"
 log_info "  - Railway CLI: railway login"
 log_info "  - Vercel CLI: vercel login"
-log_info "Restart Codex, Claude Code, and OpenCode after dotfiles sync so skills and plugins reload."
+log_info "Restart Codex and Claude Code after dotfiles sync so skills and plugins reload."

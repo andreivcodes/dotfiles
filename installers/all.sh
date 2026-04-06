@@ -93,7 +93,9 @@ for i in "${!SCRIPTS[@]}"; do
 
     # Re-source environment so PATH changes propagate to subsequent scripts
     # (e.g., brew.sh adds /opt/homebrew/bin, dev.sh adds cargo/nvm)
+    # shellcheck source=/dev/null
     source "$HOME/.zprofile" 2>/dev/null || true
+    # shellcheck source=/dev/null
     [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env" 2>/dev/null || true
 done
 
