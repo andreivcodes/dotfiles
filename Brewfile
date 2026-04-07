@@ -93,6 +93,5 @@ cask "mullvad-vpn"      # Privacy VPN
 cask "notion"           # Notes and workspace
 cask "rectangle"        # Window management
 cask "keepingyouawake"  # Prevent sleep
-cask "cleanshot"        # Screenshot tool
 cask "balenaetcher"     # USB/SD card imaging
 cask "macs-fan-control" # Fan control utility

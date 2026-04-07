@@ -148,7 +148,6 @@ RUST_TOOLS=(
     "cargo-upgrades"
     "cargo-edit"
     "cargo-sort"
-    "sea-orm-cli"
 )
 
 log_info "Installing Rust development tools..."
