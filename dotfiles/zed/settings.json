@@ -1,4 +1,16 @@
 {
+  "project_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "git_panel": {
+    "dock": "left"
+  },
   "language_models": {
     "ollama": {
       "api_url": "http://ai-box:11434"
@@ -88,6 +100,7 @@
     "dark": "One Dark"
   },
   "agent": {
+    "dock": "right",
     "default_model": {
       "provider": "lmstudio",
       "model": "google/gemma-4-31b",

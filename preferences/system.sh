@@ -215,6 +215,17 @@ defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
 # Save to disk (not to iCloud) by default
 defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
 
+# Spotlight Preferences
+log_info "Configuring Spotlight preferences..."
+MACOS_MAJOR_VERSION=$(sw_vers -productVersion | awk -F '.' '{print $1}')
+if [ "$MACOS_MAJOR_VERSION" -ge 26 ]; then
+    defaults write com.apple.Spotlight PasteboardHistoryEnabled -bool true
+    killall Spotlight 2>/dev/null || true
+    log_success "Enabled Spotlight clipboard history"
+else
+    log_info "Skipping native clipboard history (requires macOS 26+)"
+fi
+
 # Display Configuration
 log_info "Configuring display scaling..."
 if command -v displayplacer >/dev/null 2>&1; then
