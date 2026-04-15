@@ -153,23 +153,6 @@ else
     log_warning "No agent skills source found; skipping repo skill sync"
 fi
 
-# Superpowers for Codex publishes skills by symlinking into ~/.agents/skills.
-# Recreate that link after syncing repo-managed skills.
-SUPERPOWERS_SKILLS_SOURCE="$HOME/.codex/superpowers/skills"
-SUPERPOWERS_SKILLS_TARGET="$HOME/.agents/skills/superpowers"
-if [ -d "$SUPERPOWERS_SKILLS_SOURCE" ]; then
-    if [ -L "$SUPERPOWERS_SKILLS_TARGET" ] && [ "$(readlink "$SUPERPOWERS_SKILLS_TARGET")" = "$SUPERPOWERS_SKILLS_SOURCE" ]; then
-        log_success "Superpowers skills already linked"
-    elif [ -e "$SUPERPOWERS_SKILLS_TARGET" ] || [ -L "$SUPERPOWERS_SKILLS_TARGET" ]; then
-        log_warning "Skipping Superpowers link because $SUPERPOWERS_SKILLS_TARGET is already managed externally"
-    else
-        ln -s "$SUPERPOWERS_SKILLS_SOURCE" "$SUPERPOWERS_SKILLS_TARGET"
-        log_success "Linked Superpowers skills into shared skills directory"
-    fi
-else
-    log_info "Superpowers for Codex not installed; skipping external skills link"
-fi
-
 if [ -d "$HOME/.agents/skills" ]; then
     log_info "Linking shared skills into tool configuration directories..."
 

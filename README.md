@@ -187,17 +187,6 @@ agent-browser install
 
 The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The repo-managed `agent-browser` skill lives under `dotfiles/agents/skills/agent-browser`, and the shared `AGENTS.md` rules tell Codex and Claude Code to use it for browser automation tasks.
 
-### Superpowers
-
-This repo tracks the current upstream install pattern for `superpowers` across the supported AI CLIs:
-
-- Claude Code: enabled via `enabledPlugins` as `superpowers@claude-plugins-official`
-- Codex: `installers/ai-tools.sh` clones `obra/superpowers` into `~/.codex/superpowers`, and `dotfiles/dotfiles.sh` links `~/.agents/skills/superpowers` to that checkout so native skill discovery can find it
-
-After syncing dotfiles, restart Claude Code or run `/reload-plugins`. For Codex, rerun `bash dotfiles/dotfiles.sh` after `bash installers/ai-tools.sh` if you install or update Superpowers separately.
-
-If you install skills with `skills.sh`, use its recommended symlink mode. This repo is designed to coexist with that layout.
-
 ### Brewfile Package Management
 
 Use the checked-in Brewfile directly:

@@ -114,7 +114,6 @@ CLAUDE_PLUGINS=(
     "typescript-lsp@claude-plugins-official"
     "code-review@claude-plugins-official"
     "skill-creator@claude-plugins-official"
-    "superpowers@claude-plugins-official"
 )
 
 if command_exists claude; then
@@ -158,36 +157,6 @@ else
     else
         log_warning "Vercel CLI installation failed. Install manually:"
         log_info "  npm i -g vercel@latest"
-    fi
-fi
-
-# ============================================================================
-# Superpowers for Codex
-# ============================================================================
-SUPERPOWERS_DIR="$HOME/.codex/superpowers"
-SUPERPOWERS_REPO_URL="https://github.com/obra/superpowers.git"
-
-log_info "Setting up Superpowers for Codex..."
-if ! command_exists git; then
-    log_warning "Git is required to install Superpowers for Codex; skipping"
-elif [ -d "$SUPERPOWERS_DIR/.git" ]; then
-    if git -C "$SUPERPOWERS_DIR" pull --ff-only; then
-        log_success "Superpowers updated in $SUPERPOWERS_DIR"
-    else
-        log_warning "Superpowers update failed. Update manually:"
-        log_info "  git -C $SUPERPOWERS_DIR pull --ff-only"
-    fi
-elif [ -e "$SUPERPOWERS_DIR" ]; then
-    log_warning "Existing path is not a git repository: $SUPERPOWERS_DIR"
-    log_info "  Remove or rename it, then run:"
-    log_info "  git clone $SUPERPOWERS_REPO_URL $SUPERPOWERS_DIR"
-else
-    mkdir -p "$(dirname "$SUPERPOWERS_DIR")"
-    if git clone "$SUPERPOWERS_REPO_URL" "$SUPERPOWERS_DIR"; then
-        log_success "Superpowers cloned to $SUPERPOWERS_DIR"
-    else
-        log_warning "Superpowers clone failed. Install manually:"
-        log_info "  git clone $SUPERPOWERS_REPO_URL $SUPERPOWERS_DIR"
     fi
 fi
 
