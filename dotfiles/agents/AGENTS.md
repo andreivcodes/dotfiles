@@ -106,9 +106,7 @@ The goal is to arrive at the correct solution, not to please the user by agreein
    - `agent-browser snapshot -i`
    - Interact using refs like `@e1`, `@e2`
    - Re-run `snapshot` after navigation or significant DOM changes
-2. **Use the repo-managed skill when needed**:
-   - The shared `agent-browser` skill is available to Codex and Claude Code through the shared `~/.agents/skills` directory
-3. **Assume the macOS install path managed by this repo**:
+2. **Assume the macOS install path managed by this repo**:
    - `brew install agent-browser`
    - `agent-browser install`
 

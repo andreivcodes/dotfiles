@@ -161,7 +161,7 @@ codex login
 claude auth login
 ```
 
-The repo only manages stable config files and shared skills. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles` or `~/.claude-profiles` directories are no longer used by this repo.
+The repo only manages stable config files and shared skill infrastructure. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles` or `~/.claude-profiles` directories are no longer used by this repo.
 
 During setup, `installers/mcp-env.sh` prompts for `CONTEXT7_API_KEY` and `EXA_API_KEY` and writes them to `~/.zshrc.local`.
 
@@ -169,9 +169,9 @@ Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railwa
 
 ### Shared Skills
 
-- Repo skills are linked into the shared skills directory at `~/.agents/skills`
+- Repo skills placed under `dotfiles/agents/skills` are linked into the shared skills directory at `~/.agents/skills`
 - Skills installed separately, including `skills.sh` symlink installs, are preserved during sync
-- Native tool skill directories are linked to that shared location
+- Codex and Claude Code native skill directories are linked to that shared location
 - One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
 
 Because `~/.codex/skills` and `~/.claude/skills` both point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
@@ -185,7 +185,7 @@ brew install agent-browser
 agent-browser install
 ```
 
-The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The repo-managed `agent-browser` skill lives under `dotfiles/agents/skills/agent-browser`, and the shared `AGENTS.md` rules tell Codex and Claude Code to use it for browser automation tasks.
+The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The shared `AGENTS.md` rules tell Codex and Claude Code to use it for browser automation tasks.
 
 ### Brewfile Package Management
 
