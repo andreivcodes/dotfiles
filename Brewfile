@@ -11,7 +11,6 @@
 # ============================================================================
 # Taps
 # ============================================================================
-tap "dopplerhq/cli"      # Doppler secrets management
 tap "oven-sh/bun"        # Bun JavaScript runtime
 tap "mdnmdn/asimeow"     # Asimeow Time Machine exclusion manager
 
@@ -42,7 +41,7 @@ brew "doppler"          # Secrets management CLI
 # AI Tools
 cask "codex"            # OpenAI Codex CLI (coding agent)
 brew "agent-browser"    # Browser automation CLI for AI agents
-# Note: Claude Code is installed via native installer (see installers/ai-tools.sh)
+# Note: Claude Code, Pi, and pi-acp are installed via installers/ai-tools.sh
 
 # ============================================================================
 # Applications - AI
@@ -71,7 +70,7 @@ cask "zed@preview"      # Code editor
 cask "github"           # GitHub Desktop
 cask "tableplus"        # Database management
 cask "figma"            # Design and prototyping tool
-cask "docker"           # Container runtime
+cask "docker-desktop"   # Container runtime
 
 # ============================================================================
 # Applications - Browsers & Network

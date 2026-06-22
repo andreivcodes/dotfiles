@@ -16,16 +16,22 @@ ZSHRC_LOCAL="$HOME/.zshrc.local"
 KEY_NAMES=(
     "CONTEXT7_API_KEY"
     "EXA_API_KEY"
+    "UIDOTSH_TOKEN"
+    "NEURALWATT_API_KEY"
 )
 
 KEY_LABELS=(
     "Context7 MCP"
     "Exa MCP"
+    "ui.sh MCP"
+    "NeuralWatt API"
 )
 
 KEY_DETAILS=(
-    "Used by the Context7 MCP server in Codex and Claude Code."
-    "Used by the Exa MCP server in Codex and Claude Code."
+    "Used by the Context7 MCP server in Codex, Claude Code, Claude Desktop, and Pi."
+    "Used by the Exa MCP server in Codex, Claude Code, Claude Desktop, and Pi."
+    "Used by the ui.sh MCP server in Codex, Claude Code, and Pi."
+    "Used by Pi's NeuralWatt provider for GLM-5.2."
 )
 
 configured_keys=()

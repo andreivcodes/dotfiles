@@ -1,35 +1,31 @@
 {
+  "settings": {
+    "toolPrefix": "server",
+    "idleTimeout": 10
+  },
   "mcpServers": {
     "context7": {
-      "type": "http",
       "url": "https://mcp.context7.com/mcp",
       "headers": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}"
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
       }
     },
     "gh_grep": {
-      "type": "http",
       "url": "https://mcp.grep.app"
     },
     "exa": {
-      "type": "http",
       "url": "https://mcp.exa.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer ${EXA_API_KEY:-}"
-      }
+      "auth": "bearer",
+      "bearerTokenEnv": "EXA_API_KEY"
     },
     "vercel": {
-      "type": "http",
       "url": "https://mcp.vercel.com"
     },
     "railway": {
-      "type": "http",
       "url": "https://mcp.railway.com"
     },
     "kicad": {
-      "type": "stdio",
       "command": "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp",
-      "args": [],
       "env": {
         "FREEROUTER_JAR": "/Users/andrei/freerouting-2.2.4.jar",
         "JAVA_HOME": "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home",
@@ -39,24 +35,20 @@
       }
     },
     "kipilot": {
-      "type": "stdio",
       "command": "/Users/andrei/.local/share/kicad-mcps/kipilot-mcp/.venv/bin/python",
       "args": ["-m", "kipilot_mcp.server"],
       "env": {
         "KIPILOT_ENABLE_MUTATIONS": "0",
-        "KIPILOT_KICAD_CLIENT_NAME": "claude-kipilot",
+        "KIPILOT_KICAD_CLIENT_NAME": "pi-kipilot",
         "KIPILOT_KICAD_TIMEOUT_MS": "60000",
         "KIPILOT_LOG_FILE": "/Users/andrei/Library/Logs/kicad-mcp-setup/kipilot-mcp.log",
         "KIPILOT_LOG_LEVEL": "INFO"
       }
     },
     "uidotsh": {
-      "command": "/Users/andrei/.claude/mcp-env-run.sh",
-      "args": [
-        "bash",
-        "-c",
-        "exec npx -y mcp-remote \"https://ui.sh/mcp?token=$UIDOTSH_TOKEN\""
-      ]
+      "url": "https://ui.sh/mcp?agent=pi",
+      "auth": "bearer",
+      "bearerTokenEnv": "UIDOTSH_TOKEN"
     }
   }
 }

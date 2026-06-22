@@ -1,4 +1,4 @@
-model = "gpt-5.4"
+model = "gpt-5.5"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 web_search = "live"
@@ -6,10 +6,18 @@ model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
 personality = "pragmatic"
 
+
+
+
+notify = ["/Users/andrei/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+service_tier = "default"
+
 [mcp_servers.context7]
 type = "http"
 url = "https://mcp.context7.com/mcp"
 env_http_headers = { CONTEXT7_API_KEY = "CONTEXT7_API_KEY" }
+startup_timeout_sec = 30
+tool_timeout_sec = 180
 
 [mcp_servers.gh_grep]
 url = "https://mcp.grep.app"
@@ -22,8 +30,32 @@ bearer_token_env_var = "EXA_API_KEY"
 url = "https://mcp.vercel.com"
 
 [mcp_servers.railway]
-command = "npx"
-args = ["-y", "@railway/mcp-server"]
+url = "https://mcp.railway.com"
+
+[mcp_servers.kicad]
+command = "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp"
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+
+[mcp_servers.kicad.env]
+FREEROUTER_JAR = "/Users/andrei/freerouting-2.2.4.jar"
+JAVA_HOME = "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
+KICAD_CLI_PATH = "/opt/homebrew/bin/kicad-cli"
+KICAD_SEARCH_PATHS = "/Users/andrei/git/silentmesh-docs"
+PATH = "/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+[mcp_servers.kipilot]
+command = "/Users/andrei/.local/share/kicad-mcps/kipilot-mcp/.venv/bin/python"
+args = ["-m", "kipilot_mcp.server"]
+startup_timeout_sec = 30
+tool_timeout_sec = 180
+
+[mcp_servers.kipilot.env]
+KIPILOT_ENABLE_MUTATIONS = "0"
+KIPILOT_KICAD_CLIENT_NAME = "codex-kipilot"
+KIPILOT_KICAD_TIMEOUT_MS = "60000"
+KIPILOT_LOG_FILE = "/Users/andrei/Library/Logs/kicad-mcp-setup/kipilot-mcp.log"
+KIPILOT_LOG_LEVEL = "INFO"
 
 [notice]
 hide_full_access_warning = true
@@ -33,7 +65,12 @@ hide_full_access_warning = true
 
 [features]
 multi_agent = true
+goals = true
 
+codex_hooks = true
+memories = true
+chronicle = true
+js_repl = false
 [projects."/Users/andrei/git/milkroad-sanity"]
 trust_level = "trusted"
 
@@ -91,8 +128,144 @@ trust_level = "trusted"
 [projects."/Users/andrei/git/open-interns"]
 trust_level = "trusted"
 
+[projects."/Users/andrei/git/wedding-invitation"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/wedding-invite"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/proposalsapp"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/v0-wedding-invitation-platform"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/wedding-invite-platform"]
+trust_level = "trusted"
+
+[projects."/private/tmp"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/portfolio-idea"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/New project"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/milkroad"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/nuntivo.ro"]
+trust_level = "trusted"
+
+[projects."/"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-12/script-attribute-metadata-extraction-purpose-counts"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-19/connect-to-my-incus-server-and"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/danvoinea.com"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-22/connect-to-incus-and-figure-out"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-23/files-mentioned-by-the-user-apple"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-28/connect-to-https-unraid-home-arpa"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-05-29/files-mentioned-by-the-user-untitled"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-04/update-the-connected-audiomoth-to-its"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/git/silentmesh-docs"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-07/files-mentioned-by-the-user-pasted"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-08/why-doesnt-screen-sharing-work-on"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-09/connect-to-my-incus-server-and"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-14/connect-to-unraid-using-unraid-arpa"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-19/check"]
+trust_level = "trusted"
+
+[projects."/Users/andrei/Documents/Codex/2026-06-22/am"]
+trust_level = "trusted"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-06-22T00:15:56Z"
+source_type = "local"
+source = "/Users/andrei/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-06-20T05:45:55Z"
+source_type = "local"
+source = "/Users/andrei/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."codex-security@openai-curated"]
+enabled = true
+
 [plugins."github@openai-curated"]
 enabled = true
 
-[plugins."stripe@openai-curated"]
+[plugins."linear@openai-curated"]
 enabled = true
+
+[plugins."figma@openai-curated"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+
+[desktop]
+appearanceTheme = "system"
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
+notifications-turn-mode = "off"
+worktree-keep-count = 5
+dock-icon-preference = "codex-light"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.open-in-target-preferences.perPath]
+"/Users/andrei/git/proposalsapp" = "zed"
+
+[mcp_servers.uidotsh]
+url = "https://ui.sh/mcp?agent=codex"
+bearer_token_env_var = "UIDOTSH_TOKEN"
+
+[mcp_servers.uidotsh.tools.uidotsh_fetch]
+approval_mode = "approve"

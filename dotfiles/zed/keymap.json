@@ -20,6 +20,16 @@
             }
           }
         }
+      ],
+      "cmd-alt-p": [
+        "agent::NewExternalAgentThread",
+        {
+          "agent": {
+            "custom": {
+              "name": "pi-acp"
+            }
+          }
+        }
       ]
     }
   },

@@ -1,0 +1,39 @@
+{
+  "providers": {
+    "neuralwatt": {
+      "baseUrl": "https://api.neuralwatt.com/v1",
+      "api": "openai-completions",
+      "apiKey": "$NEURALWATT_API_KEY",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": true,
+        "reasoningEffortMap": {
+          "minimal": "minimal",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh"
+        },
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "glm-5.2",
+          "name": "GLM-5.2 (NeuralWatt)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1048000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 1.45,
+            "output": 4.5,
+            "cacheRead": 1.45,
+            "cacheWrite": 1.45
+          }
+        }
+      ]
+    }
+  }
+}

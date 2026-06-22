@@ -14,7 +14,7 @@ cd ~/git/dotfiles
 
 - **Brewfile**: Declarative package management for Homebrew CLI tools and apps
 - **Shell Configuration**: Performance-optimized `.zshrc` with lazy loading
-- **AI CLI Configuration**: Shared Codex and Claude Code setup
+- **AI CLI Configuration**: Shared Codex, Claude Code, and Pi setup
 - **Shared Agent Rules & Skills**: One canonical instructions file, synced repo skills, and preserved external skill installs
 - **Development Environment**: Node.js (via NVM), Rust, Bun, and essential CLI tools
 - **Installation Scripts**: Automated setup and symlink management
@@ -42,6 +42,10 @@ dotfiles/
 │   │   └── skills/
 │   ├── codex/
 │   │   └── config.toml
+│   ├── pi/
+│   │   ├── mcp.json
+│   │   ├── models.json
+│   │   └── pi-acp-zed.sh
 │   ├── asimeow/
 │   │   └── config.yaml
 │   ├── claude/
@@ -74,7 +78,7 @@ cd ~/git/dotfiles
 This will:
 - Install all Homebrew packages and applications
 - Set up Node.js, Bun, and Rust development environments
-- Install Codex, Claude Code, Claude Desktop, T3 Code, Agent Browser, Railway CLI, and Vercel CLI
+- Install Codex, Claude Code, Pi, Pi ACP, Claude Desktop, T3 Code, Agent Browser, Railway CLI, and Vercel CLI
 - Prompt for MCP API keys used by the shared AI tool configs
 - Configure macOS system preferences
 - Create symlinks for shell, editor, and shared AI CLI configs
@@ -139,18 +143,22 @@ bash installers/timemachine-exclude.sh
 - Git aliases for common workflows
 - Daily completion cache refresh for faster shell startup
 - Minimal Claude wrapper that injects the repo-managed MCP config
+- Pi ACP wrapper that resolves the npm-installed adapter reliably from Zed
 
 ### AI CLI Configuration
 
-This repo manages shared config files for the two CLI tools:
+This repo manages shared config files for three CLI tools:
 
 - Codex: `~/.codex/config.toml`, `~/.codex/AGENTS.md`
+- Pi: `~/.pi/agent/mcp.json`, `~/.pi/agent/models.json`, `~/.pi/agent/AGENTS.md`, `~/.pi/agent/pi-acp-zed.sh`
 - Claude Code: `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, `~/.claude/mcp.json`, `~/.claude/statusline.sh`
+- Claude Desktop MCP: merged from `~/.claude/desktop-mcp.json` into `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 Usage is plain:
 
 ```bash
 codex
+pi
 claude
 ```
 
@@ -159,22 +167,27 @@ Authentication is also plain:
 ```bash
 codex login
 claude auth login
+pi
+# then run /login inside pi, or export your provider API key
 ```
 
-The repo only manages stable config files and shared skill infrastructure. Auth, sessions, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles` or `~/.claude-profiles` directories are no longer used by this repo.
+The repo only manages stable config files and shared skill infrastructure. Auth, sessions, Pi package state, and other mutable runtime state stay in the tools' native user locations. Any old `~/.codex-profiles` or `~/.claude-profiles` directories are no longer used by this repo.
 
-During setup, `installers/mcp-env.sh` prompts for `CONTEXT7_API_KEY` and `EXA_API_KEY` and writes them to `~/.zshrc.local`.
+During setup, `installers/mcp-env.sh` prompts for `CONTEXT7_API_KEY`, `EXA_API_KEY`, `UIDOTSH_TOKEN`, and `NEURALWATT_API_KEY` and writes them to `~/.zshrc.local`.
 
-Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railway` across Codex and Claude Code.
+Pi defaults to the repo-managed NeuralWatt provider in `~/.pi/agent/models.json`, using model `glm-5.2`, `defaultThinkingLevel` `xhigh`, and `NEURALWATT_API_KEY` from the local shell environment.
+
+Shared MCP coverage includes `context7`, `gh_grep`, `exa`, `vercel`, and `railway` across Codex, Claude Code, Claude Desktop, and Pi. Codex, Claude Code, and Pi also expose the portable local MCP servers `kicad`, `kipilot`, and `uidotsh`; the Codex desktop `node_repl` server is intentionally not mirrored because it depends on Codex app internals. Claude Code uses direct HTTP and stdio MCP entries from `~/.claude/mcp.json`; Claude Desktop uses stdio-compatible local servers and `mcp-remote` entries merged into its app config without replacing app preferences. Pi uses `pi-mcp-adapter` with a repo-managed `~/.pi/agent/mcp.json` while keeping secrets in environment variables only. The Pi config stores `${CONTEXT7_API_KEY}` placeholders plus `EXA_API_KEY` and `UIDOTSH_TOKEN` references, not the secrets themselves.
 
 ### Shared Skills
 
 - Repo skills placed under `dotfiles/agents/skills` are linked into the shared skills directory at `~/.agents/skills`
 - Skills installed separately, including `skills.sh` symlink installs, are preserved during sync
 - Codex and Claude Code native skill directories are linked to that shared location
+- Pi auto-discovers `~/.agents/skills` directly, and `installers/ai-tools.sh` also records that shared path in Pi's mutable `settings.json`
 - One canonical rules file in `dotfiles/agents/AGENTS.md` is linked into each tool's documented shared config location
 
-Because `~/.codex/skills` and `~/.claude/skills` both point at the same shared directory, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
+Because `~/.codex/skills` and `~/.claude/skills` both point at the same shared directory, and Pi reads `~/.agents/skills` directly, global `skills.sh` installs done as symlinks stay compatible with this repo's setup.
 
 ### Browser Automation
 
@@ -185,7 +198,7 @@ brew install agent-browser
 agent-browser install
 ```
 
-The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The shared `AGENTS.md` rules tell Codex and Claude Code to use it for browser automation tasks.
+The first command installs the CLI. The second downloads Chrome for Testing, which `agent-browser` uses by default. The shared `AGENTS.md` rules tell Codex, Claude Code, and Pi to use it for browser automation tasks.
 
 ### Brewfile Package Management
 
@@ -203,7 +216,7 @@ brew bundle check --file ~/git/dotfiles/Brewfile
 
 ### Zed Configuration
 
-- Codex agent server support
+- Codex, Claude Code, and Pi agent server support
 - Prettier formatters for JavaScript, TypeScript, and TSX
 - Git gutter and inline blame
 - Integrated zsh terminal
@@ -267,6 +280,8 @@ Verify the commands resolve correctly:
 
 ```bash
 type codex
+type pi
+type pi-acp
 type claude
 type agent-browser
 ```
@@ -276,13 +291,17 @@ If a tool is missing, install it with:
 ```bash
 brew install --cask codex
 curl -fsSL https://claude.ai/install.sh | bash
+npm install -g @earendil-works/pi-coding-agent
+npm install -g pi-acp
 brew install agent-browser
 agent-browser install
 brew install railway
 npm i -g vercel@latest
 ```
 
-If Claude is installed but not loading the shared MCP config, reload your shell and verify `~/.claude/mcp.json` exists.
+If Claude Code is installed but not loading the shared MCP config, reload your shell and verify `~/.claude/mcp.json` exists. If Claude Desktop is not showing MCP tools, fully quit and restart the app, then inspect `~/Library/Logs/Claude/mcp*.log`.
+
+If Pi is installed but not seeing the shared MCP servers, verify `~/.pi/agent/mcp.json` exists, confirm `pi list` includes `pi-mcp-adapter`, and restart Pi so the adapter reloads. If NeuralWatt is not available in Pi, verify `~/.pi/agent/models.json` exists and `NEURALWATT_API_KEY` is set in `~/.zshrc.local`.
 
 ### Completion Not Working
 

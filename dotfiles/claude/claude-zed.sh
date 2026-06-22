@@ -5,6 +5,13 @@ set -euo pipefail
 CLAUDE_BIN="${HOME}/.local/bin/claude"
 USE_REPO_MCP=true
 
+# Zed launches this wrapper outside an interactive shell, so load the same
+# private MCP keys and Homebrew/NVM paths that terminal-launched Claude sees.
+# shellcheck source=/dev/null
+source "$HOME/.zprofile" 2>/dev/null || true
+# shellcheck source=/dev/null
+source "$HOME/.zshrc.local" 2>/dev/null || true
+
 if [ ! -x "$CLAUDE_BIN" ]; then
   CLAUDE_BIN="${HOME}/.claude/bin/claude"
 fi

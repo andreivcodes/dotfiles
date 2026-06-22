@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "@upstash/context7-mcp"]
+    },
+    "gh_grep": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "mcp-remote", "https://mcp.grep.app", "--transport", "http-only"]
+    },
+    "exa": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "exa-mcp-server"]
+    },
+    "vercel": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "mcp-remote", "https://mcp.vercel.com", "--transport", "http-only"]
+    },
+    "railway": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "mcp-remote", "https://mcp.railway.com", "--transport", "http-only"]
+    }
+  }
+}

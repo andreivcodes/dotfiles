@@ -24,6 +24,11 @@
         "CLAUDE_CODE_EXECUTABLE": "/Users/andrei/.claude/claude-zed.sh"
       }
     },
+    "pi-acp": {
+      "type": "custom",
+      "command": "/Users/andrei/.pi/agent/pi-acp-zed.sh",
+      "args": []
+    },
     "codex-acp": {
       "type": "registry"
     }
@@ -136,7 +141,7 @@
           "symbol_info": true,
           "terminal": true,
           "thinking": true,
-          "web_search": true
+          "search_web": true
         },
         "enable_all_context_servers": true,
         "context_servers": {}

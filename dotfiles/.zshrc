@@ -188,6 +188,8 @@ export AGENT_HARNESS=1
 # Create ~/.zshrc.local with entries like:
 # export CONTEXT7_API_KEY="your-context7-key"
 # export EXA_API_KEY="your-exa-key"
+# export UIDOTSH_TOKEN="your-uidotsh-token"
+# export NEURALWATT_API_KEY="your-neuralwatt-key"
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
 # pnpm
@@ -234,8 +236,4 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 if [ -d "$HOME/.lmstudio/bin" ]; then
   export PATH="$PATH:$HOME/.lmstudio/bin"
 fi
-# End of LM Studio CLI section
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/andrei/.lmstudio/bin"
 # End of LM Studio CLI section

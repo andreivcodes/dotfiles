@@ -23,18 +23,30 @@ SOURCES=(
     "$REPO_ROOT/dotfiles/zed"
     # Shell configuration
     "$REPO_ROOT/dotfiles/.zshrc"
+    # Package manager defaults
+    "$REPO_ROOT/dotfiles/.npmrc"
+    "$REPO_ROOT/dotfiles/pnpm/rc"
+    "$REPO_ROOT/dotfiles/.bunfig.toml"
+    "$REPO_ROOT/dotfiles/.yarnrc.yml"
     # Asimeow configuration
     "$REPO_ROOT/dotfiles/asimeow/config.yaml"
     # Codex shared configuration
     "$REPO_ROOT/dotfiles/codex/config.toml"
     "$REPO_ROOT/dotfiles/agents/AGENTS.md"
+    # Pi shared configuration
+    "$REPO_ROOT/dotfiles/pi/mcp.json"
+    "$REPO_ROOT/dotfiles/pi/models.json"
+    "$REPO_ROOT/dotfiles/agents/AGENTS.md"
+    "$REPO_ROOT/dotfiles/pi/pi-acp-zed.sh"
     # Claude Code shared configuration
     "$REPO_ROOT/dotfiles/claude/settings.json"
     "$REPO_ROOT/dotfiles/claude/mcp.json"
+    "$REPO_ROOT/dotfiles/claude/desktop-mcp.json"
     "$REPO_ROOT/dotfiles/claude/CLAUDE.md"
     "$REPO_ROOT/dotfiles/agents/AGENTS.md"
     "$REPO_ROOT/dotfiles/claude/statusline.sh"
     "$REPO_ROOT/dotfiles/claude/claude-zed.sh"
+    "$REPO_ROOT/dotfiles/claude/mcp-env-run.sh"
 )
 
 TARGETS=(
@@ -42,18 +54,30 @@ TARGETS=(
     "$HOME/.config/zed"
     # Shell configuration
     "$HOME/.zshrc"
+    # Package manager defaults
+    "$HOME/.npmrc"
+    "$HOME/.config/pnpm/rc"
+    "$HOME/.bunfig.toml"
+    "$HOME/.yarnrc.yml"
     # Asimeow configuration
     "$HOME/.config/asimeow/config.yaml"
     # Codex shared configuration
     "$HOME/.codex/config.toml"
     "$HOME/.codex/AGENTS.md"
+    # Pi shared configuration
+    "$HOME/.pi/agent/mcp.json"
+    "$HOME/.pi/agent/models.json"
+    "$HOME/.pi/agent/AGENTS.md"
+    "$HOME/.pi/agent/pi-acp-zed.sh"
     # Claude Code shared configuration
     "$HOME/.claude/settings.json"
     "$HOME/.claude/mcp.json"
+    "$HOME/.claude/desktop-mcp.json"
     "$HOME/.claude/CLAUDE.md"
     "$HOME/.claude/AGENTS.md"
     "$HOME/.claude/statusline.sh"
     "$HOME/.claude/claude-zed.sh"
+    "$HOME/.claude/mcp-env-run.sh"
 )
 
 total=${#SOURCES[@]}
@@ -76,6 +100,70 @@ for i in "${!SOURCES[@]}"; do
         exit 1
     fi
 done
+
+merge_claude_desktop_mcp_config() {
+    local desktop_config_dir="$HOME/Library/Application Support/Claude"
+    local desktop_config="$desktop_config_dir/claude_desktop_config.json"
+    local desktop_mcp_source="$HOME/.claude/desktop-mcp.json"
+    local temp_file=""
+    local backup_file=""
+
+    [ -f "$desktop_mcp_source" ] || return 0
+
+    if ! command_exists jq; then
+        log_warning "jq is unavailable; skipping Claude Desktop MCP merge"
+        return 0
+    fi
+
+    mkdir -p "$desktop_config_dir"
+
+    if [ ! -f "$desktop_config" ]; then
+        printf '{\n  "mcpServers": {}\n}\n' > "$desktop_config"
+        chmod 600 "$desktop_config"
+    fi
+
+    if ! jq empty "$desktop_config" >/dev/null 2>&1; then
+        log_warning "Claude Desktop config is not valid JSON; skipping MCP merge: $desktop_config"
+        return 0
+    fi
+
+    if ! jq empty "$desktop_mcp_source" >/dev/null 2>&1; then
+        log_warning "Claude Desktop MCP source is not valid JSON; skipping MCP merge: $desktop_mcp_source"
+        return 0
+    fi
+
+    temp_file="$(mktemp "${TMPDIR:-/tmp}/claude-desktop-mcp.XXXXXX")"
+    jq -s '
+        .[0] as $current
+        | .[1] as $managed
+        | ($managed.mcpServers // {}) as $managed_servers
+        | ($managed_servers | keys) as $managed_names
+        | $current
+        | .mcpServers = (
+            ((.mcpServers // {})
+            | del(.opencode, .OpenCode, .openCode, .open_code)
+            | with_entries(select(.key as $name | ($managed_names | index($name) | not))))
+            + $managed_servers
+        )
+    ' \
+        "$desktop_config" "$desktop_mcp_source" > "$temp_file"
+
+    if cmp -s "$desktop_config" "$temp_file"; then
+        rm -f "$temp_file"
+        log_success "Claude Desktop MCP servers already configured"
+        return 0
+    fi
+
+    backup_file="$HOME/.claude/backups/claude_desktop_config.$(date +%Y%m%d_%H%M%S).json"
+    mkdir -p "$(dirname "$backup_file")"
+    cp "$desktop_config" "$backup_file"
+    mv "$temp_file" "$desktop_config"
+    chmod 600 "$desktop_config"
+    log_success "Merged Claude Desktop MCP servers"
+    log_info "Backed up previous Claude Desktop config: $backup_file"
+}
+
+merge_claude_desktop_mcp_config
 
 SHARED_SKILLS_DIR="$HOME/.agents/skills"
 REPO_SKILLS_DIR="$REPO_ROOT/dotfiles/agents/skills"
@@ -181,6 +269,9 @@ if [ -d "$HOME/.agents/skills" ]; then
 else
     log_warning "Shared skills directory not available; skipping tool symlinks"
 fi
+
+# Pi auto-discovers ~/.agents/skills directly, so it does not need a tool-
+# specific skills symlink.
 
 log_success "Dotfiles setup completed successfully!"
 log_info "Restart your terminal or run 'source ~/.zshrc' to load the new shell configuration."
