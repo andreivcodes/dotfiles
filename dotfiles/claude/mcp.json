@@ -22,10 +22,6 @@
       "type": "http",
       "url": "https://mcp.vercel.com"
     },
-    "railway": {
-      "type": "http",
-      "url": "https://mcp.railway.com"
-    },
     "kicad": {
       "type": "stdio",
       "command": "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp",

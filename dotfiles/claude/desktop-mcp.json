@@ -15,10 +15,6 @@
     "vercel": {
       "command": "/Users/andrei/.claude/mcp-env-run.sh",
       "args": ["npx", "-y", "mcp-remote", "https://mcp.vercel.com", "--transport", "http-only"]
-    },
-    "railway": {
-      "command": "/Users/andrei/.claude/mcp-env-run.sh",
-      "args": ["npx", "-y", "mcp-remote", "https://mcp.railway.com", "--transport", "http-only"]
     }
   }
 }

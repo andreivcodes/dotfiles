@@ -248,6 +248,7 @@ sync_claude_mcp_servers_from_json() {
     local server_name=""
     local server_json=""
     local server_names=()
+    local deprecated_server_names=("railway")
 
     if [ ! -f "$config_file" ]; then
         log_warning "Claude Code MCP config not found: $config_file"
@@ -267,6 +268,14 @@ sync_claude_mcp_servers_from_json() {
     while IFS= read -r server_name; do
         server_names+=("$server_name")
     done < <(jq -r '.mcpServers | keys[]' "$config_file")
+
+    for server_name in "${deprecated_server_names[@]}"; do
+        if [ -f "$HOME/.claude.json" ] && \
+            jq -e --arg n "$server_name" '.mcpServers[$n]' "$HOME/.claude.json" >/dev/null 2>&1; then
+            log_info "Removing deprecated Claude Code MCP server $server_name..."
+            claude mcp remove "$server_name" --scope user >/dev/null 2>&1 || true
+        fi
+    done
 
     for server_name in "${server_names[@]}"; do
         server_json="$(jq -c --arg n "$server_name" '.mcpServers[$n]' "$config_file")"

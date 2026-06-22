@@ -21,9 +21,6 @@
     "vercel": {
       "url": "https://mcp.vercel.com"
     },
-    "railway": {
-      "url": "https://mcp.railway.com"
-    },
     "kicad": {
       "command": "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp",
       "env": {

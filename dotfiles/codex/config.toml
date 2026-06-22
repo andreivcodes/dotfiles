@@ -29,9 +29,6 @@ bearer_token_env_var = "EXA_API_KEY"
 [mcp_servers.vercel]
 url = "https://mcp.vercel.com"
 
-[mcp_servers.railway]
-url = "https://mcp.railway.com"
-
 [mcp_servers.kicad]
 command = "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp"
 startup_timeout_sec = 30

@@ -138,11 +138,12 @@ merge_claude_desktop_mcp_config() {
         | .[1] as $managed
         | ($managed.mcpServers // {}) as $managed_servers
         | ($managed_servers | keys) as $managed_names
+        | (($managed_names + ["railway"]) | unique) as $removed_managed_names
         | $current
         | .mcpServers = (
             ((.mcpServers // {})
             | del(.opencode, .OpenCode, .openCode, .open_code)
-            | with_entries(select(.key as $name | ($managed_names | index($name) | not))))
+            | with_entries(select(.key as $name | ($removed_managed_names | index($name) | not))))
             + $managed_servers
         )
     ' \
