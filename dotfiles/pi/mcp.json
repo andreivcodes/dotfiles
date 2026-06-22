@@ -21,6 +21,10 @@
     "vercel": {
       "url": "https://mcp.vercel.com"
     },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp",
+      "auth": "oauth"
+    },
     "kicad": {
       "command": "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp",
       "env": {

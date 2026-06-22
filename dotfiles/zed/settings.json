@@ -33,6 +33,11 @@
       "type": "registry"
     }
   },
+  "context_servers": {
+    "figma": {
+      "url": "https://mcp.figma.com/mcp"
+    }
+  },
   "bottom_dock_layout": "contained",
   "vim_mode": false,
   "indent_guides": {

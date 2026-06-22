@@ -29,6 +29,11 @@ bearer_token_env_var = "EXA_API_KEY"
 [mcp_servers.vercel]
 url = "https://mcp.vercel.com"
 
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+
 [mcp_servers.kicad]
 command = "/Users/andrei/.local/share/kicad-mcps/blwfish-kicad-mcp/.venv/bin/kicad-mcp"
 startup_timeout_sec = 30
@@ -204,7 +209,7 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [marketplaces.openai-bundled]
-last_updated = "2026-06-22T00:15:56Z"
+last_updated = "2026-06-22T11:40:59Z"
 source_type = "local"
 source = "/Users/andrei/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
@@ -266,3 +271,22 @@ bearer_token_env_var = "UIDOTSH_TOKEN"
 
 [mcp_servers.uidotsh.tools.uidotsh_fetch]
 approval_mode = "approve"
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/Codex.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/andrei/.codex"
+CODEX_HOME = "/Users/andrei/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "2c20141b13bec5a64cd2874d8e2df011430d5b1a70e4f5425aa10d01743311a8"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.616.51431"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"

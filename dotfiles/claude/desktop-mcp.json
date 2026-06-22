@@ -15,6 +15,10 @@
     "vercel": {
       "command": "/Users/andrei/.claude/mcp-env-run.sh",
       "args": ["npx", "-y", "mcp-remote", "https://mcp.vercel.com", "--transport", "http-only"]
+    },
+    "figma": {
+      "command": "/Users/andrei/.claude/mcp-env-run.sh",
+      "args": ["npx", "-y", "mcp-remote", "https://mcp.figma.com/mcp", "--transport", "http-only"]
     }
   }
 }

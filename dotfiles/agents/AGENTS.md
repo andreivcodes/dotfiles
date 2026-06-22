@@ -110,6 +110,15 @@ The goal is to arrive at the correct solution, not to please the user by agreein
    - `brew install agent-browser`
    - `agent-browser install`
 
+### Figma Workflows
+
+**CRITICAL**: When a task references a Figma design, FigJam board, Slides file, Code Connect, design-to-code work, or writing content back to Figma, use the configured Figma MCP server or official Figma plugin before relying on screenshots or guesses.
+
+1. Prefer Figma links with a `node-id` and extract the file key and node ID from the URL. If permissions fail, verify the authenticated user with the Figma `whoami` tool and report the exact access issue.
+2. For implementation work, fetch design context and screenshots where available, then compare against the real rendered app before changing layout heuristically.
+3. For write-to-canvas workflows, load and follow the Figma plugin skills when the client provides them before calling write tools such as `use_figma`, `create_new_file`, or diagram generation.
+4. If Figma MCP is unavailable, rate-limited, or unauthenticated, say that directly and use a user-provided screenshot or direct app inspection as a fallback. Do not pretend that unverified visual details came from Figma.
+
 <!-- context7 -->
 Use Context7 MCP to fetch current documentation whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service -- even well-known ones like React, Next.js, Prisma, Express, Tailwind, Django, or Spring Boot. This includes API syntax, configuration, version migration, library-specific debugging, setup instructions, and CLI tool usage. Use even when you think you know the answer -- your training data may not reflect recent changes. Prefer this over web search for library docs.
 

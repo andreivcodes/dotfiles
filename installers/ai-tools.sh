@@ -347,6 +347,7 @@ CLAUDE_PLUGINS=(
     "code-review@claude-plugins-official"
     "skill-creator@claude-plugins-official"
     "frontend-design@claude-plugins-official"
+    "figma@claude-plugins-official"
 )
 
 if command_exists claude; then
@@ -495,4 +496,8 @@ log_info "  - Claude Code: claude auth login"
 log_info "  - Pi: pi, then /login (or export your provider API key)"
 log_info "  - Railway CLI: railway login"
 log_info "  - Vercel CLI: vercel login"
+log_info "  - Figma MCP for Codex CLI: codex mcp login figma"
+log_info "  - Figma MCP for Claude Code: run /mcp in Claude and authenticate figma"
+log_info "  - Figma MCP for Claude Desktop and Zed: restart the app and approve OAuth"
+log_info "  - Figma MCP for Pi: start OAuth from the pi-mcp-adapter mcp auth flow"
 log_info "Restart Codex, Claude Code, Pi, and Zed after dotfiles sync so shared configs reload."
